@@ -324,21 +324,35 @@ function simPickMove(mode, moves, fen, color, player, counter) {
 function simulateBattleGame(modeA, modeB) {
     const sg = new Chess();
     let sRotated = false, sCounter = 0, sPlayer = 'P1', sSkipNext = false;
-    const sSkips = { P1: settings.initialSkips, P2: settings.initialSkips };
+    const sSkips = { P1: settings.initialSkips, P2: settings.initialSkips + 1 };
     const sCaps = { P1: 0, P2: 0 };
+    let sGuardP2 = true;
     let moves = 0;
-    while (moves < 160) {
+    while (moves < 240) {
         const bottomColor = sRotated ? 'b' : 'w';
         const color = sPlayer === 'P1' ? bottomColor : (bottomColor === 'w' ? 'b' : 'w');
         const fen = `${sg.fen().split(' ')[0]} ${color} - - 0 1`;
         let sim;
         try { sim = new Chess(fen); } catch (e) { break; }
-        const legal = sim.moves({ verbose: true })
+        const activeCount = sim.board().flat().filter(x => x && x.color === color).length;
+        let legal = sim.moves({ verbose: true })
             .filter(m => !(m.captured === 'k' && COLOR_OWNERS[m.color] !== sPlayer));
+        if (activeCount > 1) {
+            const lk = legal.filter(m => !(m.piece === 'k' && m.color !== (sPlayer === 'P1' ? 'w' : 'b')));
+            if (lk.length > 0) legal = lk;
+        }
         if (legal.length === 0) return { winner: null, moves };
         const mode = sPlayer === 'P1' ? modeA : modeB;
-        if (sSkips[sPlayer] > 0 && !sSkipNext && mode === 'cpu-demon' && Math.random() < 0.3) {
+        const sDanger = isKingInCheck(sg.fen(), sPlayer === 'P1' ? 'w' : 'b');
+        if (sSkips[sPlayer] > 0 && !sSkipNext && ((sDanger && Math.random() < 0.85) || (mode === 'cpu-demon' && Math.random() < 0.3))) {
             sSkipNext = true; sSkips[sPlayer]--;
+        }
+        if (sGuardP2 && sPlayer === 'P1') {
+            const wm = legal.find(m => m.captured === 'k' && COLOR_OWNERS[m.color] === 'P1');
+            if (wm) {
+                const lg = legal.filter(m => m !== wm);
+                if (lg.length > 0) { legal = lg; sGuardP2 = false; }
+            }
         }
         const chosen = simPickMove(mode, legal, fen, color, sPlayer, sCounter);
         if (!chosen) return { winner: null, moves };
@@ -354,6 +368,7 @@ function simulateBattleGame(modeA, modeB) {
         if (mo.captured === 'k') return { winner: sPlayer, moves };
         if (isKingCheckmated(sg.fen(), 'b') && sPlayer === 'P1' && color === 'w') return { winner: 'P1', moves };
         if (isKingCheckmated(sg.fen(), 'w') && sPlayer === 'P2' && color === 'b') return { winner: 'P2', moves };
+        if (sg.board().flat().every(x => !x || x.type === 'k')) return { winner: null, moves };
         sCounter++;
         if (sCounter >= 2) {
             sCounter = 0;
@@ -361,6 +376,9 @@ function simulateBattleGame(modeA, modeB) {
         }
         sPlayer = sPlayer === 'P1' ? 'P2' : 'P1';
     }
+    const adj = evaluateBoard(sg, 'w');
+    if (adj > 150) return { winner: 'P1', moves, adjudicated: true };
+    if (adj < -150) return { winner: 'P2', moves, adjudicated: true };
     return { winner: null, moves };
 }
 
@@ -645,7 +663,7 @@ if (battleStartBtn) {
         const modeB = document.getElementById('battle-b').value;
         const total = parseInt(document.getElementById('battle-games').value, 10);
         const nameOf = (m) => ({ 'cpu-easy': '初級', 'cpu-normal': '中級', 'cpu-hard': '上級', 'cpu-demon': '鬼' }[m] || m);
-        const tally = { a: 0, b: 0, d: 0, moves: 0 };
+        const tally = { a: 0, b: 0, d: 0, moves: 0, adj: 0 };
         let i = 0;
         battleRunning = true;
         if (battleResultEl) battleResultEl.innerHTML = '';
@@ -655,13 +673,14 @@ if (battleStartBtn) {
                 if (battleProgressEl) battleProgressEl.textContent = '完了';
                 if (battleResultEl) {
                     battleResultEl.innerHTML =
-                        `先手 ${nameOf(modeA)}: ${tally.a}勝 / 後手 ${nameOf(modeB)}: ${tally.b}勝 / 引き分け: ${tally.d}<br>` +
-                        `平均手数: ${(tally.moves / total).toFixed(1)}手（先手・後手は固定で対戦）`;
+                        `先手 ${nameOf(modeA)}: ${tally.a}勝（${(tally.a / total * 100).toFixed(0)}%） / 後手 ${nameOf(modeB)}: ${tally.b}勝（${(tally.b / total * 100).toFixed(0)}%） / 引き分け: ${tally.d}<br>` +
+                        `平均手数: ${(tally.moves / total).toFixed(1)}手（先手・後手は固定で対戦）※手数上限では形勢判定（判定勝ち ${tally.adj} 件）`;
                 }
                 return;
             }
             const r = simulateBattleGame(modeA, modeB);
             if (r.winner === 'P1') tally.a++; else if (r.winner === 'P2') tally.b++; else tally.d++;
+            if (r.adjudicated) tally.adj++;
             tally.moves += r.moves;
             i++;
             if (battleProgressEl) battleProgressEl.textContent = `対戦中… ${i} / ${total} 試合`;
