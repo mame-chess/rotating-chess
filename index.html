@@ -577,6 +577,19 @@
         </div>
     </div>
 
+    <div id="dice-modal" class="dice-modal hidden">
+        <div class="dice-box">
+            <h3 class="dice-title">🎲 先手・後手を決めよう</h3>
+            <div class="dice-row">
+                <div class="dice-side"><span id="dice-you-name">あなた</span><div id="dice-you" class="dice-face">🎲</div></div>
+                <div class="dice-vs">VS</div>
+                <div class="dice-side"><span id="dice-opp-name">相手</span><div id="dice-opp" class="dice-face">🎲</div></div>
+            </div>
+            <p id="dice-result" class="dice-result">サイコロを振って、大きい目が出た方が先手（P1・金）になります</p>
+            <button id="dice-roll-btn" class="action-btn">サイコロを振る</button>
+            <button id="dice-go-btn" class="action-btn hidden">対戦開始</button>
+        </div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="characters.js"></script>
     <script src="characters2.js"></script>
@@ -607,19 +620,6 @@
             </figcaption>
             <button id="lb-close" class="secondary-btn">閉じる</button>
         </figure>
-    </div>
-    <div id="dice-modal" class="dice-modal hidden">
-        <div class="dice-box">
-            <h3 class="dice-title">🎲 先手・後手を決めよう</h3>
-            <div class="dice-row">
-                <div class="dice-side"><span id="dice-you-name">あなた</span><div id="dice-you" class="dice-face">🎲</div></div>
-                <div class="dice-vs">VS</div>
-                <div class="dice-side"><span id="dice-opp-name">相手</span><div id="dice-opp" class="dice-face">🎲</div></div>
-            </div>
-            <p id="dice-result" class="dice-result">サイコロを振って、大きい目が出た方が先手（P1・金）になります</p>
-            <button id="dice-roll-btn" class="action-btn">サイコロを振る</button>
-            <button id="dice-go-btn" class="action-btn hidden">対戦開始</button>
-        </div>
     </div>
 </body>
 
