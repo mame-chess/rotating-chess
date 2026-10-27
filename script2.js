@@ -14,6 +14,9 @@ function handleOnlineData(data) {
     } else if (data.type === 'draw-response') {
         if (data.accept) finishDraw('同意による引き分け');
         else setOnlineStatus('引き分けは断られました');
+    } else if (data.type === 'dice') {
+        onlineDice.theirs = data.value;
+        resolveOnlineDice();
     } else if (data.type === 'rematch-request') {
         showOffer('rematch', '相手が再戦を希望しています（先手・後手が入れ替わります）');
     } else if (data.type === 'rematch-response') {
@@ -33,6 +36,7 @@ function attachOnlineConn(conn) {
     conn.on('open', () => {
         onlineConnected = true;
         setOnlineStatus(`接続しました。対戦開始（あなたは ${myRole}）`);
+        startOnlineDice();
         if (myRole === 'P1') broadcastState();
         else sendOnline({ type: 'hello' });
     });
@@ -84,10 +88,12 @@ function setupSocketOnline() {
         onlineConnected = true;
         setOnlineStatus(`接続しました。対戦開始（あなたは ${myRole}）`);
         updateModeDisplay();
+        startOnlineDice();
     });
     onlineSocket.on('peer-joined', () => {
         onlineConnected = true;
         setOnlineStatus('接続しました。対戦開始（あなたは P1）');
+        startOnlineDice();
         broadcastState();
         updateModeDisplay();
     });
@@ -107,6 +113,8 @@ function setupSocketOnline() {
 
 function teardownOnline() {
     onlineConnected = false;
+    onlineDice = { mine: null, theirs: null, started: false };
+    onlineDiceDone = false;
     onlineConn = null;
     onlineTransport = null;
     if (onlineSocket) {
@@ -236,6 +244,18 @@ if (offerDeclineBtn) {
         sendOnline({ type: type + '-response', accept: false });
     });
 }
+const doubleBtnEl = document.getElementById('double-btn');
+if (doubleBtnEl) {
+    doubleBtnEl.addEventListener('click', () => {
+        if (gameOver || currentPlayer !== 'P2' || !p2DoubleMove) return;
+        if (isOnlineMode() && myRole !== 'P2') return;
+        if (isCpuGame() && cpuSide === 'P2') return;
+        doubleMoveArmed = !doubleMoveArmed;
+        messageEl.textContent = doubleMoveArmed ? '連続手番を予約しました。この手番のあと、もう1手動けます' : '連続手番の予約を取り消しました';
+        renderBoard();
+    });
+}
+
 if (rematchBtn) {
     rematchBtn.addEventListener('click', () => {
         if (onlineConnected) {
@@ -334,6 +354,7 @@ function simulateBattleGame(modeA, modeB) {
     const sSkips = { P1: settings.initialSkips, P2: settings.initialSkips + 1 };
     const sCaps = { P1: 0, P2: 0 };
     let sGuardP2 = true;
+    let sDoubleP2 = true;
     let moves = 0;
     while (moves < 240) {
         const bottomColor = sRotated ? 'b' : 'w';
@@ -381,7 +402,12 @@ function simulateBattleGame(modeA, modeB) {
             sCounter = 0;
             if (sSkipNext) sSkipNext = false; else sRotated = !sRotated;
         }
-        sPlayer = sPlayer === 'P1' ? 'P2' : 'P1';
+        let extraTurn = false;
+        if (sPlayer === 'P2' && sDoubleP2 && (mo.captured || isKingInCheck(sg.fen(), 'w'))) {
+            sDoubleP2 = false;
+            extraTurn = true;
+        }
+        if (!extraTurn) sPlayer = sPlayer === 'P1' ? 'P2' : 'P1';
     }
     const adj = evaluateBoard(sg, 'w');
     if (adj > 150) return { winner: 'P1', moves, adjudicated: true };
@@ -391,7 +417,7 @@ function simulateBattleGame(modeA, modeB) {
 
 // script.js からの分割（CPUスキル・キャラパネル・図鑑・キャラ選択・観戦UI・駒図鑑）
 function maybeCpuUseSkill() {
-    const player = 'P2';
+    const player = cpuSide;
     if (!isCharaMode() || charaUsed[player] || charaPhase || gameOver) return;
     const ch = charaOf(player);
     if (!ch) return;
@@ -616,7 +642,7 @@ function openCharaSelection() {
     buildCharaGrid();
     document.querySelectorAll('.chara-card').forEach(c => { c.disabled = false; });
     const title = document.getElementById('chara-modal-title');
-    if (title) title.textContent = isOnlineMode() ? 'あなたのキャラを選んでください' : 'P1 のキャラを選んでください';
+    if (title) title.textContent = isOnlineMode() ? 'あなたのキャラを選んでください' : (isCpuGame() ? 'あなたのキャラを選んでください' : 'P1 のキャラを選んでください');
     updateCharaModalVisibility();
     renderCharaPanel();
 }
@@ -630,9 +656,9 @@ function onCharaCardPick(id) {
         if (playerCharacters.P1 && playerCharacters.P2) { charaPhase = false; }
         else if (title) title.textContent = '相手の選択を待っています…';
     } else if (isCpuGame()) {
-        playerCharacters.P1 = id;
+        playerCharacters[humanSide()] = id;
         const rest = CHARACTERS.map(c => c.id).filter(x => x !== id);
-        playerCharacters.P2 = rest[Math.floor(Math.random() * rest.length)];
+        playerCharacters[cpuSide] = rest[Math.floor(Math.random() * rest.length)];
         charaPhase = false;
     } else {
         if (!playerCharacters.P1) {
@@ -646,6 +672,7 @@ function onCharaCardPick(id) {
         charaPhase = false;
     }
     renderBoard();
+    if (isCpuGame() && !charaPhase && currentPlayer === cpuSide && !gameOver) setTimeout(makeCpuMove, 800);
 }
 function updateCharaModalVisibility() {
     const modal = document.getElementById('chara-modal');
@@ -838,5 +865,201 @@ function renderWatchStats() {
         `<span class="ws-rec">P2 ${g.p2}勝（${pct(g.p2, g.games)}）</span>` +
         `<span class="ws-draw">引分 ${g.draws}</span></div>`).join('');
     box.innerHTML = `<p class="screen-note">観戦の対戦記録：全${recs.length}試合（P1の強さ × P2の強さ ごとの勝率）</p>` + rows;
+}
+
+// ===== 先手・後手決め（サイコロ） =====
+let onlineDice = { mine: null, theirs: null, started: false };
+let onlineDiceDone = false;
+let watchDiceNote = '';
+const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+function diceRoll() { return 1 + Math.floor(Math.random() * 6); }
+
+function beginGameWithDice() {
+    if (isOnlineMode()) { startSelectedGame(); return; }
+    if (isWatchMode()) { watchDiceSwap(); startSelectedGame(); return; }
+    const modal = document.getElementById('dice-modal');
+    if (!modal) { startSelectedGame(); return; }
+    const youName = document.getElementById('dice-you-name');
+    const oppName = document.getElementById('dice-opp-name');
+    if (youName) youName.textContent = isCpuGame() ? 'あなた' : 'プレイヤー1';
+    if (oppName) oppName.textContent = isCpuGame() ? 'CPU' : 'プレイヤー2';
+    const result = document.getElementById('dice-result');
+    if (result) result.textContent = 'サイコロを振って、大きい目が出た方が先手（P1・金）になります';
+    const go = document.getElementById('dice-go-btn');
+    if (go) go.classList.add('hidden');
+    const roll = document.getElementById('dice-roll-btn');
+    if (roll) roll.classList.remove('hidden');
+    modal.classList.remove('hidden');
+}
+(function initDiceModal() {
+    const rollBtn = document.getElementById('dice-roll-btn');
+    const goBtn = document.getElementById('dice-go-btn');
+    const youEl = document.getElementById('dice-you');
+    const oppEl = document.getElementById('dice-opp');
+    const result = document.getElementById('dice-result');
+    if (!rollBtn || !goBtn) return;
+    rollBtn.addEventListener('click', () => {
+        rollBtn.disabled = true;
+        let ticks = 0;
+        const iv = setInterval(() => {
+            if (youEl) youEl.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
+            if (oppEl) oppEl.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
+            ticks++;
+            if (ticks >= 8) {
+                clearInterval(iv);
+                const you = diceRoll(), opp = diceRoll();
+                if (youEl) youEl.textContent = DICE_FACES[you - 1];
+                if (oppEl) oppEl.textContent = DICE_FACES[opp - 1];
+                rollBtn.disabled = false;
+                if (you === opp) {
+                    if (result) result.textContent = `あいこ（${you} vs ${opp}）！もう一度振ってください`;
+                    return;
+                }
+                const youFirst = you > opp;
+                if (isCpuGame()) cpuSide = youFirst ? 'P2' : 'P1';
+                if (result) result.textContent = youFirst
+                    ? `${you} vs ${opp} ― ${isCpuGame() ? 'あなた' : 'プレイヤー1'} の勝ち！先手（P1・金）です`
+                    : `${you} vs ${opp} ― ${isCpuGame() ? 'CPU' : 'プレイヤー2'} の勝ち！${isCpuGame() ? 'CPUが先手（P1）、あなたは後手（P2）です' : 'プレイヤー2 が先手（P1・金）です'}`;
+                rollBtn.classList.add('hidden');
+                goBtn.classList.remove('hidden');
+            }
+        }, 80);
+    });
+    goBtn.addEventListener('click', () => {
+        const modal = document.getElementById('dice-modal');
+        if (modal) modal.classList.add('hidden');
+        startSelectedGame();
+    });
+})();
+
+// 観戦：試合ごとにサイコロで先手側を決め直す（強さの割り当てが入れ替わる）
+function watchDiceSwap() {
+    const a = diceRoll(), b = diceRoll();
+    const s1 = document.getElementById('watch-p1-level');
+    const s2 = document.getElementById('watch-p2-level');
+    let swapped = false;
+    if (b > a && s1 && s2) {
+        const tmp = s1.value; s1.value = s2.value; s2.value = tmp;
+        swapped = true;
+    }
+    watchDiceNote = `サイコロ ${a} vs ${b}：${b > a ? 'P2側が勝って先手の強さを入れ替え' : 'そのままの強さで対戦'}`;
+    return swapped;
+}
+
+// オンライン：接続時にサイコロを振り合い、大きい目が P1
+function startOnlineDice() {
+    if (onlineDice.started || onlineDiceDone) return;
+    onlineDice.started = true;
+    onlineDice.mine = diceRoll();
+    sendOnline({ type: 'dice', value: onlineDice.mine });
+    setOnlineStatus(`サイコロで先手を決めています…（あなたの目: ${onlineDice.mine}）`);
+    resolveOnlineDice();
+}
+function resolveOnlineDice() {
+    if (onlineDiceDone) return;
+    if (onlineDice.mine === null || onlineDice.theirs === null) return;
+    if (onlineDice.mine === onlineDice.theirs) {
+        onlineDice = { mine: null, theirs: null, started: false };
+        setOnlineStatus('サイコロがあいこ！振り直します…');
+        startOnlineDice();
+        return;
+    }
+    myRole = onlineDice.mine > onlineDice.theirs ? 'P1' : 'P2';
+    onlineDiceDone = true;
+    setOnlineStatus(`サイコロ: あなた ${onlineDice.mine} / 相手 ${onlineDice.theirs} → あなたは ${myRole}（${myRole === 'P1' ? '先手・金' : '後手・青'}）`);
+    initGame();
+    refreshSideLabels();
+    if (isCharaMode()) openCharaSelection();
+    updateModeDisplay();
+}
+
+// ===== script.js から分割（CPU着手・観戦制御） =====
+function maybeArmDoubleMove(player, mv) {
+    if (player !== 'P2' || !p2DoubleMove || doubleMoveArmed || !mv) return;
+    let use = !!mv.captured;
+    if (!use) {
+        try {
+            const tg = new Chess(buildActiveFen());
+            const rm = tg.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
+            if (rm && isKingInCheck(tg.fen(), 'w')) use = true;
+        } catch (e) { /* 評価できない場合は使わない */ }
+    }
+    if (use) doubleMoveArmed = true;
+}
+function makeCpuMove() {
+    if (gameOver) return;
+    maybeCpuUseSkill();
+    const level = getCpuLevelForMode();
+    const mv = chooseCpuMove(cpuSide, level);
+    if (mv) { maybeArmDoubleMove(cpuSide, mv); executeMoveCustom(mv.from, mv.to); }
+}
+
+// ===== CPU同士の観戦モード =====
+let watchTimer = null;
+let watchPlaying = false;
+let watchMatchNo = 1;
+function isWatchMode() { return selectedGameMode === 'watch'; }
+function watchLevelFor(player) {
+    const sel = document.getElementById(player === 'P1' ? 'watch-p1-level' : 'watch-p2-level');
+    return sel ? sel.value : 'cpu-normal';
+}
+function watchDelay() {
+    const sel = document.getElementById('watch-speed');
+    return sel ? parseInt(sel.value, 10) : 1000;
+}
+function stopWatchTimer() {
+    if (watchTimer) { clearTimeout(watchTimer); watchTimer = null; }
+}
+function scheduleWatch() {
+    stopWatchTimer();
+    if (!watchPlaying || !isWatchMode() || gameOver) return;
+    watchTimer = setTimeout(watchStep, watchDelay());
+}
+function watchStep() {
+    if (!watchPlaying || !isWatchMode() || gameOver) return;
+    const mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
+    maybeArmDoubleMove(currentPlayer, mv);
+    if (!mv) { pauseWatch(); return; }
+    executeMoveCustom(mv.from, mv.to);
+    if (!gameOver && totalMovesCount >= 300) {
+        const adjScore = evaluateBoard(game, 'w');
+        if (adjScore > 150) { finishGame('P1', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P1 の勝ち'; }
+        else if (adjScore < -150) { finishGame('P2', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P2 の勝ち'; }
+        else finishDraw('手数上限・形勢互角');
+    }
+    if (!gameOver) scheduleWatch();
+    else if (watchAutoEnabled()) {
+        watchTimer = setTimeout(() => {
+            if (!isWatchMode() || !watchPlaying) return;
+            watchMatchNo++;
+            if (typeof watchDiceSwap === 'function') watchDiceSwap();
+            initGame();
+            startWatch();
+        }, 3000);
+    }
+    else pauseWatch();
+}
+function watchAutoEnabled() {
+    const el = document.getElementById('watch-auto');
+    return !!(el && el.checked);
+}
+function startWatch() {
+    if (!isWatchMode()) return;
+    watchPlaying = true;
+    updateWatchUI();
+    scheduleWatch();
+}
+function pauseWatch() {
+    watchPlaying = false;
+    stopWatchTimer();
+    updateWatchUI();
+}
+function updateWatchUI() {
+    const panel = document.getElementById('watch-panel');
+    if (panel) panel.classList.toggle('hidden', !isWatchMode());
+    const btn = document.getElementById('watch-toggle-btn');
+    if (btn) btn.textContent = watchPlaying ? '一時停止' : '再開する';
+    const info = document.getElementById('watch-match-info');
+    if (info) info.textContent = `第${watchMatchNo}試合` + (typeof watchDiceNote !== 'undefined' && watchDiceNote ? `（${watchDiceNote}）` : '');
 }
 
