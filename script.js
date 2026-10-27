@@ -45,13 +45,16 @@ const CHARACTERS = [
     { id: 'carmilla', name: 'カーミラ', title: '吸血鬼の令嬢', skill: '眷属化', kind: 'convert', unlock: { captured: 1 }, desc: '自分が取った相手の駒のうち最強の1つを、自分の色に変えて初期位置に復活させる。', profile: '古城に住む吸血鬼の令嬢。気に入った相手は眷属にしてしまう。' },
     { id: 'suiren', name: 'スイレン', title: '龍の巫女', skill: 'りゅうの結界', kind: 'barrier', desc: '次の相手の手番、相手はチェックをかける手とキングを取る手ができない。', profile: '水龍を祀る神社の巫女。張った結界は王への攻撃を通さない。' },
     { id: 'titan', name: 'タイタン', title: '岩の守護者', skill: 'いわの守護', kind: 'shield', desc: '自分の色の駒が次に取られるのを1回防ぐ（防ぐまで有効）。', profile: '山の神殿を守る岩の守護者。仲間への一撃ならこの身で受ける。' },
-    { id: 'sibylla', name: 'シビラ', title: '星の占い師', skill: '星屑の加護', kind: 'fortune', desc: '運試し。15%で取られた自分の最強の駒が復活（大当たり）、50%で自分のポーン復活、35%で停止権+1（復活できる駒がない場合は停止権+1）。', profile: '星の声を聞く占い師。運命は気まぐれだが、彼女の予言はよく当たる。' },
+    { id: 'sibylla', name: 'シビラ', title: '星の占い師', skill: '星屑の加護', kind: 'fortune', desc: 'シビラだけの星読み。10%で超新星：取られた自分の駒をすべて復活。30%で星の守り：次の相手の手番、自分の駒は取られずキングもチェックされない。40%で流れ星：自分のポーン1つを前方2マスへワープ。20%で護衛の星：自分のキングの隣にポーンが現れる（現れなければ停止権+1）。', profile: '星の声を聞く占い師。運命は気まぐれだが、彼女の星読みは戦況そのものを書き換える。' },
     { id: 'hayate', name: 'ハヤテ', title: '風の忍者', skill: '分身の術', kind: 'clone', unlock: { moves: 4 }, desc: '今操作している自分のナイトの隣の空きマスに、ナイトをもう1つ増やす。', profile: '疾風の里の忍者。分身の術でナイトを増やすのが奥義。' },
     { id: 'seraphina', name: 'セラフィナ', title: '天空の天使', skill: '大いなる祝福', kind: 'transform', toType: 'q', unlock: { lost: 2 }, desc: '今操作している自分のポーン1つをクイーンに変える。', profile: '天空の都から遣わされた天使。小さなポーンにも大きな祝福を。' },
-    { id: 'barbarossa', name: 'バルバロッサ', title: '海賊船長', skill: '砲撃', kind: 'destroy', unlock: { moves: 6 }, desc: '相手の色のポーン1つを盤上から取り除く。', profile: '七つの海を荒らした海賊船長。砲撃の的は絶対に外さない。' },
-    { id: 'nicola', name: 'ニコラ', title: '錬金術師', skill: '等価交換', kind: 'exchange', unlock: { lost: 1 }, desc: '今操作している自分の駒1つ（キング以外）を、取られた自分の最強の駒とそのマスで入れ替える。', profile: '賢者の石を追う錬金術師。等価交換こそ世界の真理だと信じている。' },
-    { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: '冥府の軍団', kind: 'reviveAll', unlock: { captured: 2, moves: 6 }, desc: '自分が取った相手の駒をすべて、自分の色に変えて初期位置に復活させる（空いている初期位置の分だけ）。', profile: '冥界を治める女王。倒した敵は幽霊の軍団として、彼女のもとに蘇る。' },
-    { id: 'rosetta', name: 'ロゼッタ', title: '薔薇の伯爵夫人', skill: '魅了の抱擁', kind: 'charm', unlock: { moves: 8 }, desc: '相手の色のポーン1つを、場所はそのままに自分の色に変えてしまう。', profile: '薔薇園の伯爵夫人。その微笑みと差し伸べた手に、逆らえる者はいない。' }
+    { id: 'barbarossa', name: 'バルバロッサ', title: '海賊船長', skill: '砲撃', kind: 'destroy', unlock: { moves: 8 }, desc: '相手の色の駒（キング以外）どれか1つを盤上から取り除く。クイーンやルークも砲撃で沈められる。', profile: '七つの海を荒らした海賊船長。砲撃の的は絶対に外さない。' },
+    { id: 'nicola', name: 'ニコラ', title: '錬金術師', skill: '等価交換', kind: 'exchange', unlock: { moves: 6 }, desc: '今操作している自分の駒1つ（キング以外）を、好きな駒（クイーン／ルーク／ビショップ／ナイト／ポーン）に変える。通常の上限数を超えて同じ駒を増やすこともできる（ポーンの昇格と同じ仕組み）。', profile: '賢者の石を追う錬金術師。姿を変えることも、等価交換の応用にすぎない。' },
+    { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: '冥府の軍団', kind: 'reviveAll', unlock: { lost: 3, moves: 6 }, desc: '相手に取られた自分の駒をすべて、自分の色のまま初期位置に復活させる（空いている初期位置の分だけ）。取られた駒が多いほど帰ってくる軍団も大きくなる。', profile: '冥界を治める若き女王。倒れた自軍の魂を呼び戻し、戦列へ帰す。' },
+    { id: 'rosetta', name: 'ロゼッタ', title: '薔薇の伯爵夫人', skill: '魅了の抱擁', kind: 'charm', unlock: { moves: 8 }, desc: '相手の色の駒1つ（キングとクイーン以外）を、場所はそのままに自分の色に変えてしまう。ただし、変えた駒がそのまま相手のキングにチェックできる位置にある場合は選べない。', profile: '薔薇園の若き伯爵夫人。その微笑みと差し伸べた手に、逆らえる者はいない。' },
+    { id: 'shizuku', name: 'シズク', title: '図書室の文学少女', skill: '終章', kind: 'doom', unlock: { moves: 6 }, desc: '相手が次に操作する色の駒1つ（キング以外）に「終章」の印をつける。その相手の手番が終わると、印の駒は盤上から消える。印の駒が動いても、消えるまで印は追いかける。', profile: '白髪と眼鏡が目印の、物静かな文学少女。本を閉じるように、物語の終わりを静かに告げる。' },
+    { id: 'ayame', name: 'アヤメ', title: '二刀流の女剣士', skill: '斬り込み', kind: 'dashSlash', unlock: { moves: 5 }, desc: '今操作している自分の駒1つ（キング以外）を、同じ縦・横・斜めの直線上にいる相手の色の駒（キング以外）へ一直線に斬り込ませ、その駒を取る。途中の駒は飛び越える。', profile: '桜と月夜を背に戦う二刀流の女剣士。二本の刀が描く軌跡は、一直線の死線になる。' },
+    { id: 'kanon', name: 'カノン', title: '弦楽の演奏家', skill: 'リタルダンド', kind: 'pushback', desc: '相手の色のポーン1つを、そのポーンから見て後ろの空きマスへ1マス押し戻す。', profile: 'コンサートホールの花形ヴァイオリニスト。ゆっくりと遅らせる旋律は、敵の歩みまで押し戻す。' }
 ];
 const SKILL_PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 let playerCharacters = { P1: null, P2: null };
@@ -63,6 +66,13 @@ let sleepFor = null;
 let sleepSquare = null;
 let barrierFor = null;
 let shieldFor = null;
+let starGuardFor = null;
+let doomFor = null;
+let doomSquare = null;
+let doomPieceType = null;
+let doomPieceColor = null;
+let transformPicker = null;
+let skillFxNote = '';
 function opponentOf(player) { return player === 'P1' ? 'P2' : 'P1'; }
 function sleepTargetColorFor(player) {
     const active = getActivePieceColor(player);
@@ -400,6 +410,15 @@ function initGame() {
     sleepSquare = null;
     barrierFor = null;
     shieldFor = null;
+    starGuardFor = null;
+    doomFor = null;
+    doomSquare = null;
+    doomPieceType = null;
+    doomPieceColor = null;
+    transformPicker = null;
+    skillFxNote = '';
+    const transformModalInit = document.getElementById('transform-modal');
+    if (transformModalInit) transformModalInit.classList.add('hidden');
     skillRecharge = { P1: 0, P2: 0 };
     pendingExtraMove = { P1: false, P2: false };
     skillTargeting = null;
@@ -491,7 +510,8 @@ function snapshotState() {
         lastMovePlayer, lastMoveColor,
         playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
         frozenFor, pendingExtraMove: { ...pendingExtraMove },
-        sleepFor, sleepSquare, barrierFor, shieldFor, skillRecharge: { ...skillRecharge },
+        sleepFor, sleepSquare, barrierFor, shieldFor, starGuardFor,
+        doomFor, doomSquare, doomPieceType, doomPieceColor, skillRecharge: { ...skillRecharge },
         selectedGameMode, moveHistory: JSON.parse(JSON.stringify(moveHistory)),
         totalMovesCount, rotationsCount, statsRecorded, randomNextRotation,
         lastMove, castlingRights, epSquare,
@@ -524,6 +544,14 @@ function restoreState(snap) {
     sleepSquare = snap.sleepSquare || null;
     barrierFor = snap.barrierFor || null;
     shieldFor = snap.shieldFor || null;
+    starGuardFor = snap.starGuardFor || null;
+    doomFor = snap.doomFor || null;
+    doomSquare = snap.doomSquare || null;
+    doomPieceType = snap.doomPieceType || null;
+    doomPieceColor = snap.doomPieceColor || null;
+    transformPicker = null;
+    const transformModalRestore = document.getElementById('transform-modal');
+    if (transformModalRestore) transformModalRestore.classList.add('hidden');
     skillRecharge = snap.skillRecharge || { P1: 0, P2: 0 };
     charaPhase = isCharaMode() && !(playerCharacters.P1 && playerCharacters.P2);
     if (snap.selectedGameMode) selectedGameMode = snap.selectedGameMode;
@@ -676,6 +704,11 @@ function renderBoard() {
             });
             boardEl.appendChild(squareEl);
         }
+    }
+
+    if (doomSquare) {
+        const doomEl = boardEl.querySelector(`[data-square="${doomSquare}"]`);
+        if (doomEl) doomEl.classList.add('doom-marked');
     }
 
     const playerLabel = getPlayerLabel(currentPlayer);
@@ -923,6 +956,16 @@ function executeMoveCustom(from, to, promotion) {
             return;
         }
     }
+    // シビラの「星の守り」：守られているプレイヤーの色の駒は取れない
+    if (starGuardFor && starGuardFor !== currentPlayer) {
+        const guardColor = starGuardFor === 'P1' ? 'w' : 'b';
+        const epTargetSquare = movingPiece && movingPiece.type === 'p' && !targetPiece && to === epSquare && from[0] !== to[0] ? to[0] + from[1] : null;
+        const epTargetPiece = epTargetSquare ? game.get(epTargetSquare) : null;
+        if ((targetPiece && targetPiece.color === guardColor) || (epTargetPiece && epTargetPiece.color === guardColor)) {
+            messageEl.textContent = '星の守り！その駒はこの手番では取れません';
+            return;
+        }
+    }
     // ふぶきで凍っているプレイヤーは、この手番では駒を取れない
     if (frozenFor === currentPlayer) {
         const isEpCapture = movingPiece && movingPiece.type === 'p' && !targetPiece && to === epSquare && from[0] !== to[0];
@@ -940,6 +983,14 @@ function executeMoveCustom(from, to, promotion) {
             const ownerKingColor = opponentOf(currentPlayer) === 'P1' ? 'w' : 'b';
             if ((targetPiece && targetPiece.type === 'k') || isKingInCheck(simGame.fen(), ownerKingColor)) {
                 messageEl.textContent = 'スイレンの結界！チェックやキング取りはできません';
+                return;
+            }
+        }
+        // 星の守り：守られているキングへチェックをかける手もできない
+        if (starGuardFor && starGuardFor !== currentPlayer) {
+            const guardKingColor = starGuardFor === 'P1' ? 'w' : 'b';
+            if (isKingInCheck(simGame.fen(), guardKingColor)) {
+                messageEl.textContent = '星の守り！チェックをかける手はできません';
                 return;
             }
         }
@@ -963,6 +1014,10 @@ function executeMoveCustom(from, to, promotion) {
             capturedColor: moveObj.captured ? (currentColor === 'w' ? 'b' : 'w') : null,
             san: moveObj.san
         });
+        if (doomFor === currentPlayer && from === doomSquare && movingPiece && movingPiece.color === doomPieceColor) {
+            doomSquare = to;
+            doomPieceType = moveObj.promotion || movingPiece.type;
+        }
         if (moveObj.captured && charaUsed[currentPlayer]) {
             skillRecharge[currentPlayer]++;
             if (skillRecharge[currentPlayer] >= 3) {
@@ -1016,6 +1071,18 @@ function executeMoveCustom(from, to, promotion) {
             broadcastState();
             if (isCpuGame() && currentPlayer === 'P2' && !gameOver) setTimeout(makeCpuMove, 600);
             return;
+        }
+        if (starGuardFor && opponentOf(currentPlayer) === starGuardFor) starGuardFor = null;
+        if (doomFor === currentPlayer) {
+            const doomedPiece = doomSquare ? game.get(doomSquare) : null;
+            if (doomedPiece && doomedPiece.type === doomPieceType && doomedPiece.color === doomPieceColor) {
+                game.remove(doomSquare);
+                messageEl.textContent = 'シズクの「終章」！印をつけられた駒が消えた';
+            }
+            doomFor = null;
+            doomSquare = null;
+            doomPieceType = null;
+            doomPieceColor = null;
         }
         if (!isNormalMode()) {
             // ===== 盤面回転 =====
@@ -1173,6 +1240,14 @@ function chooseCpuMove(player, levelKey) {
         moves = moves.filter(m => {
             if (m.captured === 'k') return false;
             try { const tg = new Chess(activeFen); const rm = tg.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' }); return rm ? !isKingInCheck(tg.fen(), okc) : false; }
+            catch (e) { return true; }
+        });
+    }
+    if (starGuardFor && starGuardFor !== player) {
+        const guardColor = starGuardFor === 'P1' ? 'w' : 'b';
+        moves = moves.filter(m => {
+            if (m.captured && (m.color === 'w' ? 'b' : 'w') === guardColor) return false;
+            try { const tg = new Chess(activeFen); const rm = tg.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' }); return rm ? !isKingInCheck(tg.fen(), guardColor) : false; }
             catch (e) { return true; }
         });
     }
@@ -1685,6 +1760,84 @@ function unlockText(ch) {
     if (ch.unlock.lost) parts.push(`自分の駒が${ch.unlock.lost}つ以上取られる`);
     return '解放条件：' + parts.join('＋');
 }
+function squareCoords(square) { return { f: square.charCodeAt(0) - 97, r: Number(square[1]) }; }
+function coordsToSquare(f, r) { return f >= 0 && f <= 7 && r >= 1 && r <= 8 ? String.fromCharCode(97 + f) + r : null; }
+function boardCells() { const cells = []; const bd = game.board(); for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell) cells.push({ type: cell.type, color: cell.color, square: String.fromCharCode(97 + f) + (8 - r) }); } return cells; }
+function reviveAllLostPieces(player) {
+    const ownColor = player === 'P1' ? 'w' : 'b';
+    const entries = moveHistory.filter(h => h.captured && h.capturedColor === ownColor && !h.revived);
+    if (!entries.length) return 0;
+    entries.sort((x, y) => (SKILL_PIECE_VALUES[y.captured] || 0) - (SKILL_PIECE_VALUES[x.captured] || 0));
+    let placed = 0;
+    skillFxSquares = [];
+    entries.forEach(en => {
+        const sq = skillHomeSquares(en.captured, ownColor).find(s => !game.get(s));
+        if (sq) {
+            en.revived = true;
+            game.put({ type: en.captured, color: ownColor }, sq);
+            placed++;
+            skillFxSquares.push(sq);
+        }
+    });
+    if (!placed) skillFxSquares = [];
+    return placed;
+}
+function planKingGuardPawn(player) {
+    const ownColor = player === 'P1' ? 'w' : 'b';
+    let kingSquare = null;
+    boardCells().forEach(cell => { if (cell.type === 'k' && cell.color === ownColor) kingSquare = cell.square; });
+    if (!kingSquare) return null;
+    const c = squareCoords(kingSquare);
+    const dirs = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]];
+    for (const [df, dr] of dirs) {
+        const sq = coordsToSquare(c.f + df, c.r + dr);
+        if (sq && !game.get(sq)) return sq;
+    }
+    return null;
+}
+function planFortuneWarp(player) {
+    const activeColor = getActivePieceColor(player);
+    const cells = boardCells().filter(cell => cell.type === 'p' && cell.color === activeColor);
+    for (const cell of cells) {
+        const c = squareCoords(cell.square);
+        const dest = coordsToSquare(c.f, c.r + (cell.color === 'w' ? 2 : -2));
+        if (dest && !game.get(dest)) return cell.square;
+    }
+    return null;
+}
+function charmWouldGiveCheck(square, player) {
+    const pc = game.get(square);
+    if (!pc) return true;
+    const ownColor = player === 'P1' ? 'w' : 'b';
+    const oppKingColor = ownColor === 'w' ? 'b' : 'w';
+    let kingSquare = null;
+    boardCells().forEach(cell => { if (cell.type === 'k' && cell.color === oppKingColor) kingSquare = cell.square; });
+    if (!kingSquare) return true;
+    const from = squareCoords(square);
+    const king = squareCoords(kingSquare);
+    const df = king.f - from.f;
+    const dr = king.r - from.r;
+    if (pc.type === 'p') {
+        const dir = ownColor === 'w' ? 1 : -1;
+        return dr === dir && Math.abs(df) === 1;
+    }
+    if (pc.type === 'n') return (Math.abs(df) === 1 && Math.abs(dr) === 2) || (Math.abs(df) === 2 && Math.abs(dr) === 1);
+    if (pc.type === 'k') return false;
+    const straight = df === 0 || dr === 0;
+    const diagonal = Math.abs(df) === Math.abs(dr);
+    if ((pc.type === 'r' && !straight) || (pc.type === 'b' && !diagonal) || (pc.type === 'q' && !straight && !diagonal)) return false;
+    const stepF = Math.sign(df);
+    const stepR = Math.sign(dr);
+    let f = from.f + stepF;
+    let r = from.r + stepR;
+    while (f !== king.f || r !== king.r) {
+        const between = coordsToSquare(f, r);
+        if (!between || game.get(between)) return false;
+        f += stepF;
+        r += stepR;
+    }
+    return true;
+}
 function applySkillEffect(player, data) {
     const ch = charaOf(player);
     if (!ch || charaUsed[player] || gameOver) return false;
@@ -1756,13 +1909,10 @@ function applySkillEffect(player, data) {
         }
         case 'exchange': {
             const target = data && data.square ? game.get(data.square) : null;
-            if (!target || target.color !== activeColor || target.type === 'k') return false;
-            const caps = moveHistory.filter(h => h.captured && h.capturedColor === ownColor && !h.revived);
-            if (!caps.length) return false;
-            caps.sort((x, y) => (SKILL_PIECE_VALUES[y.captured] || 0) - (SKILL_PIECE_VALUES[x.captured] || 0));
-            caps[0].revived = true;
+            const validTypes = ['q', 'r', 'b', 'n', 'p'];
+            if (!target || target.color !== activeColor || target.type === 'k' || !data || !validTypes.includes(data.toType)) return false;
             game.remove(data.square);
-            game.put({ type: caps[0].captured, color: ownColor }, data.square); break;
+            game.put({ type: data.toType, color: target.color }, data.square); break;
         }
         case 'clone': {
             if (!data || !data.square || game.get(data.square)) return false;
@@ -1773,39 +1923,91 @@ function applySkillEffect(player, data) {
         case 'destroy': {
             const pc = data && data.square ? game.get(data.square) : null;
             const oppColor = ownColor === 'w' ? 'b' : 'w';
-            if (!pc || pc.type !== 'p' || pc.color !== oppColor) return false;
+            if (!pc || pc.type === 'k' || pc.color !== oppColor) return false;
             game.remove(data.square); break;
         }
         case 'fortune': {
-            if (data && data.mode === 'big' && data.type && data.square && !game.get(data.square)) {
-                const bentry = moveHistory.find(h => h.captured === data.type && h.capturedColor === ownColor && !h.revived);
-                if (bentry) { bentry.revived = true; game.put({ type: data.type, color: ownColor }, data.square); skillFxSquares = [data.square]; break; }
+            if (!data) return false;
+            if (data.mode === 'all') {
+                if (!reviveAllLostPieces(player)) return false;
+                skillFxNote = '超新星！取られた駒をすべて復活';
+                break;
             }
-            if (data && data.mode === 'pawn' && data.square && !game.get(data.square)) {
-                const entry = moveHistory.find(h => h.captured === 'p' && h.capturedColor === ownColor && !h.revived);
-                if (entry) { entry.revived = true; game.put({ type: 'p', color: ownColor }, data.square); break; }
+            if (data.mode === 'guard') {
+                starGuardFor = player;
+                skillFxNote = '星の守り！次の相手の手番は取られず、チェックもされない';
+                break;
             }
-            if (player === 'P1') p1Skips++; else p2Skips++; break;
+            if (data.mode === 'warp') {
+                const pc = data.square ? game.get(data.square) : null;
+                if (!pc || pc.type !== 'p' || pc.color !== activeColor) return false;
+                const c = squareCoords(data.square);
+                const dest = coordsToSquare(c.f, c.r + (pc.color === 'w' ? 2 : -2));
+                if (!dest || game.get(dest)) return false;
+                game.remove(data.square);
+                game.put({ type: 'p', color: pc.color }, dest);
+                skillFxSquares = [data.square, dest];
+                skillFxNote = '流れ星！ポーンが前方2マスへワープ';
+                break;
+            }
+            if (data.mode === 'pawn') {
+                if (data.square && !game.get(data.square)) {
+                    game.put({ type: 'p', color: ownColor }, data.square);
+                    skillFxNote = '護衛の星！キングの隣にポーンが現れた';
+                } else {
+                    if (player === 'P1') p1Skips++; else p2Skips++;
+                    skillFxNote = '護衛の星は現れず、代わりに停止権+1';
+                }
+                break;
+            }
+            return false;
         }
         case 'reviveAll': {
-            const entries = moveHistory.filter(h => h.player === player && h.captured && !h.converted);
-            if (!entries.length) return false;
-            entries.sort((x, y) => (SKILL_PIECE_VALUES[y.captured] || 0) - (SKILL_PIECE_VALUES[x.captured] || 0));
-            let placed = 0;
-            skillFxSquares = [];
-            entries.forEach(en => {
-                const sq = skillHomeSquares(en.captured, ownColor).find(s => !game.get(s));
-                if (sq) { en.converted = true; en.revived = true; game.put({ type: en.captured, color: ownColor }, sq); placed++; skillFxSquares.push(sq); }
-            });
-            if (!placed) { skillFxSquares = []; return false; }
+            if (!reviveAllLostPieces(player)) return false;
+            break;
+        }
+        case 'doom': {
+            const pc = data && data.square ? game.get(data.square) : null;
+            if (!pc || pc.type === 'k' || pc.color !== sleepTargetColorFor(player)) return false;
+            doomFor = opp;
+            doomSquare = data.square;
+            doomPieceType = pc.type;
+            doomPieceColor = pc.color;
+            break;
+        }
+        case 'dashSlash': {
+            const pa = data && data.a ? game.get(data.a) : null;
+            const pb = data && data.b ? game.get(data.b) : null;
+            const oppColor = ownColor === 'w' ? 'b' : 'w';
+            if (!pa || !pb || data.a === data.b || pa.color !== activeColor || pa.type === 'k' || pb.color !== oppColor || pb.type === 'k') return false;
+            const a = squareCoords(data.a);
+            const b = squareCoords(data.b);
+            const aligned = a.f === b.f || a.r === b.r || Math.abs(a.f - b.f) === Math.abs(a.r - b.r);
+            if (!aligned) return false;
+            game.remove(data.b);
+            game.remove(data.a);
+            game.put({ type: pa.type, color: pa.color }, data.b);
+            break;
+        }
+        case 'pushback': {
+            const pc = data && data.square ? game.get(data.square) : null;
+            const oppColor = ownColor === 'w' ? 'b' : 'w';
+            if (!pc || pc.type !== 'p' || pc.color !== oppColor) return false;
+            const c = squareCoords(data.square);
+            const dest = coordsToSquare(c.f, c.r + (pc.color === 'w' ? -1 : 1));
+            if (!dest || game.get(dest)) return false;
+            game.remove(data.square);
+            game.put({ type: 'p', color: pc.color }, dest);
+            skillFxSquares = [data.square, dest];
             break;
         }
         case 'charm': {
             const pc = data && data.square ? game.get(data.square) : null;
             const oppColorC = ownColor === 'w' ? 'b' : 'w';
-            if (!pc || pc.type !== 'p' || pc.color !== oppColorC) return false;
+            if (!pc || pc.color !== oppColorC || pc.type === 'k' || pc.type === 'q' || charmWouldGiveCheck(data.square, player)) return false;
+            const type = pc.type;
             game.remove(data.square);
-            game.put({ type: 'p', color: ownColor }, data.square); break;
+            game.put({ type, color: ownColor }, data.square); break;
         }
         case 'undo': {
             if (!historyStack.length) return false;
@@ -1825,7 +2027,7 @@ function applySkillEffect(player, data) {
     charaUsed[player] = true;
     skillRecharge[player] = 0;
     skillTargeting = null;
-    messageEl.textContent = `${ch.name} のスキル「${ch.skill}」！`;
+    messageEl.textContent = `${ch.name} のスキル「${ch.skill}」！${skillFxNote ? ' ' + skillFxNote : ''}`;
     renderBoard();
     showSkillEffect(player, skillSquaresOf(data).concat(skillFxSquares));
     skillFxSquares = [];
@@ -1862,13 +2064,39 @@ const SKILL_FX = {
     exchange: { icons: ['⚗️', '🧪', '✨'], tint: 'rgba(120,255,170,.20)', motion: 'fx-swirl' },
     charm: { icons: ['💘', '🌹', '💕'], tint: 'rgba(255,110,180,.24)', motion: 'fx-rise' }
 };
+const CHARA_SKILL_FX = {
+    luna: { sign: '🌙', icons: ['🌙', '✨', '⭐'], tint: 'rgba(250,210,90,.22)', motion: 'fx-rise', special: 'fx-moon' },
+    mint: { sign: '🌿', icons: ['🍃', '🌿', '✨'], tint: 'rgba(90,220,130,.22)', motion: 'fx-rise', special: 'fx-leaf' },
+    sora: { sign: '💨', icons: ['💨', '🍃', '🌀'], tint: 'rgba(110,220,255,.20)', motion: 'fx-swirl', special: 'fx-wind' },
+    hikari: { sign: '🎤', icons: ['⭐', '🎵', '🎤'], tint: 'rgba(255,120,200,.24)', motion: 'fx-swirl', special: 'fx-spotlight' },
+    yuki: { sign: '❄️', icons: ['❄️', '❄️', '🧊'], tint: 'rgba(170,220,255,.34)', motion: 'fx-fall', special: 'fx-blizzard' },
+    momo: { sign: '🔮', icons: ['🔮', '✨', '🦋'], tint: 'rgba(175,110,255,.26)', motion: 'fx-swirl', special: 'fx-magic' },
+    nereia: { sign: '🫧', icons: ['🫧', '💤', '🐚'], tint: 'rgba(90,170,255,.26)', motion: 'fx-rise', special: 'fx-bubbles' },
+    vulkan: { sign: '🔨', icons: ['🔥', '🔨', '⚒️'], tint: 'rgba(255,130,50,.28)', motion: 'fx-rise', special: 'fx-embers' },
+    chronos: { sign: '🕰️', icons: ['⏳', '🕰️', '↩️'], tint: 'rgba(215,175,95,.28)', motion: 'fx-fall', special: 'fx-rewind' },
+    bastet: { sign: '🐾', icons: ['🐾', '🐱', '✨'], tint: 'rgba(255,180,120,.22)', motion: 'fx-rise', special: 'fx-paw' },
+    carmilla: { sign: '🌹', icons: ['🌹', '🦇', '❤️'], tint: 'rgba(255,70,105,.26)', motion: 'fx-fall', special: 'fx-petals' },
+    suiren: { sign: '🐉', icons: ['🐉', '💧', '🌀'], tint: 'rgba(70,205,225,.26)', motion: 'fx-swirl', special: 'fx-ripple' },
+    titan: { sign: '🛡️', icons: ['🪨', '🛡️', '✨'], tint: 'rgba(190,160,110,.28)', motion: 'fx-rise', special: 'fx-guard' },
+    sibylla: { sign: '🔮', icons: ['🔮', '⭐', '✨'], tint: 'rgba(175,120,255,.28)', motion: 'fx-fall', special: 'fx-stars' },
+    hayate: { sign: '🥷', icons: ['🥷', '🍃', '💨'], tint: 'rgba(110,200,140,.22)', motion: 'fx-swirl', special: 'fx-smoke' },
+    seraphina: { sign: '🪽', icons: ['✨', '🪶', '🪽'], tint: 'rgba(255,245,190,.34)', motion: 'fx-rise', special: 'fx-holy' },
+    barbarossa: { sign: '💥', icons: ['💥', '🔥', '💣'], tint: 'rgba(255,105,45,.32)', motion: 'fx-rise', special: 'fx-explosion' },
+    nicola: { sign: '⚗️', icons: ['⚗️', '🧪', '✨'], tint: 'rgba(110,255,175,.24)', motion: 'fx-swirl', special: 'fx-alchemy' },
+    persephone: { sign: '👻', icons: ['👻', '💜', '✨'], tint: 'rgba(120,230,210,.25)', motion: 'fx-rise', special: 'fx-underworld' },
+    rosetta: { sign: '💘', icons: ['💘', '🌹', '💕'], tint: 'rgba(255,110,180,.28)', motion: 'fx-rise', special: 'fx-hearts' },
+    shizuku: { sign: '📖', icons: ['📖', '🔖', '✒️'], tint: 'rgba(105,135,255,.26)', motion: 'fx-fall', special: 'fx-pages' },
+    ayame: { sign: '⚔️', icons: ['⚔️', '🌸', '💨'], tint: 'rgba(255,145,180,.24)', motion: 'fx-swirl', special: 'fx-slash' },
+    kanon: { sign: '🎻', icons: ['🎻', '🎵', '🎶'], tint: 'rgba(100,220,220,.24)', motion: 'fx-swirl', special: 'fx-music' }
+};
 function showSkillEffect(player, squares) {
     const ch = charaOf(player);
     if (!ch) return;
     try {
+        const fxNote = skillFxNote;
         const banner = document.getElementById('skill-effect-banner');
         if (banner) {
-            banner.innerHTML = `<div class="se-player">${player === 'P1' ? 'P1' : 'P2'} ${ch.name}</div><div class="se-skill">✦「${ch.skill}」✦</div>`;
+            banner.innerHTML = `<div class="se-player">${player === 'P1' ? 'P1' : 'P2'} ${ch.name}</div><div class="se-skill">✦「${ch.skill}」✦</div>${fxNote ? `<div class="se-result">${fxNote}</div>` : ''}`;
             banner.classList.remove('hidden', 'anim');
             void banner.offsetWidth;
             banner.classList.add('anim');
@@ -1885,11 +2113,20 @@ function showSkillEffect(player, squares) {
             if (el) { el.classList.add('skill-hit'); setTimeout(() => el.classList.remove('skill-hit'), 1400); }
         });
         const fxLayer = document.getElementById('fx-layer');
-        const fx = SKILL_FX[ch.kind] || SKILL_FX.fortune;
+        const fx = CHARA_SKILL_FX[ch.id] || SKILL_FX[ch.kind] || SKILL_FX.fortune;
         if (fxLayer && fx) {
             fxLayer.innerHTML = '';
+            fxLayer.removeAttribute('class');
+            if (fx.special) fxLayer.classList.add(fx.special);
+            const boardWrap = fxLayer.parentElement;
+            if (boardWrap) {
+                boardWrap.classList.remove('fx-board-shake', 'fx-board-rewind');
+                if (fx.special === 'fx-explosion' || fx.special === 'fx-slash') boardWrap.classList.add('fx-board-shake');
+                if (fx.special === 'fx-rewind') boardWrap.classList.add('fx-board-rewind');
+                setTimeout(() => boardWrap.classList.remove('fx-board-shake', 'fx-board-rewind'), 1050);
+            }
             fxLayer.style.background = `radial-gradient(ellipse at center, ${fx.tint}, transparent 75%)`;
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 28; i++) {
                 const sp = document.createElement('span');
                 sp.className = 'fx-particle ' + fx.motion;
                 sp.textContent = fx.icons[i % fx.icons.length];
@@ -1898,7 +2135,11 @@ function showSkillEffect(player, squares) {
                 sp.style.animationDelay = (Math.random() * 0.35) + 's';
                 fxLayer.appendChild(sp);
             }
-            setTimeout(() => { fxLayer.innerHTML = ''; fxLayer.style.background = 'transparent'; }, 2100);
+            const sig = document.createElement('div');
+            sig.className = 'fx-signature';
+            sig.textContent = fx.sign || fx.icons[0];
+            fxLayer.appendChild(sig);
+            setTimeout(() => { fxLayer.innerHTML = ''; fxLayer.style.background = 'transparent'; fxLayer.removeAttribute('class'); }, 2100);
         }
     } catch (e) {}
 }
@@ -1920,34 +2161,69 @@ function onSkillButton(player) {
         case 'swap': skillTargeting = { player, skill: 'swap', first: null }; messageEl.textContent = 'テレポート：入れ替える駒を2つクリックしてください'; return;
         case 'step': skillTargeting = { player, skill: 'step', first: null }; messageEl.textContent = 'にゃんステップ：移したい駒をクリック'; return;
         case 'sleep': skillTargeting = { player, skill: 'sleep' }; messageEl.textContent = 'まどろみ：眠らせたい相手の駒をクリック'; return;
-        case 'destroy': skillTargeting = { player, skill: 'destroy' }; messageEl.textContent = '砲撃：取り除く相手のポーンをクリック'; return;
-        case 'exchange': {
-            const ownColor = player === 'P1' ? 'w' : 'b';
-            if (!moveHistory.some(h => h.captured && h.capturedColor === ownColor && !h.revived)) { messageEl.textContent = '交換できる（取られた）駒がありません'; return; }
-            skillTargeting = { player, skill: 'exchange' }; messageEl.textContent = '等価交換：入れ替えたい自分の駒をクリック'; return;
-        }
+        case 'destroy': skillTargeting = { player, skill: 'destroy' }; messageEl.textContent = '砲撃：取り除く相手の駒（キング以外）をクリック'; return;
+        case 'exchange': skillTargeting = { player, skill: 'exchange' }; messageEl.textContent = '等価交換：変身させたい、今操作している自分の駒をクリック'; return;
         case 'revive': { const plan = planRevive(player); if (!plan) { messageEl.textContent = '復活できる駒がありません'; return; } applySkillEffect(player, plan); return; }
         case 'revivePawns': { const plan = planRevivePawns(player); if (!plan) { messageEl.textContent = '復活できるポーンがありません'; return; } applySkillEffect(player, plan); return; }
         case 'convert': { const plan = planConvert(player); if (!plan) { messageEl.textContent = '眷属化できる駒がありません'; return; } applySkillEffect(player, plan); return; }
         case 'clone': { const plan = planClone(player); if (!plan) { messageEl.textContent = 'ナイトがいないか、隣が空いていません'; return; } applySkillEffect(player, plan); return; }
         case 'fortune': {
+            const ownColor = player === 'P1' ? 'w' : 'b';
+            const hasLost = moveHistory.some(h => h.captured && h.capturedColor === ownColor && !h.revived);
             const r = Math.random();
-            const big = r < 0.15 ? planRevive(player) : null;
-            if (big) { applySkillEffect(player, { mode: 'big', ...big }); return; }
-            const pawns = planRevivePawns(player);
-            if (r < 0.65 && pawns) applySkillEffect(player, { mode: 'pawn', square: pawns.places[0] });
-            else applySkillEffect(player, { mode: 'skip' });
+            if (r < 0.10 && hasLost) { applySkillEffect(player, { mode: 'all' }); return; }
+            if (r < 0.40) { applySkillEffect(player, { mode: 'guard' }); return; }
+            if (r < 0.80) {
+                if (planFortuneWarp(player)) {
+                    skillTargeting = { player, skill: 'fortuneWarp' };
+                    messageEl.textContent = '星読みは「流れ星」！前方2マスへワープさせる、今操作しているポーンをクリック';
+                } else applySkillEffect(player, { mode: 'guard' });
+                return;
+            }
+            applySkillEffect(player, { mode: 'pawn', square: planKingGuardPawn(player) });
             return;
         }
         case 'reviveAll': {
-            if (!moveHistory.some(h => h.player === player && h.captured && !h.converted)) { messageEl.textContent = 'まだ取った駒がありません'; return; }
+            const ownColor = player === 'P1' ? 'w' : 'b';
+            if (!moveHistory.some(h => h.captured && h.capturedColor === ownColor && !h.revived)) { messageEl.textContent = 'まだ相手に取られた自分の駒がありません'; return; }
             applySkillEffect(player, {}); return;
         }
-        case 'charm': skillTargeting = { player, skill: 'charm' }; messageEl.textContent = '魅了：自分の色に変えたい相手のポーンをクリック'; return;
+        case 'doom': skillTargeting = { player, skill: 'doom' }; messageEl.textContent = '終章：相手が次に操作する駒（キング以外）に印をつけてください'; return;
+        case 'dashSlash': skillTargeting = { player, skill: 'dashSlash', first: null }; messageEl.textContent = '斬り込み：斬り込む自分の駒をクリック'; return;
+        case 'pushback': skillTargeting = { player, skill: 'pushback' }; messageEl.textContent = 'リタルダンド：押し戻したい相手のポーンをクリック'; return;
+        case 'charm': skillTargeting = { player, skill: 'charm' }; messageEl.textContent = '魅了：自分の色に変えたい相手の駒（キング・クイーン以外）をクリック'; return;
         case 'undo': if (!historyStack.length) { messageEl.textContent = 'まだ巻き戻せる手がありません'; return; } applySkillEffect(player, {}); return;
         default: applySkillEffect(player, {}); return;
     }
 }
+function openTransformPicker(player, square) {
+    transformPicker = { player, square };
+    const modal = document.getElementById('transform-modal');
+    if (modal) modal.classList.remove('hidden');
+    messageEl.textContent = '等価交換：変身先の駒を選んでください（上限数を超えてもOK）';
+}
+function closeTransformPicker() {
+    transformPicker = null;
+    const modal = document.getElementById('transform-modal');
+    if (modal) modal.classList.add('hidden');
+}
+document.querySelectorAll('.transform-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (!transformPicker) return;
+        const picked = transformPicker;
+        closeTransformPicker();
+        skillTargeting = null;
+        applySkillEffect(picked.player, { square: picked.square, toType: btn.dataset.tpiece });
+    });
+});
+(function () {
+    const cancel = document.getElementById('transform-cancel');
+    if (cancel) cancel.addEventListener('click', () => {
+        closeTransformPicker();
+        skillTargeting = null;
+        messageEl.textContent = 'スキルの使用をキャンセルしました';
+    });
+})();
 function handleSkillTargetClick(square) {
     const t = skillTargeting;
     if (!t) return;
@@ -1965,18 +2241,47 @@ function handleSkillTargetClick(square) {
     }
     if (t.skill === 'charm') {
         const oppColor = t.player === 'P1' ? 'b' : 'w';
-        if (pc && pc.type === 'p' && pc.color === oppColor) applySkillEffect(t.player, { square });
+        if (pc && pc.color === oppColor && (pc.type === 'k' || pc.type === 'q')) messageEl.textContent = 'キングとクイーンは魅了できません';
+        else if (pc && pc.color === oppColor && charmWouldGiveCheck(square, t.player)) messageEl.textContent = 'その駒を変えると相手のキングへチェックがかかってしまうため選べません';
+        else if (pc && pc.color === oppColor) applySkillEffect(t.player, { square });
+        else messageEl.textContent = '相手の色の駒（キング・クイーン以外）を選んでください';
+        return;
+    }
+    if (t.skill === 'doom') {
+        if (pc && pc.type !== 'k' && pc.color === sleepTargetColorFor(t.player)) applySkillEffect(t.player, { square });
+        else messageEl.textContent = '相手が次に操作する駒（キング以外）を選んでください';
+        return;
+    }
+    if (t.skill === 'pushback') {
+        const oppColor = t.player === 'P1' ? 'b' : 'w';
+        if (pc && pc.type === 'p' && pc.color === oppColor) { if (!applySkillEffect(t.player, { square })) messageEl.textContent = 'そのポーンの後ろが空いていません'; }
         else messageEl.textContent = '相手の色のポーンを選んでください';
+        return;
+    }
+    if (t.skill === 'fortuneWarp') {
+        if (pc && pc.type === 'p' && pc.color === activeColor) { if (!applySkillEffect(t.player, { mode: 'warp', square })) messageEl.textContent = 'そのポーンは前方2マス先へワープできません'; }
+        else messageEl.textContent = '今操作している自分のポーンを選んでください';
+        return;
+    }
+    if (t.skill === 'dashSlash') {
+        const oppColor = t.player === 'P1' ? 'b' : 'w';
+        if (!t.first) {
+            if (pc && pc.color === activeColor && pc.type !== 'k') { t.first = square; messageEl.textContent = '斬り込み：同じ縦・横・斜めの直線上にいる相手の駒をクリック'; }
+            else messageEl.textContent = '今操作している自分の駒（キング以外）を選んでください';
+            return;
+        }
+        if (pc && pc.color === oppColor && pc.type !== 'k') { if (!applySkillEffect(t.player, { a: t.first, b: square })) messageEl.textContent = '同じ縦・横・斜めの直線上にいる相手の駒を選んでください'; }
+        else messageEl.textContent = '相手の色の駒（キング以外）を選んでください';
         return;
     }
     if (t.skill === 'destroy') {
         const oppColor = t.player === 'P1' ? 'b' : 'w';
-        if (pc && pc.type === 'p' && pc.color === oppColor) applySkillEffect(t.player, { square });
-        else messageEl.textContent = '相手の色のポーンを選んでください';
+        if (pc && pc.type !== 'k' && pc.color === oppColor) applySkillEffect(t.player, { square });
+        else messageEl.textContent = '相手の色の駒（キング以外）を選んでください';
         return;
     }
     if (t.skill === 'exchange') {
-        if (pc && pc.color === activeColor && pc.type !== 'k') applySkillEffect(t.player, { square });
+        if (pc && pc.color === activeColor && pc.type !== 'k') openTransformPicker(t.player, square);
         else messageEl.textContent = '今操作している自分の駒（キング以外）を選んでください';
         return;
     }
@@ -1997,346 +2302,3 @@ function handleSkillTargetClick(square) {
         applySkillEffect(t.player, { a: t.first, b: square });
     }
 }
-function maybeCpuUseSkill() {
-    const player = 'P2';
-    if (!isCharaMode() || charaUsed[player] || charaPhase || gameOver) return;
-    const ch = charaOf(player);
-    if (!ch) return;
-    const rnd = Math.random();
-    const activeColor = getActivePieceColor(player);
-    switch (ch.kind) {
-        case 'skip': case 'shield': applySkillEffect(player, {}); return;
-        case 'extra': if (rnd < 0.3) applySkillEffect(player, {}); return;
-        case 'freeze': case 'barrier': if (totalMovesCount > 4 && rnd < 0.3) applySkillEffect(player, {}); return;
-        case 'revive': { const p = planRevive(player); if (p) applySkillEffect(player, p); return; }
-        case 'revivePawns': { const p = planRevivePawns(player); if (p) applySkillEffect(player, p); return; }
-        case 'convert': { const p = planConvert(player); if (p) applySkillEffect(player, p); return; }
-        case 'clone': { const p = planClone(player); if (p) applySkillEffect(player, p); return; }
-        case 'fortune': {
-            const big = rnd < 0.15 ? planRevive(player) : null;
-            if (big) { applySkillEffect(player, { mode: 'big', ...big }); return; }
-            const pawns = planRevivePawns(player);
-            if (pawns && rnd < 0.65) applySkillEffect(player, { mode: 'pawn', square: pawns.places[0] });
-            else if (rnd < 0.5) applySkillEffect(player, { mode: 'skip' });
-            return;
-        }
-        case 'reviveAll': { if (moveHistory.some(h => h.player === player && h.captured && !h.converted)) applySkillEffect(player, {}); return; }
-        case 'charm': {
-            const bd2 = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd2[r][f]; if (cell && cell.type === 'p' && cell.color === 'w') { if (rnd < 0.7) applySkillEffect(player, { square: cell.square }); return; } }
-            return;
-        }
-        case 'undo': if (historyStack.length >= 3 && rnd < 0.12) applySkillEffect(player, {}); return;
-        case 'transform': {
-            const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square }); return; } }
-            return;
-        }
-        case 'sleep': {
-            const tc = sleepTargetColorFor(player);
-            let best = null, bv = -1;
-            game.board().flat().forEach(cell => { if (cell && cell.color === tc && (SKILL_PIECE_VALUES[cell.type] || 0) > bv) { bv = SKILL_PIECE_VALUES[cell.type]; best = cell.square; } });
-            if (best && rnd < 0.5) applySkillEffect(player, { square: best });
-            return;
-        }
-        case 'destroy': {
-            const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === 'w') { if (rnd < 0.6) applySkillEffect(player, { square: cell.square }); return; } }
-            return;
-        }
-        case 'step': {
-            const bd = game.board(); const files = 'abcdefgh';
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
-                const cell = bd[r][f];
-                if (cell && cell.type === 'p' && cell.color === activeColor) {
-                    const nr = cell.color === 'w' ? r - 1 : r + 1;
-                    if (nr >= 0 && nr < 8 && !bd[nr][f]) { applySkillEffect(player, { a: cell.square, b: files[f] + (8 - nr) }); return; }
-                }
-            }
-            return;
-        }
-        case 'exchange': {
-            if (!moveHistory.some(h => h.captured && h.capturedColor === 'b' && !h.revived)) return;
-            const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square }); return; } }
-            return;
-        }
-        case 'swap': return;
-    }
-}
-function renderCharaPanel() {
-    const panel = document.getElementById('chara-panel');
-    if (!panel) return;
-    if (!isCharaMode()) { panel.classList.add('hidden'); return; }
-    panel.classList.remove('hidden');
-    ['P1', 'P2'].forEach(pl => {
-        const key = pl.toLowerCase();
-        const ch = charaOf(pl);
-        const img = document.getElementById('chara-img-' + key);
-        const nameEl = document.getElementById('chara-name-' + key);
-        const skillEl = document.getElementById('chara-skill-' + key);
-        const btn = document.getElementById('chara-btn-' + key);
-        if (img) img.src = ch && typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
-        if (nameEl) nameEl.textContent = ch ? `${pl}：${ch.name}（${ch.title}）` : `${pl}：未選択`;
-        if (skillEl) skillEl.textContent = ch ? `スキル「${ch.skill}」：${ch.desc}` : '';
-        if (btn) {
-            btn.disabled = !canUseSkillUI(pl);
-            if (!ch) btn.textContent = 'スキル';
-            else if (charaUsed[pl]) btn.textContent = `再使用まで：あと${3 - (skillRecharge[pl] || 0)}つ取る`;
-            else if (!skillUnlocked(pl)) btn.textContent = `🔒 ${skillLockText(pl)}`;
-            else btn.textContent = `スキル：${ch.skill}`;
-        }
-    });
-}
-['p1', 'p2'].forEach(k => {
-    const b = document.getElementById('chara-btn-' + k);
-    if (b) b.addEventListener('click', () => onSkillButton(k.toUpperCase()));
-});
-
-function openCharaLightbox(charaId) {
-    const ch = CHARACTERS.find(c => c.id === charaId);
-    if (!ch) return;
-    const lb = document.getElementById('chara-lightbox');
-    if (!lb) return;
-    document.getElementById('lb-img').src = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
-    document.getElementById('lb-name').textContent = `${ch.name}（${ch.title}）`;
-    document.getElementById('lb-skill').textContent = `スキル「${ch.skill}」`;
-    document.getElementById('lb-desc').textContent = `${ch.desc} ${ch.profile || ''}`;
-    lb.classList.remove('hidden');
-    lb.style.display = 'flex';
-    const cb = document.getElementById('lb-close'); if (cb) cb.onclick = closeCharaLightbox;
-    const xb = document.getElementById('lb-close-x'); if (xb) xb.onclick = closeCharaLightbox;
-    const im = document.getElementById('lb-img'); if (im) im.onclick = closeCharaLightbox;
-}
-function closeCharaLightbox() {
-    const lb = document.getElementById('chara-lightbox');
-    if (lb) { lb.classList.add('hidden'); lb.style.display = 'none'; }
-}
-function buildGuideChara() {
-    const grid = document.getElementById('guide-chara-grid');
-    if (!grid || grid.childElementCount > 0) return;
-    CHARACTERS.forEach(ch => {
-        const card = document.createElement('div');
-        card.className = 'guide-chara-card';
-        const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
-        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><div class="guide-chara-body"><div class="guide-chara-name">${ch.name} <span class="guide-chara-title">${ch.title}</span></div><div class="guide-chara-skill">スキル「${ch.skill}」：${ch.desc}</div><div class="guide-chara-unlock">${unlockText(ch)}</div><p class="guide-chara-profile">${ch.profile || ''}</p></div>`;
-        const gimg = card.querySelector('img');
-        if (gimg) { gimg.title = 'クリックで拡大'; gimg.addEventListener('click', () => openCharaLightbox(ch.id)); }
-        grid.appendChild(card);
-    });
-}
-buildGuideChara();
-document.querySelectorAll('.guide-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.guide-tab').forEach(t => t.classList.toggle('selected', t === tab));
-        ['pieces', 'rules', 'chara'].forEach(k => {
-            const sec = document.getElementById('guide-tab-' + k);
-            if (sec) sec.classList.toggle('hidden', tab.dataset.gtab !== k);
-        });
-    });
-});
-(function () {
-    const lb = document.getElementById('chara-lightbox');
-    if (lb) {
-        lb.querySelector('.lb-backdrop').addEventListener('click', closeCharaLightbox);
-        document.getElementById('lb-close').addEventListener('click', closeCharaLightbox);
-        lb.addEventListener('click', (e) => { if (e.target === lb) closeCharaLightbox(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCharaLightbox(); });
-    }
-    [['chara-img-p1', 'P1'], ['chara-img-p2', 'P2']].forEach(([id, pl]) => {
-        const img = document.getElementById(id);
-        if (img) { img.title = 'クリックで拡大'; img.addEventListener('click', () => { if (playerCharacters[pl]) openCharaLightbox(playerCharacters[pl]); }); }
-    });
-})();
-function leaveCharaToMenu() {
-    charaPhase = false;
-    skillTargeting = null;
-    if (isOnlineMode()) teardownOnline();
-    updateCharaModalVisibility();
-    showScreen('menu');
-}
-(function () {
-    const b = document.getElementById('chara-modal-back');
-    if (b) b.addEventListener('click', leaveCharaToMenu);
-})();
-
-function buildCharaGrid() {
-    const grid = document.getElementById('chara-grid');
-    if (!grid || grid.childElementCount > 0) return;
-    CHARACTERS.forEach(ch => {
-        const card = document.createElement('button');
-        card.className = 'chara-card';
-        card.dataset.chara = ch.id;
-        const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
-        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><span class="chara-zoom-btn" title="立ち絵を拡大">🔍</span><span class="chara-card-name">${ch.name}</span><span class="chara-card-title">${ch.title}</span><span class="chara-card-skill">「${ch.skill}」${ch.desc}</span><span class="chara-card-unlock">${unlockText(ch)}</span>`;
-        card.addEventListener('click', () => onCharaCardPick(ch.id));
-        const zb = card.querySelector('.chara-zoom-btn');
-        if (zb) zb.addEventListener('click', (e) => { e.stopPropagation(); openCharaLightbox(ch.id); });
-        grid.appendChild(card);
-    });
-}
-function openCharaSelection() {
-    playerCharacters = { P1: null, P2: null };
-    charaPhase = true;
-    skillTargeting = null;
-    buildCharaGrid();
-    document.querySelectorAll('.chara-card').forEach(c => { c.disabled = false; });
-    const title = document.getElementById('chara-modal-title');
-    if (title) title.textContent = isOnlineMode() ? 'あなたのキャラを選んでください' : 'P1 のキャラを選んでください';
-    updateCharaModalVisibility();
-    renderCharaPanel();
-}
-function onCharaCardPick(id) {
-    if (!charaPhase) return;
-    const title = document.getElementById('chara-modal-title');
-    if (isOnlineMode()) {
-        if (playerCharacters[myRole]) return;
-        playerCharacters[myRole] = id;
-        broadcastState();
-        if (playerCharacters.P1 && playerCharacters.P2) { charaPhase = false; }
-        else if (title) title.textContent = '相手の選択を待っています…';
-    } else if (isCpuGame()) {
-        playerCharacters.P1 = id;
-        const rest = CHARACTERS.map(c => c.id).filter(x => x !== id);
-        playerCharacters.P2 = rest[Math.floor(Math.random() * rest.length)];
-        charaPhase = false;
-    } else {
-        if (!playerCharacters.P1) {
-            playerCharacters.P1 = id;
-            document.querySelectorAll('.chara-card').forEach(c => { if (c.dataset.chara === id) c.disabled = true; });
-            if (title) title.textContent = 'P2 のキャラを選んでください';
-            renderCharaPanel();
-            return;
-        }
-        playerCharacters.P2 = id;
-        charaPhase = false;
-    }
-    renderBoard();
-}
-function updateCharaModalVisibility() {
-    const modal = document.getElementById('chara-modal');
-    if (!modal) return;
-    if (isCharaMode() && charaPhase) {
-        buildCharaGrid();
-        const title = document.getElementById('chara-modal-title');
-        if (title && isOnlineMode()) {
-            title.textContent = playerCharacters[myRole] ? '相手の選択を待っています…' : 'あなたのキャラを選んでください';
-        }
-        modal.classList.remove('hidden');
-    } else {
-        modal.classList.add('hidden');
-    }
-}
-
-let battleRunning = false;
-if (battleStartBtn) {
-    battleStartBtn.addEventListener('click', () => {
-        if (battleRunning) return;
-        const modeA = document.getElementById('battle-a').value;
-        const modeB = document.getElementById('battle-b').value;
-        const total = parseInt(document.getElementById('battle-games').value, 10);
-        const nameOf = (m) => ({ 'cpu-easy': '初級', 'cpu-normal': '中級', 'cpu-hard': '上級', 'cpu-demon': '鬼' }[m] || m);
-        const tally = { a: 0, b: 0, d: 0, moves: 0 };
-        let i = 0;
-        battleRunning = true;
-        if (battleResultEl) battleResultEl.innerHTML = '';
-        const step = () => {
-            if (i >= total) {
-                battleRunning = false;
-                if (battleProgressEl) battleProgressEl.textContent = '完了';
-                if (battleResultEl) {
-                    battleResultEl.innerHTML =
-                        `先手 ${nameOf(modeA)}: ${tally.a}勝 / 後手 ${nameOf(modeB)}: ${tally.b}勝 / 引き分け: ${tally.d}<br>` +
-                        `平均手数: ${(tally.moves / total).toFixed(1)}手（先手・後手は固定で対戦）`;
-                }
-                return;
-            }
-            const r = simulateBattleGame(modeA, modeB);
-            if (r.winner === 'P1') tally.a++; else if (r.winner === 'P2') tally.b++; else tally.d++;
-            tally.moves += r.moves;
-            i++;
-            if (battleProgressEl) battleProgressEl.textContent = `対戦中… ${i} / ${total} 試合`;
-            setTimeout(step, 30);
-        };
-        step();
-    });
-}
-
-
-// 観戦パネルの操作
-const watchToggleBtn = document.getElementById('watch-toggle-btn');
-if (watchToggleBtn) {
-    watchToggleBtn.addEventListener('click', () => {
-        if (gameOver) return;
-        if (watchPlaying) pauseWatch(); else startWatch();
-    });
-}
-['watch-p1-level', 'watch-p2-level'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.addEventListener('change', () => { /* 次の手から新しい強さが適用される */ });
-});
-const watchSpeedSel = document.getElementById('watch-speed');
-if (watchSpeedSel) {
-    watchSpeedSel.addEventListener('change', () => { if (watchPlaying) scheduleWatch(); });
-}
-
-
-// ===== 駒図鑑・ルール説明 =====
-const GUIDE_PIECES = [
-    { type: 'k', name: 'キング', value: '最重要（取られると負け）', desc: '全方向に1マス。このゲームのターゲットです。自分の色の駒で相手のキングを取れば勝利、チェックメイトでも勝利です。' },
-    { type: 'q', name: 'クイーン', value: '9', desc: '縦・横・斜めに何マスでも進める最強の駒。攻撃の中心になります。' },
-    { type: 'r', name: 'ルーク', value: '5', desc: '縦・横に何マスでも。キングとのキャスリングにも使います。' },
-    { type: 'b', name: 'ビショップ', value: '3', desc: '斜めに何マスでも。ずっと同じ色のマスの上だけを進みます。' },
-    { type: 'n', name: 'ナイト', value: '3', desc: 'L字に跳ぶ駒。他の駒を飛び越えられるのはナイトだけです。' },
-    { type: 'p', name: 'ポーン', value: '1', desc: '前に1マス（最初の移動は2マスも可）。取る時は斜め前に進みます。相手陣地の端まで進むと昇格できます。' }
-];
-function guideTargets(type) {
-    const c = 2, pts = [], caps = [];
-    const straight = [[1,0],[-1,0],[0,1],[0,-1]];
-    const diag = [[1,1],[1,-1],[-1,1],[-1,-1]];
-    const slide = (ds) => ds.forEach(([dx,dy]) => { let x=c+dx, y=c+dy; while (x>=0 && x<5 && y>=0 && y<5) { pts.push(x+','+y); x+=dx; y+=dy; } });
-    if (type === 'r') slide(straight);
-    else if (type === 'b') slide(diag);
-    else if (type === 'q') { slide(straight); slide(diag); }
-    else if (type === 'k') [...straight, ...diag].forEach(([dx,dy]) => pts.push((c+dx)+','+(c+dy)));
-    else if (type === 'n') [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([dx,dy]) => pts.push((c+dx)+','+(c+dy)));
-    else if (type === 'p') { pts.push('2,1'); caps.push('1,1','3,1'); }
-    return { pts: new Set(pts), caps: new Set(caps) };
-}
-let guideRendered = false;
-function renderGuide() {
-    const wrap = document.getElementById('guide-pieces');
-    if (!wrap || guideRendered) return;
-    guideRendered = true;
-    GUIDE_PIECES.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'guide-card';
-        const { pts, caps } = guideTargets(p.type);
-        let cells = '';
-        for (let y = 0; y < 5; y++) {
-            for (let x = 0; x < 5; x++) {
-                const key = x + ',' + y;
-                const cls = ((x + y) % 2 === 0) ? 'mini-sq light' : 'mini-sq dark';
-                let inner = '';
-                if (x === 2 && y === 2) inner = pieceSVG(p.type, 'w');
-                else if (caps.has(key)) inner = '<span class="mini-cap"></span>';
-                else if (pts.has(key)) inner = '<span class="mini-dot"></span>';
-                cells += `<div class="${cls}">${inner}</div>`;
-            }
-        }
-        card.innerHTML =
-            '<div class="guide-card-head">' +
-                '<span class="guide-piece-img">' + pieceSVG(p.type, 'w') + '</span>' +
-                '<span class="guide-piece-img">' + pieceSVG(p.type, 'b') + '</span>' +
-                '<div><div class="guide-piece-name">' + p.name + '</div>' +
-                '<div class="guide-piece-value">価値の目安：' + p.value + '</div></div>' +
-            '</div>' +
-            '<div class="mini-board">' + cells + '</div>' +
-            '<p class="guide-piece-desc">' + p.desc + '</p>';
-        wrap.appendChild(card);
-    });
-}
-const menuGuideBtn = document.getElementById('menu-guide-btn');
-if (menuGuideBtn) menuGuideBtn.addEventListener('click', () => { renderGuide(); showScreen('guide'); });
-const guideBackBtn = document.getElementById('guide-back-btn');
-if (guideBackBtn) guideBackBtn.addEventListener('click', () => showScreen('menu'));
