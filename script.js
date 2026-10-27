@@ -141,6 +141,7 @@ let currentPlayer = 'P1';
 let gameOver = false;
 let winnerPlayer = null;
 let winReason = null; // 'king' | 'checkmate' | 'resignation'
+let p2KingGuard = true;
 let p1Skips = 1;
 let p2Skips = 1;
 let p1Captures = 0;
@@ -399,7 +400,8 @@ function initGame() {
     winnerPlayer = null;
     winReason = null;
     p1Skips = settings.initialSkips;
-    p2Skips = settings.initialSkips;
+    p2Skips = settings.initialSkips + (['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode) ? 0 : 1);
+    p2KingGuard = !isRandomMode() && !['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode);
     p1Captures = 0;
     p2Captures = 0;
 
@@ -517,7 +519,7 @@ function snapshotState() {
     return {
         boardFen: game.fen(),
         isBoardRotated, moveCounter, skipNextRotation,
-        currentPlayer, gameOver, winnerPlayer, winReason,
+        currentPlayer, gameOver, winnerPlayer, winReason, p2KingGuard,
         p1Skips, p2Skips, p1Captures, p2Captures,
         lastMovePlayer, lastMoveColor,
         playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
@@ -562,6 +564,7 @@ function restoreState(snap) {
     doomSquare = snap.doomSquare || null;
     doomPieceType = snap.doomPieceType || null;
     doomPieceColor = snap.doomPieceColor || null;
+    p2KingGuard = snap.p2KingGuard !== false;
     counterFor = snap.counterFor || null;
     counterSquare = snap.counterSquare || null;
     counterPieceType = snap.counterPieceType || null;
@@ -969,6 +972,25 @@ function executeMoveCustom(from, to, promotion) {
 
     // 眠らされた駒は、この手番では動けない
     if (sleepFor === currentPlayer && from === sleepSquare) { messageEl.textContent = 'その駒は眠っている！この手番は動けません'; return; }
+    // 後手ハンデ「王の加護」：P2のキングへの最初の直接取りは1回だけ防がれる
+    if (p2KingGuard && targetPiece && targetPiece.type === 'k' && targetPiece.color === 'b' && movingPiece && movingPiece.color === 'w' && currentPlayer === 'P1' && !isRandomMode()) {
+        p2KingGuard = false;
+        messageEl.textContent = '後手の王の加護！P2のキングは守られた（ハンデ）';
+        return;
+    }
+    // 相手の色のキングは操作できない（その色の駒がキングだけ／他に合法手がない場合は除く）
+    if (movingPiece && movingPiece.type === 'k' && movingPiece.color !== (currentPlayer === 'P1' ? 'w' : 'b')) {
+        const sameColorPieces = game.board().flat().filter(x => x && x.color === movingPiece.color);
+        let hasOtherMove = false;
+        try {
+            const probe = new Chess(buildActiveFen(currentColor));
+            hasOtherMove = probe.moves({ verbose: true }).some(m => m.piece !== 'k');
+        } catch (e) { hasOtherMove = false; }
+        if (sameColorPieces.length > 1 && hasOtherMove) {
+            messageEl.textContent = '相手の色のキングは動かせません';
+            return;
+        }
+    }
     // ミラージュの鏡の加護：加護の駒を取ろうとした駒は、代わりに消える
     if (counterFor && counterFor !== currentPlayer) {
         const epCapturedSquare = movingPiece && movingPiece.type === 'p' && !targetPiece && to === epSquare && from[0] !== to[0] ? to[0] + from[1] : null;
@@ -1302,14 +1324,20 @@ function chooseCpuMove(player, levelKey) {
     if (counterFor && counterFor !== player) {
         moves = moves.filter(m => m.to !== counterSquare);
     }
+    const activePieceCount = game.board().flat().filter(x => x && x.color === color).length;
+    if (activePieceCount > 1) {
+        const filteredKing = moves.filter(m => !(m.piece === 'k' && m.color !== ownColor));
+        if (filteredKing.length > 0) moves = filteredKing;
+    }
     if (moves.length === 0) return null;
 
     // 回転停止権の使用判断（そのプレイヤーの残り回数を使う）
     const skipsLeft = player === 'P1' ? p1Skips : p2Skips;
     if (skipsLeft > 0 && !skipNextRotation) {
-        const useSkip = levelKey === 'cpu-demon'
-            ? (Math.random() < 0.4 || simGame.in_check())
-            : (Math.random() < 0.2);
+        const ownKingInDanger = isKingInCheck(game.fen(), ownColor);
+        const useSkip = ownKingInDanger
+            ? Math.random() < 0.85
+            : (levelKey === 'cpu-demon' ? (Math.random() < 0.4 || simGame.in_check()) : (Math.random() < 0.2));
         if (useSkip) {
             skipNextRotation = true;
             if (player === 'P1') p1Skips--; else p2Skips--;
@@ -1392,6 +1420,12 @@ function watchStep() {
     const mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
     if (!mv) { pauseWatch(); return; }
     executeMoveCustom(mv.from, mv.to);
+    if (!gameOver && totalMovesCount >= 300) {
+        const adjScore = evaluateBoard(game, 'w');
+        if (adjScore > 150) { finishGame('P1', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P1 の勝ち'; }
+        else if (adjScore < -150) { finishGame('P2', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P2 の勝ち'; }
+        else finishDraw('手数上限・形勢互角');
+    }
     if (!gameOver) scheduleWatch();
     else if (watchAutoEnabled()) {
         watchTimer = setTimeout(() => {
