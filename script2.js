@@ -363,3 +363,382 @@ function simulateBattleGame(modeA, modeB) {
     }
     return { winner: null, moves };
 }
+
+// script.js からの分割（CPUスキル・キャラパネル・図鑑・キャラ選択・観戦UI・駒図鑑）
+function maybeCpuUseSkill() {
+    const player = 'P2';
+    if (!isCharaMode() || charaUsed[player] || charaPhase || gameOver) return;
+    const ch = charaOf(player);
+    if (!ch) return;
+    if (!skillUnlocked(player)) return;
+    const rnd = Math.random();
+    const activeColor = getActivePieceColor(player);
+    switch (ch.kind) {
+        case 'skip': case 'shield': applySkillEffect(player, {}); return;
+        case 'extra': if (rnd < 0.3) applySkillEffect(player, {}); return;
+        case 'freeze': case 'barrier': if (totalMovesCount > 4 && rnd < 0.3) applySkillEffect(player, {}); return;
+        case 'revive': { const p = planRevive(player); if (p) applySkillEffect(player, p); return; }
+        case 'revivePawns': { const p = planRevivePawns(player); if (p) applySkillEffect(player, p); return; }
+        case 'convert': { const p = planConvert(player); if (p) applySkillEffect(player, p); return; }
+        case 'clone': { const p = planClone(player); if (p) applySkillEffect(player, p); return; }
+        case 'fortune': {
+            const roll = Math.random();
+            const hasLost = moveHistory.some(h => h.captured && h.capturedColor === 'b' && !h.revived);
+            if (roll < 0.10 && hasLost) applySkillEffect(player, { mode: 'all' });
+            else if (roll < 0.40) applySkillEffect(player, { mode: 'guard' });
+            else if (roll < 0.80) {
+                const warpSquare = planFortuneWarp(player);
+                if (warpSquare) applySkillEffect(player, { mode: 'warp', square: warpSquare });
+                else applySkillEffect(player, { mode: 'guard' });
+            } else applySkillEffect(player, { mode: 'pawn', square: planKingGuardPawn(player) });
+            return;
+        }
+        case 'reviveAll': { if (moveHistory.some(h => h.captured && h.capturedColor === 'b' && !h.revived)) applySkillEffect(player, {}); return; }
+        case 'charm': {
+            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k' && cell.type !== 'q' && !charmWouldGiveCheck(cell.square, player));
+            targets.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
+            if (targets.length && rnd < 0.7) applySkillEffect(player, { square: targets[0].square });
+            return;
+        }
+        case 'doom': {
+            const tc = sleepTargetColorFor(player);
+            let best = null, bv = -1;
+            boardCells().forEach(cell => { if (cell.color === tc && cell.type !== 'k' && (SKILL_PIECE_VALUES[cell.type] || 0) > bv) { bv = SKILL_PIECE_VALUES[cell.type]; best = cell.square; } });
+            if (best && rnd < 0.5) applySkillEffect(player, { square: best });
+            return;
+        }
+        case 'pushback': {
+            const pawns = boardCells().filter(cell => cell.type === 'p' && cell.color === 'w');
+            for (const cell of pawns) {
+                const c = squareCoords(cell.square);
+                const dest = coordsToSquare(c.f, c.r - 1);
+                if (dest && !game.get(dest)) { if (rnd < 0.5) applySkillEffect(player, { square: cell.square }); return; }
+            }
+            return;
+        }
+        case 'dashSlash': {
+            let bestMove = null, bestValue = -1;
+            const ownPieces = boardCells().filter(cell => cell.color === activeColor && cell.type !== 'k');
+            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k');
+            ownPieces.forEach(a => targets.forEach(b => {
+                const ac = squareCoords(a.square), bc = squareCoords(b.square);
+                const aligned = ac.f === bc.f || ac.r === bc.r || Math.abs(ac.f - bc.f) === Math.abs(ac.r - bc.r);
+                if (aligned && (SKILL_PIECE_VALUES[b.type] || 0) > bestValue) { bestValue = SKILL_PIECE_VALUES[b.type]; bestMove = { a: a.square, b: b.square }; }
+            }));
+            if (bestMove && rnd < 0.65) applySkillEffect(player, bestMove);
+            return;
+        }
+        case 'undo': if (historyStack.length >= 3 && rnd < 0.12) applySkillEffect(player, {}); return;
+        case 'transform': {
+            const bd = game.board();
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square }); return; } }
+            return;
+        }
+        case 'sleep': {
+            const tc = sleepTargetColorFor(player);
+            let best = null, bv = -1;
+            game.board().flat().forEach(cell => { if (cell && cell.color === tc && (SKILL_PIECE_VALUES[cell.type] || 0) > bv) { bv = SKILL_PIECE_VALUES[cell.type]; best = cell.square; } });
+            if (best && rnd < 0.5) applySkillEffect(player, { square: best });
+            return;
+        }
+        case 'destroy': {
+            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k');
+            targets.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
+            if (targets.length && rnd < 0.6) applySkillEffect(player, { square: targets[0].square });
+            return;
+        }
+        case 'step': {
+            const bd = game.board(); const files = 'abcdefgh';
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+                const cell = bd[r][f];
+                if (cell && cell.type === 'p' && cell.color === activeColor) {
+                    const nr = cell.color === 'w' ? r - 1 : r + 1;
+                    if (nr >= 0 && nr < 8 && !bd[nr][f]) { applySkillEffect(player, { a: cell.square, b: files[f] + (8 - nr) }); return; }
+                }
+            }
+            return;
+        }
+        case 'exchange': {
+            const bd = game.board();
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square, toType: 'q' }); return; } }
+            return;
+        }
+        case 'swap': return;
+    }
+}
+function renderCharaPanel() {
+    const panel = document.getElementById('chara-panel');
+    if (!panel) return;
+    if (!isCharaMode()) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+    ['P1', 'P2'].forEach(pl => {
+        const key = pl.toLowerCase();
+        const ch = charaOf(pl);
+        const img = document.getElementById('chara-img-' + key);
+        const nameEl = document.getElementById('chara-name-' + key);
+        const skillEl = document.getElementById('chara-skill-' + key);
+        const btn = document.getElementById('chara-btn-' + key);
+        if (img) img.src = ch && typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
+        if (nameEl) { nameEl.textContent = ch ? `${pl}：${ch.name}` : `${pl}：未選択`; nameEl.title = ch ? `${ch.name}（${ch.title}）` : ''; }
+        if (skillEl) { skillEl.textContent = ch ? `スキル「${ch.skill}」` : ''; skillEl.title = ch ? `${ch.desc} ${unlockText(ch)}` : ''; }
+        if (btn) {
+            btn.disabled = !canUseSkillUI(pl);
+            if (!ch) btn.textContent = 'スキル';
+            else if (charaUsed[pl]) btn.textContent = `再使用：あと${3 - (skillRecharge[pl] || 0)}つ取る`;
+            else if (!skillUnlocked(pl)) btn.textContent = `🔒 ${skillLockText(pl)}`;
+            else btn.textContent = ch.skill;
+        }
+    });
+}
+['p1', 'p2'].forEach(k => {
+    const b = document.getElementById('chara-btn-' + k);
+    if (b) b.addEventListener('click', () => onSkillButton(k.toUpperCase()));
+});
+
+function openCharaLightbox(charaId) {
+    const ch = CHARACTERS.find(c => c.id === charaId);
+    if (!ch) return;
+    const lb = document.getElementById('chara-lightbox');
+    if (!lb) return;
+    document.getElementById('lb-img').src = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
+    document.getElementById('lb-name').textContent = `${ch.name}（${ch.title}）`;
+    document.getElementById('lb-skill').textContent = `スキル「${ch.skill}」`;
+    document.getElementById('lb-desc').textContent = `${ch.desc} ${ch.profile || ''}`;
+    lb.classList.remove('hidden');
+    lb.style.display = 'flex';
+    const cb = document.getElementById('lb-close'); if (cb) cb.onclick = closeCharaLightbox;
+    const xb = document.getElementById('lb-close-x'); if (xb) xb.onclick = closeCharaLightbox;
+    const im = document.getElementById('lb-img'); if (im) im.onclick = closeCharaLightbox;
+}
+function closeCharaLightbox() {
+    const lb = document.getElementById('chara-lightbox');
+    if (lb) { lb.classList.add('hidden'); lb.style.display = 'none'; }
+}
+function buildGuideChara() {
+    const grid = document.getElementById('guide-chara-grid');
+    if (!grid || grid.childElementCount > 0) return;
+    CHARACTERS.forEach(ch => {
+        const card = document.createElement('div');
+        card.className = 'guide-chara-card';
+        const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
+        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><div class="guide-chara-body"><div class="guide-chara-name">${ch.name} <span class="guide-chara-title">${ch.title}</span></div><div class="guide-chara-skill">スキル「${ch.skill}」：${ch.desc}</div><div class="guide-chara-unlock">${unlockText(ch)}</div><p class="guide-chara-profile">${ch.profile || ''}</p></div>`;
+        const gimg = card.querySelector('img');
+        if (gimg) { gimg.title = 'クリックで拡大'; gimg.addEventListener('click', () => openCharaLightbox(ch.id)); }
+        grid.appendChild(card);
+    });
+}
+buildGuideChara();
+document.querySelectorAll('.guide-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.guide-tab').forEach(t => t.classList.toggle('selected', t === tab));
+        ['pieces', 'rules', 'chara'].forEach(k => {
+            const sec = document.getElementById('guide-tab-' + k);
+            if (sec) sec.classList.toggle('hidden', tab.dataset.gtab !== k);
+        });
+    });
+});
+(function () {
+    const lb = document.getElementById('chara-lightbox');
+    if (lb) {
+        lb.querySelector('.lb-backdrop').addEventListener('click', closeCharaLightbox);
+        document.getElementById('lb-close').addEventListener('click', closeCharaLightbox);
+        lb.addEventListener('click', (e) => { if (e.target === lb) closeCharaLightbox(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCharaLightbox(); });
+    }
+    [['chara-img-p1', 'P1'], ['chara-img-p2', 'P2']].forEach(([id, pl]) => {
+        const img = document.getElementById(id);
+        if (img) { img.title = 'クリックで拡大'; img.addEventListener('click', () => { if (playerCharacters[pl]) openCharaLightbox(playerCharacters[pl]); }); }
+    });
+})();
+function leaveCharaToMenu() {
+    charaPhase = false;
+    skillTargeting = null;
+    if (isOnlineMode()) teardownOnline();
+    updateCharaModalVisibility();
+    showScreen('menu');
+}
+(function () {
+    const b = document.getElementById('chara-modal-back');
+    if (b) b.addEventListener('click', leaveCharaToMenu);
+})();
+
+function buildCharaGrid() {
+    const grid = document.getElementById('chara-grid');
+    if (!grid || grid.childElementCount > 0) return;
+    CHARACTERS.forEach(ch => {
+        const card = document.createElement('button');
+        card.className = 'chara-card';
+        card.dataset.chara = ch.id;
+        const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
+        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><span class="chara-zoom-btn" title="立ち絵を拡大">🔍</span><span class="chara-card-name">${ch.name}</span><span class="chara-card-title">${ch.title}</span><span class="chara-card-skill">「${ch.skill}」${ch.desc}</span><span class="chara-card-unlock">${unlockText(ch)}</span>`;
+        card.addEventListener('click', () => onCharaCardPick(ch.id));
+        const zb = card.querySelector('.chara-zoom-btn');
+        if (zb) zb.addEventListener('click', (e) => { e.stopPropagation(); openCharaLightbox(ch.id); });
+        grid.appendChild(card);
+    });
+}
+function openCharaSelection() {
+    playerCharacters = { P1: null, P2: null };
+    charaPhase = true;
+    skillTargeting = null;
+    buildCharaGrid();
+    document.querySelectorAll('.chara-card').forEach(c => { c.disabled = false; });
+    const title = document.getElementById('chara-modal-title');
+    if (title) title.textContent = isOnlineMode() ? 'あなたのキャラを選んでください' : 'P1 のキャラを選んでください';
+    updateCharaModalVisibility();
+    renderCharaPanel();
+}
+function onCharaCardPick(id) {
+    if (!charaPhase) return;
+    const title = document.getElementById('chara-modal-title');
+    if (isOnlineMode()) {
+        if (playerCharacters[myRole]) return;
+        playerCharacters[myRole] = id;
+        broadcastState();
+        if (playerCharacters.P1 && playerCharacters.P2) { charaPhase = false; }
+        else if (title) title.textContent = '相手の選択を待っています…';
+    } else if (isCpuGame()) {
+        playerCharacters.P1 = id;
+        const rest = CHARACTERS.map(c => c.id).filter(x => x !== id);
+        playerCharacters.P2 = rest[Math.floor(Math.random() * rest.length)];
+        charaPhase = false;
+    } else {
+        if (!playerCharacters.P1) {
+            playerCharacters.P1 = id;
+            document.querySelectorAll('.chara-card').forEach(c => { if (c.dataset.chara === id) c.disabled = true; });
+            if (title) title.textContent = 'P2 のキャラを選んでください';
+            renderCharaPanel();
+            return;
+        }
+        playerCharacters.P2 = id;
+        charaPhase = false;
+    }
+    renderBoard();
+}
+function updateCharaModalVisibility() {
+    const modal = document.getElementById('chara-modal');
+    if (!modal) return;
+    if (isCharaMode() && charaPhase) {
+        buildCharaGrid();
+        const title = document.getElementById('chara-modal-title');
+        if (title && isOnlineMode()) {
+            title.textContent = playerCharacters[myRole] ? '相手の選択を待っています…' : 'あなたのキャラを選んでください';
+        }
+        modal.classList.remove('hidden');
+    } else {
+        modal.classList.add('hidden');
+    }
+}
+
+let battleRunning = false;
+if (battleStartBtn) {
+    battleStartBtn.addEventListener('click', () => {
+        if (battleRunning) return;
+        const modeA = document.getElementById('battle-a').value;
+        const modeB = document.getElementById('battle-b').value;
+        const total = parseInt(document.getElementById('battle-games').value, 10);
+        const nameOf = (m) => ({ 'cpu-easy': '初級', 'cpu-normal': '中級', 'cpu-hard': '上級', 'cpu-demon': '鬼' }[m] || m);
+        const tally = { a: 0, b: 0, d: 0, moves: 0 };
+        let i = 0;
+        battleRunning = true;
+        if (battleResultEl) battleResultEl.innerHTML = '';
+        const step = () => {
+            if (i >= total) {
+                battleRunning = false;
+                if (battleProgressEl) battleProgressEl.textContent = '完了';
+                if (battleResultEl) {
+                    battleResultEl.innerHTML =
+                        `先手 ${nameOf(modeA)}: ${tally.a}勝 / 後手 ${nameOf(modeB)}: ${tally.b}勝 / 引き分け: ${tally.d}<br>` +
+                        `平均手数: ${(tally.moves / total).toFixed(1)}手（先手・後手は固定で対戦）`;
+                }
+                return;
+            }
+            const r = simulateBattleGame(modeA, modeB);
+            if (r.winner === 'P1') tally.a++; else if (r.winner === 'P2') tally.b++; else tally.d++;
+            tally.moves += r.moves;
+            i++;
+            if (battleProgressEl) battleProgressEl.textContent = `対戦中… ${i} / ${total} 試合`;
+            setTimeout(step, 30);
+        };
+        step();
+    });
+}
+
+
+// 観戦パネルの操作
+const watchToggleBtn = document.getElementById('watch-toggle-btn');
+if (watchToggleBtn) {
+    watchToggleBtn.addEventListener('click', () => {
+        if (gameOver) return;
+        if (watchPlaying) pauseWatch(); else startWatch();
+    });
+}
+['watch-p1-level', 'watch-p2-level'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.addEventListener('change', () => { /* 次の手から新しい強さが適用される */ });
+});
+const watchSpeedSel = document.getElementById('watch-speed');
+if (watchSpeedSel) {
+    watchSpeedSel.addEventListener('change', () => { if (watchPlaying) scheduleWatch(); });
+}
+
+
+// ===== 駒図鑑・ルール説明 =====
+const GUIDE_PIECES = [
+    { type: 'k', name: 'キング', value: '最重要（取られると負け）', desc: '全方向に1マス。このゲームのターゲットです。自分の色の駒で相手のキングを取れば勝利、チェックメイトでも勝利です。' },
+    { type: 'q', name: 'クイーン', value: '9', desc: '縦・横・斜めに何マスでも進める最強の駒。攻撃の中心になります。' },
+    { type: 'r', name: 'ルーク', value: '5', desc: '縦・横に何マスでも。キングとのキャスリングにも使います。' },
+    { type: 'b', name: 'ビショップ', value: '3', desc: '斜めに何マスでも。ずっと同じ色のマスの上だけを進みます。' },
+    { type: 'n', name: 'ナイト', value: '3', desc: 'L字に跳ぶ駒。他の駒を飛び越えられるのはナイトだけです。' },
+    { type: 'p', name: 'ポーン', value: '1', desc: '前に1マス（最初の移動は2マスも可）。取る時は斜め前に進みます。相手陣地の端まで進むと昇格できます。' }
+];
+function guideTargets(type) {
+    const c = 2, pts = [], caps = [];
+    const straight = [[1,0],[-1,0],[0,1],[0,-1]];
+    const diag = [[1,1],[1,-1],[-1,1],[-1,-1]];
+    const slide = (ds) => ds.forEach(([dx,dy]) => { let x=c+dx, y=c+dy; while (x>=0 && x<5 && y>=0 && y<5) { pts.push(x+','+y); x+=dx; y+=dy; } });
+    if (type === 'r') slide(straight);
+    else if (type === 'b') slide(diag);
+    else if (type === 'q') { slide(straight); slide(diag); }
+    else if (type === 'k') [...straight, ...diag].forEach(([dx,dy]) => pts.push((c+dx)+','+(c+dy)));
+    else if (type === 'n') [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([dx,dy]) => pts.push((c+dx)+','+(c+dy)));
+    else if (type === 'p') { pts.push('2,1'); caps.push('1,1','3,1'); }
+    return { pts: new Set(pts), caps: new Set(caps) };
+}
+let guideRendered = false;
+function renderGuide() {
+    const wrap = document.getElementById('guide-pieces');
+    if (!wrap || guideRendered) return;
+    guideRendered = true;
+    GUIDE_PIECES.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'guide-card';
+        const { pts, caps } = guideTargets(p.type);
+        let cells = '';
+        for (let y = 0; y < 5; y++) {
+            for (let x = 0; x < 5; x++) {
+                const key = x + ',' + y;
+                const cls = ((x + y) % 2 === 0) ? 'mini-sq light' : 'mini-sq dark';
+                let inner = '';
+                if (x === 2 && y === 2) inner = pieceSVG(p.type, 'w');
+                else if (caps.has(key)) inner = '<span class="mini-cap"></span>';
+                else if (pts.has(key)) inner = '<span class="mini-dot"></span>';
+                cells += `<div class="${cls}">${inner}</div>`;
+            }
+        }
+        card.innerHTML =
+            '<div class="guide-card-head">' +
+                '<span class="guide-piece-img">' + pieceSVG(p.type, 'w') + '</span>' +
+                '<span class="guide-piece-img">' + pieceSVG(p.type, 'b') + '</span>' +
+                '<div><div class="guide-piece-name">' + p.name + '</div>' +
+                '<div class="guide-piece-value">価値の目安：' + p.value + '</div></div>' +
+            '</div>' +
+            '<div class="mini-board">' + cells + '</div>' +
+            '<p class="guide-piece-desc">' + p.desc + '</p>';
+        wrap.appendChild(card);
+    });
+}
+const menuGuideBtn = document.getElementById('menu-guide-btn');
+if (menuGuideBtn) menuGuideBtn.addEventListener('click', () => { renderGuide(); showScreen('guide'); });
+const guideBackBtn = document.getElementById('guide-back-btn');
+if (guideBackBtn) guideBackBtn.addEventListener('click', () => showScreen('menu'));
