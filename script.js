@@ -50,7 +50,7 @@ const CHARACTERS = [
     { id: 'seraphina', name: 'セラフィナ', title: '天空の天使', skill: 'ホーリー・ブレッシング', kind: 'transform', toType: 'q', unlock: { lost: 2 }, desc: '今操作している自分のポーン1つをクイーンに変える。', profile: '天空の都から遣わされた天使。小さなポーンにも大きな祝福を。' },
     { id: 'barbarossa', name: 'バルバロッサ', title: '海賊船長', skill: 'キャノン・バラージ', kind: 'destroy', unlock: { moves: 8 }, desc: '相手の色の駒（キング以外）どれか1つを盤上から取り除く。クイーンやルークも砲撃で沈められる。', profile: '七つの海を荒らした海賊船長。砲撃の的は絶対に外さない。' },
     { id: 'nicola', name: 'ニコラ', title: '錬金術師', skill: 'トランスミュート', kind: 'exchange', unlock: { moves: 6 }, desc: '今操作している自分の駒1つ（キング以外）を、好きな駒（ルーク／ビショップ／ナイト／ポーン）に変える。クイーンには変えられない。通常の上限数を超えて同じ駒を増やすこともできる（ポーンの昇格と同じ仕組み）。', profile: '賢者の石を追う錬金術師。姿を変えることも、等価交換の応用にすぎない。' },
-    { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: 'ネクロ・リージョン', kind: 'reviveAll', unlock: { lost: 3, moves: 6 }, desc: '相手に取られた自分の駒をすべて、自分の色のまま初期位置に復活させる（空いている初期位置の分だけ）。取られた駒が多いほど帰ってくる軍団も大きくなる。', profile: '冥界を治める若き女王。倒れた自軍の魂を呼び戻し、戦列へ帰す。' },
+    { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: 'ネクロ・リージョン', kind: 'reviveAll', unlock: { lost: 3, moves: 6 }, desc: '相手に取られた自分の駒を、自分が取った駒の数（最大3つ）まで、強い順に自分の色のまま初期位置に復活させる（魂の等価交換）。たくさん取らせるだけでは軍団は帰ってこない。', profile: '冥界を治める若き女王。倒れた自軍の魂を呼び戻し、戦列へ帰す。' },
     { id: 'rosetta', name: 'ロゼッタ', title: '薔薇の伯爵夫人', skill: 'チャーム・エンブレイス', kind: 'charm', unlock: { moves: 8 }, desc: '相手の色の駒1つ（キングとクイーン以外）を、場所はそのままに自分の色に変えてしまう。ただし、変えた駒がそのまま相手のキングにチェックできる位置にある場合は選べない。', profile: '薔薇園の若き伯爵夫人。その微笑みと差し伸べた手に、逆らえる者はいない。' },
     { id: 'shizuku', name: '琴那', title: '図書室の文学少女', skill: 'ファイナル・エピローグ', kind: 'doom', unlock: { moves: 6 }, desc: '相手が次に操作する色の駒1つ（キング以外）に「終章（ファイナル・エピローグ）」の印をつける。その相手の手番が終わると、印の駒は盤上から消える。印の駒が動いても、消えるまで印は追いかける。', profile: '白髪と眼鏡が目印の、物静かな文学少女。本を閉じるように、物語の終わりを静かに告げる。' },
     { id: 'ayame', name: 'ツバキ', title: '二刀流の女剣士', skill: 'クロス・スラッシュ', kind: 'dashSlash', unlock: { moves: 5 }, desc: '今操作している自分の駒1つ（キング以外）を、同じ縦・横・斜めの直線上にいる相手の色の駒（キング以外）へ一直線に斬り込ませ、その駒を取る。途中の駒は飛び越える。', profile: '桜と月夜を背に戦う二刀流の女剣士。二本の刀が描く軌跡は、一直線の死線になる。' },
@@ -114,6 +114,7 @@ const MODE_LABELS = {
     'cpu-hard': 'CPU対戦 (Hard)｜上級・ミニマックス探索',
     'cpu-demon': 'CPU対戦 (鬼)｜深い先読み',
     'watch': 'CPU同士｜観戦モード',
+    'chara-watch': 'キャラ同士｜観戦モード',
     'normal-pvp': '通常チェス｜2人対戦 (回転なし)',
     'normal-cpu': '通常チェス｜CPU対戦 (回転なし)',
     'normal-online': '通常チェス｜オンライン対戦 (回転なし)',
@@ -146,6 +147,7 @@ let cpuSide = 'P2';
 let p2DoubleMove = false;
 let doubleMoveArmed = false;
 let doubleSecondMove = false;
+let endgamePhase = false;
 let p1Skips = 1;
 let p2Skips = 1;
 let p1Captures = 0;
@@ -304,7 +306,8 @@ function startSelectedGame() {
     updateModeDisplay();
     initGame();
     if (isOnlineMode()) setupOnline();
-    if (isCharaMode()) openCharaSelection();
+    if (isCharaMode() && selectedGameMode !== 'chara-watch') openCharaSelection();
+    if (selectedGameMode === 'chara-watch') setupCharaWatch();
     if (isWatchMode()) { updateWatchUI(); startWatch(); }
     else { pauseWatch(); updateWatchUI(); }
     if (isCpuGame() && !isCharaMode() && cpuSide === 'P1') setTimeout(makeCpuMove, 800);
@@ -417,6 +420,7 @@ function initGame() {
     p2DoubleMove = !['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode);
     doubleMoveArmed = false;
     doubleSecondMove = false;
+    endgamePhase = false;
     p1Captures = 0;
     p2Captures = 0;
 
@@ -476,6 +480,7 @@ function getBottomPieceColor() {
 // 両者が1手ずつ動かして盤面が回転すると、操作する色が入れ替わる
 function getActivePieceColor(player) {
     const p = player || currentPlayer;
+    if (endgamePhase) return p === 'P1' ? 'w' : 'b';
     if (isNormalMode()) return p === 'P1' ? 'w' : 'b';
     const bottom = getBottomPieceColor();
     return p === 'P1' ? bottom : (bottom === 'w' ? 'b' : 'w');
@@ -509,12 +514,6 @@ function recordPosition() {
     positionCounts[k] = (positionCounts[k] || 0) + 1;
     return positionCounts[k];
 }
-function adjudicateWatchByPosition(reason) {
-    const diff = evaluateBoard(game, 'w');
-    if (diff >= 50) { finishGame('P1', 'adjudication'); messageEl.textContent = `${reason}のため形勢判定：P1 の勝ち`; }
-    else if (diff <= -50) { finishGame('P2', 'adjudication'); messageEl.textContent = `${reason}のため形勢判定：P2 の勝ち`; }
-    else finishDraw(reason + '・形勢互角');
-}
 function isOnlyKingsLeft() {
     const board = game.board();
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
@@ -540,7 +539,7 @@ function snapshotState() {
     return {
         boardFen: game.fen(),
         isBoardRotated, moveCounter, skipNextRotation,
-        currentPlayer, gameOver, winnerPlayer, winReason, p2KingGuard, cpuSide, p2DoubleMove, doubleMoveArmed, doubleSecondMove,
+        currentPlayer, gameOver, winnerPlayer, winReason, p2KingGuard, cpuSide, p2DoubleMove, doubleMoveArmed, doubleSecondMove, endgamePhase,
         p1Skips, p2Skips, p1Captures, p2Captures,
         lastMovePlayer, lastMoveColor,
         playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
@@ -590,6 +589,7 @@ function restoreState(snap) {
     p2DoubleMove = !!snap.p2DoubleMove;
     doubleMoveArmed = !!snap.doubleMoveArmed;
     doubleSecondMove = !!snap.doubleSecondMove;
+    endgamePhase = !!snap.endgamePhase;
     refreshSideLabels();
     counterFor = snap.counterFor || null;
     counterSquare = snap.counterSquare || null;
@@ -769,7 +769,7 @@ function renderBoard() {
 
     turnEl.textContent = `${playerLabel} の番 [操作する色: ${bottomColorName}]`;
     // ランダム回転モードでは「回転まであと何手か」を伏せる
-    movesLeftEl.textContent = isNormalMode() ? '―' : (isRandomMode() ? '？' : (2 - moveCounter));
+    movesLeftEl.textContent = (isNormalMode() || endgamePhase) ? '―' : (isRandomMode() ? '？' : (2 - moveCounter));
     skipBtn.style.display = isNormalMode() ? 'none' : '';
 
     p1SkipsEl.textContent = p1Skips;
@@ -1189,7 +1189,9 @@ function executeMoveCustom(from, to, promotion) {
         }
         if (!isNormalMode()) {
             // ===== 盤面回転 =====
-            if (doubleSecondMove) {
+            if (endgamePhase) {
+                doubleSecondMove = false;
+            } else if (doubleSecondMove) {
                 doubleSecondMove = false;
             } else if (isRandomMode()) {
                 moveCounter++;
@@ -1247,8 +1249,12 @@ function executeMoveCustom(from, to, promotion) {
         if (!gameOver) {
             if (isOnlyKingsLeft()) { finishDraw('両者キングのみ'); return; }
             if (recordPosition() >= 3) {
-                if (isWatchMode()) { adjudicateWatchByPosition('同じ局面が3回（千日手）'); return; }
-                finishDraw('同じ局面が3回（千日手）'); return;
+                if (!endgamePhase && !isNormalMode()) {
+                    enterEndgamePhase();
+                } else {
+                    adjudicateByPosition('同じ局面が3回（千日手）');
+                    return;
+                }
             }
             if (!hasAnyLegalMove(getActivePieceColor())) { finishDraw('ステイルメイト'); return; }
         }
@@ -1347,6 +1353,9 @@ function chooseCpuMove(player, levelKey) {
     let simGame;
     try { simGame = new Chess(activeFen); } catch (e) { return null; }
     let moves = filterForbiddenKingCaptures(simGame.moves({ verbose: true }), player);
+    // 自分の色の駒を取る手は選ばない（他に手がある場合）。相手の色を操作中の自滅的な取りを防ぐ
+    const nonOwnCaps = moves.filter(m => !m.captured || (m.color === 'w' ? 'b' : 'w') !== ownColor);
+    if (nonOwnCaps.length) moves = nonOwnCaps;
     if (sleepFor === player) moves = moves.filter(m => m.from !== sleepSquare);
     if (frozenFor === player) moves = moves.filter(m => !m.captured);
     if (shieldFor && shieldFor !== player) {
@@ -1621,7 +1630,7 @@ function recordGameResult() {
     stats.totalRotations += rotationsCount;
     if (isCharaMode()) {
         stats.chara = stats.chara || {};
-        const sides = selectedGameMode === 'chara-pvp' ? ['P1', 'P2'] : selectedGameMode === 'chara-cpu' ? ['P1'] : [myRole];
+        const sides = (selectedGameMode === 'chara-pvp' || selectedGameMode === 'chara-watch') ? ['P1', 'P2'] : selectedGameMode === 'chara-cpu' ? ['P1'] : [myRole];
         sides.forEach(pl => {
             const cid = playerCharacters[pl];
             if (!cid) return;
@@ -1833,14 +1842,18 @@ function unlockText(ch) {
 function squareCoords(square) { return { f: square.charCodeAt(0) - 97, r: Number(square[1]) }; }
 function coordsToSquare(f, r) { return f >= 0 && f <= 7 && r >= 1 && r <= 8 ? String.fromCharCode(97 + f) + r : null; }
 function boardCells() { const cells = []; const bd = game.board(); for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell) cells.push({ type: cell.type, color: cell.color, square: String.fromCharCode(97 + f) + (8 - r) }); } return cells; }
-function reviveAllLostPieces(player) {
+function reviveAllLostPieces(player, fullRestore) {
     const ownColor = player === 'P1' ? 'w' : 'b';
     const entries = moveHistory.filter(h => h.captured && h.capturedColor === ownColor && !h.revived);
     if (!entries.length) return 0;
+    // 魂の等価交換：自分が取った駒の数（最大3つ）までしか呼び戻せない
+    const budget = fullRestore ? Infinity : Math.min(3, moveHistory.filter(h => h.player === player && h.captured).length);
+    if (budget <= 0) return 0;
     entries.sort((x, y) => (SKILL_PIECE_VALUES[y.captured] || 0) - (SKILL_PIECE_VALUES[x.captured] || 0));
     let placed = 0;
     skillFxSquares = [];
     entries.forEach(en => {
+        if (placed >= budget) return;
         const sq = skillHomeSquares(en.captured, ownColor).find(s => !game.get(s));
         if (sq) {
             en.revived = true;
@@ -1999,7 +2012,7 @@ function applySkillEffect(player, data) {
         case 'fortune': {
             if (!data) return false;
             if (data.mode === 'all') {
-                if (!reviveAllLostPieces(player)) return false;
+                if (!reviveAllLostPieces(player, true)) return false;
                 skillFxNote = '超新星！取られた駒をすべて復活';
                 break;
             }
