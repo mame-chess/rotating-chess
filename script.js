@@ -224,7 +224,6 @@ const onlineStatusEl = document.getElementById('online-status');
 const copyUrlBtn = document.getElementById('copy-url-btn');
 const onlineJoinBoxEl = document.getElementById('online-join-box');
 const roomCodeInputEl = document.getElementById('room-code-input');
-const undoBtn = document.getElementById('undo-btn');
 const resignBtn = document.getElementById('resign-btn');
 const exportBtn = document.getElementById('export-btn');
 const moveHistoryEl = document.getElementById('move-history');
@@ -510,6 +509,12 @@ function recordPosition() {
     positionCounts[k] = (positionCounts[k] || 0) + 1;
     return positionCounts[k];
 }
+function adjudicateWatchByPosition(reason) {
+    const diff = evaluateBoard(game, 'w');
+    if (diff >= 50) { finishGame('P1', 'adjudication'); messageEl.textContent = `${reason}のため形勢判定：P1 の勝ち`; }
+    else if (diff <= -50) { finishGame('P2', 'adjudication'); messageEl.textContent = `${reason}のため形勢判定：P2 の勝ち`; }
+    else finishDraw(reason + '・形勢互角');
+}
 function isOnlyKingsLeft() {
     const board = game.board();
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
@@ -781,7 +786,6 @@ function renderBoard() {
     }
     const p2d = document.getElementById('p2-double');
     if (p2d) p2d.textContent = isNormalMode() ? '' : `連続手番: ${p2DoubleMove ? '残り1回' : '使用済み'}`;
-    if (undoBtn) undoBtn.disabled = historyStack.length === 0 || (isOnlineMode() && !onlineConnected);
     if (resignBtn) resignBtn.disabled = gameOver;
     if (drawBtn) drawBtn.disabled = gameOver;
     if (rematchBtn) rematchBtn.classList.toggle('hidden', !(isOnlineMode() && gameOver && onlineConnected));
@@ -1109,11 +1113,11 @@ function executeMoveCustom(from, to, promotion) {
             capturedColor: moveObj.captured ? (currentColor === 'w' ? 'b' : 'w') : null,
             san: moveObj.san
         });
-        if (counterFor === currentPlayer && from === counterSquare && movingPiece && movingPiece.color === counterPieceColor) {
+        if (counterSquare && from === counterSquare && movingPiece && movingPiece.color === counterPieceColor && movingPiece.type === counterPieceType) {
             counterSquare = to;
             counterPieceType = moveObj.promotion || movingPiece.type;
         }
-        if (doomFor === currentPlayer && from === doomSquare && movingPiece && movingPiece.color === doomPieceColor) {
+        if (doomSquare && from === doomSquare && movingPiece && movingPiece.color === doomPieceColor && movingPiece.type === doomPieceType) {
             doomSquare = to;
             doomPieceType = moveObj.promotion || movingPiece.type;
         }
@@ -1242,7 +1246,10 @@ function executeMoveCustom(from, to, promotion) {
         // 引き分け判定（キングのみ／千日手／ステイルメイト）
         if (!gameOver) {
             if (isOnlyKingsLeft()) { finishDraw('両者キングのみ'); return; }
-            if (recordPosition() >= 3) { finishDraw('同じ局面が3回（千日手）'); return; }
+            if (recordPosition() >= 3) {
+                if (isWatchMode()) { adjudicateWatchByPosition('同じ局面が3回（千日手）'); return; }
+                finishDraw('同じ局面が3回（千日手）'); return;
+            }
             if (!hasAnyLegalMove(getActivePieceColor())) { finishDraw('ステイルメイト'); return; }
         }
 
@@ -1525,21 +1532,6 @@ skipBtn.addEventListener('click', () => {
         broadcastState();
     }
 });
-
-// ===== 待った（1手戻す） =====
-if (undoBtn) {
-    undoBtn.addEventListener('click', () => {
-        if (isWatchMode()) return;
-        if (historyStack.length === 0) return;
-        let snap = historyStack.pop();
-        // CPU対戦では、自分の手番まで2手分戻す
-        if (selectedGameMode.startsWith('cpu') && snap.currentPlayer === cpuSide && historyStack.length > 0) {
-            snap = historyStack.pop();
-        }
-        restoreState(snap);
-        broadcastState();
-    });
-}
 
 // ===== 投了 =====
 if (resignBtn) {
@@ -2184,7 +2176,8 @@ function showSkillEffect(player, squares) {
         const fxNote = skillFxNote;
         const banner = document.getElementById('skill-effect-banner');
         if (banner) {
-            banner.innerHTML = `<div class="se-player">${player === 'P1' ? 'P1' : 'P2'} ${ch.name}</div><div class="se-skill">✦「${ch.skill}」✦</div>${fxNote ? `<div class="se-result">${fxNote}</div>` : ''}`;
+            const chibi = (typeof CHIBI_IMAGES !== 'undefined' && CHIBI_IMAGES[ch.id]) ? `<img class="se-chibi" src="${CHIBI_IMAGES[ch.id]}" alt="">` : '';
+            banner.innerHTML = `${chibi}<div class="se-player">${player === 'P1' ? 'P1' : 'P2'} ${ch.name}</div><div class="se-skill">✦「${ch.skill}」✦</div>${fxNote ? `<div class="se-result">${fxNote}</div>` : ''}`;
             banner.classList.remove('hidden', 'anim');
             void banner.offsetWidth;
             banner.classList.add('anim');
