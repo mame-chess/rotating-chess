@@ -1,0 +1,1 @@
+{"dependencies":{"express":"^4.19.2","socket.io":"^4.7.5"},"description":"回転式チェス オンライン対戦サーバー","main":"server.js","name":"rotating-chess-server","scripts":{"start":"node server.js"},"version":"1.0.0"}
