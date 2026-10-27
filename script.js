@@ -145,6 +145,7 @@ let p2KingGuard = true;
 let cpuSide = 'P2';
 let p2DoubleMove = false;
 let doubleMoveArmed = false;
+let doubleSecondMove = false;
 let p1Skips = 1;
 let p2Skips = 1;
 let p1Captures = 0;
@@ -416,6 +417,7 @@ function initGame() {
     p2KingGuard = !isRandomMode() && !['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode);
     p2DoubleMove = !['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode);
     doubleMoveArmed = false;
+    doubleSecondMove = false;
     p1Captures = 0;
     p2Captures = 0;
 
@@ -533,7 +535,7 @@ function snapshotState() {
     return {
         boardFen: game.fen(),
         isBoardRotated, moveCounter, skipNextRotation,
-        currentPlayer, gameOver, winnerPlayer, winReason, p2KingGuard, cpuSide, p2DoubleMove, doubleMoveArmed,
+        currentPlayer, gameOver, winnerPlayer, winReason, p2KingGuard, cpuSide, p2DoubleMove, doubleMoveArmed, doubleSecondMove,
         p1Skips, p2Skips, p1Captures, p2Captures,
         lastMovePlayer, lastMoveColor,
         playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
@@ -582,6 +584,7 @@ function restoreState(snap) {
     cpuSide = snap.cpuSide || 'P2';
     p2DoubleMove = !!snap.p2DoubleMove;
     doubleMoveArmed = !!snap.doubleMoveArmed;
+    doubleSecondMove = !!snap.doubleSecondMove;
     refreshSideLabels();
     counterFor = snap.counterFor || null;
     counterSquare = snap.counterSquare || null;
@@ -1182,7 +1185,9 @@ function executeMoveCustom(from, to, promotion) {
         }
         if (!isNormalMode()) {
             // ===== 盤面回転 =====
-            if (isRandomMode()) {
+            if (doubleSecondMove) {
+                doubleSecondMove = false;
+            } else if (isRandomMode()) {
                 moveCounter++;
                 if (randomNextRotation !== null) randomNextRotation--;
 
@@ -1223,6 +1228,7 @@ function executeMoveCustom(from, to, promotion) {
         if (doubleMoveArmed && currentPlayer === 'P2' && !gameOver) {
             doubleMoveArmed = false;
             p2DoubleMove = false;
+            doubleSecondMove = true;
             messageEl.textContent = '後手の連続手番！P2 がもう1手動けます';
             renderBoard();
             broadcastState();
