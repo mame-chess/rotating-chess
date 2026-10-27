@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール・キャラ図鑑</button>
             </div>
-            <p class="version-note">Rotating Chess v5.0</p>
+            <p class="version-note">Rotating Chess v5.2</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -144,6 +144,13 @@
                             <div class="mode-info">
                                 <div class="mode-title">CPU同士 観戦</div>
                                 <div class="mode-desc">CPU同士の対戦を盤面で観戦。両者の強さと速度を調整できます</div>
+                            </div>
+                        </button>
+                        <button class="mode-item" data-mode="chara-watch">
+                            <span class="badge badge-hard">キャラ観戦</span>
+                            <div class="mode-info">
+                                <div class="mode-title">キャラ同士 観戦（CPU同士）</div>
+                                <div class="mode-desc">キャラ同士のCPU対戦を観戦。スキルも自動使用。結果はキャラ別勝率とティア表に記録されます</div>
                             </div>
                         </button>
                 </div>
@@ -350,6 +357,14 @@
                                 <option value="cpu-demon">鬼</option>
                             </select>
                         </div>
+                        <div class="watch-row watch-chara-row hidden">
+                            <label for="watch-chara-p1">P1 のキャラ</label>
+                            <select id="watch-chara-p1"></select>
+                        </div>
+                        <div class="watch-row watch-chara-row hidden">
+                            <label for="watch-chara-p2">P2 のキャラ</label>
+                            <select id="watch-chara-p2"></select>
+                        </div>
                         <div class="watch-row">
                             <label for="watch-speed">対戦速度</label>
                             <select id="watch-speed">
@@ -410,7 +425,7 @@
                     <h4>回転停止権（スキップ）</h4>
                     <p>各プレイヤーは「次の回転を1回止める」権利を持って始まります。相手の駒を3つ取るごとに1回増えます。自分の手番に予約すると、次の回転タイミングで盤面が回りません。なお回転式では先手（P1）が有利なため、バランス調整として後手（P2）は停止権を1回多く持って始まります（通常チェスは対象外）。</p>
                     <h4>引き分け</h4>
-                    <p>両者キングのみになったとき、同じ局面が3回繰り返されたとき（千日手）、動ける駒がなくなったとき（ステイルメイト）、両者が同意したときに引き分けになります。</p>
+                    <p>両者キングのみになったとき、動ける駒がなくなったとき（ステイルメイト）、両者が同意したときに引き分けになります。同じ局面が3回繰り返されたとき（千日手）は、引き分けにはならず「最終決戦」に入ります：盤面の回転を止め、通常チェス（各自が自分の色を操作）で最後まで戦います。最終決戦でも千日手になった場合は形勢判定（駒の合計でルーク1枚分以上の差があれば優勢な方の勝ち）を行い、形勢が互角のときだけ引き分けになります。通常チェスモードでは千日手の時点で形勢判定を行います。</p>
                     <h4>特殊な動き</h4>
                     <p>チェスの特殊な動き（キャスリング／アンパッサン／昇格）も、すべて通常のルール通り使えます。</p>
                     <h4>キャスリング（入城）</h4>
