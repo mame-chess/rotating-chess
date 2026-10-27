@@ -33,28 +33,32 @@ const COLOR_OWNERS = { w: 'P1', b: 'P2' };
 
 const CHARACTERS = [
     { id: 'luna', name: 'セレーネ', title: '月のうさぎ巫女', skill: 'つきのまもり', kind: 'skip', desc: '回転停止権を1つ増やす。ピンチの回転を止めたいときに。', profile: '月夜の神社に仕える巫女。うさぎの耳飾りと三日月の杖が自慢。静かに見えて負けず嫌い。' },
-    { id: 'mint', name: 'シルフィーユ', title: '森の妖精', skill: 'リバイブ', kind: 'revive', desc: '取られた自分の色の駒のうち、いちばん強い駒を初期位置に復活させる。', profile: '深い森に住む風と葉の妖精。倒れた仲間を放っておけない優しい性格。' },
-    { id: 'sora', name: 'ゼファー', title: '空のパイロット', skill: 'テレポート', kind: 'swap', desc: '今操作している自分の駒2つの位置を入れ替える。', profile: '西風を追いかける若き飛行士。思い立ったら即行動、配置換えはお手のもの。' },
-    { id: 'hikari', name: 'アステリア', title: 'ステージのアイドル', skill: 'アンコール', kind: 'extra', desc: '自分の着手のあと、もう1手続けて動ける。', profile: '星のステージで歌う人気アイドル。アンコールの声援を力に変える。' },
+    { id: 'mint', name: 'シルフィーユ', title: '森の妖精', skill: 'リバイブ', kind: 'revive', unlock: { lost: 2 }, desc: '取られた自分の色の駒のうち、いちばん強い駒を初期位置に復活させる。', profile: '深い森に住む風と葉の妖精。倒れた仲間を放っておけない優しい性格。' },
+    { id: 'sora', name: 'カイト', title: '空のパイロット', skill: 'テレポート', kind: 'swap', desc: '今操作している自分の駒2つの位置を入れ替える。', profile: '西風を追いかける若き飛行士。思い立ったら即行動、配置換えはお手のもの。' },
+    { id: 'hikari', name: 'アステリア', title: 'ステージのアイドル', skill: 'アンコール', kind: 'extra', unlock: { moves: 6 }, desc: '自分の着手のあと、もう1手続けて動ける。', profile: '星のステージで歌う人気アイドル。アンコールの声援を力に変える。' },
     { id: 'yuki', name: 'ネージュ', title: '雪の少女', skill: 'ふぶき', kind: 'freeze', desc: '次の相手の手番、相手は駒を取ることができない。', profile: '雪国から来た物静かな少女。彼女の吹雪は相手の攻め手を凍らせる。' },
-    { id: 'momo', name: 'モルガナ', title: '小さな魔女', skill: 'へんしん', kind: 'transform', toType: 'n', desc: '今操作している自分のポーン1つをナイトに変える。', profile: '古い洋館に住む魔女見習い。変身魔法が得意で、いたずら好き。' },
+    { id: 'momo', name: 'モルガナ', title: '小さな魔女', skill: 'へんしん', kind: 'transform', toType: 'n', unlock: { moves: 4 }, desc: '今操作している自分のポーン1つをナイトに変える。', profile: '古い洋館に住む魔女見習い。変身魔法が得意で、いたずら好き。' },
     { id: 'nereia', name: 'ネレイア', title: '海の人魚姫', skill: 'まどろみ', kind: 'sleep', desc: '相手が次に操作する色の駒1つを眠らせる。次の相手の手番、その駒は動けない。', profile: '深海の王国の人魚姫。子守歌のような声で大の男も眠らせる。' },
-    { id: 'vulkan', name: 'ヴォルカン', title: '炎の鍛冶屋', skill: 'うちなおし', kind: 'revivePawns', desc: '取られた自分の色のポーンを最大2つまで、初期位置に復活させる。', profile: '火山のふもとの鍛冶屋の少年。壊れたものは打ち直せばいい、が信条。' },
-    { id: 'chronos', name: 'クロノス', title: '時の魔法使い', skill: 'タイムリープ', kind: 'undo', desc: '直前の1手を無料で巻き戻す（相手の手も自分の手も対象）。', profile: '時計塔に住む魔法使い。時間の流れを少しだけ巻き戻すことができる。' },
+    { id: 'vulkan', name: 'ヴォルカン', title: '炎の鍛冶屋', skill: 'うちなおし', kind: 'revivePawns', unlock: { lost: 2 }, desc: '取られた自分の色のポーンを最大2つまで、初期位置に復活させる。', profile: '火山のふもとの鍛冶屋の少年。壊れたものは打ち直せばいい、が信条。' },
+    { id: 'chronos', name: 'クロノス', title: '時の魔法使い', skill: 'タイムリープ', kind: 'undo', unlock: { moves: 4 }, desc: '直前の1手を無料で巻き戻す（相手の手も自分の手も対象）。', profile: '時計塔に住む魔法使い。時間の流れを少しだけ巻き戻すことができる。' },
     { id: 'bastet', name: 'バステト', title: '猫耳メイド', skill: 'にゃんステップ', kind: 'step', desc: '今操作している自分の駒1つを、隣の空きマスへそっと移す。', profile: '猫の女神の名を持つメイド。足音なく動くのは得意中の得意。' },
-    { id: 'carmilla', name: 'カーミラ', title: '吸血鬼の令嬢', skill: '眷属化', kind: 'convert', desc: '自分が取った相手の駒のうち最強の1つを、自分の色に変えて初期位置に復活させる。', profile: '古城に住む吸血鬼の令嬢。気に入った相手は眷属にしてしまう。' },
+    { id: 'carmilla', name: 'カーミラ', title: '吸血鬼の令嬢', skill: '眷属化', kind: 'convert', unlock: { captured: 1 }, desc: '自分が取った相手の駒のうち最強の1つを、自分の色に変えて初期位置に復活させる。', profile: '古城に住む吸血鬼の令嬢。気に入った相手は眷属にしてしまう。' },
     { id: 'suiren', name: 'スイレン', title: '龍の巫女', skill: 'りゅうの結界', kind: 'barrier', desc: '次の相手の手番、相手はチェックをかける手とキングを取る手ができない。', profile: '水龍を祀る神社の巫女。張った結界は王への攻撃を通さない。' },
     { id: 'titan', name: 'タイタン', title: '岩の守護者', skill: 'いわの守護', kind: 'shield', desc: '自分の色の駒が次に取られるのを1回防ぐ（防ぐまで有効）。', profile: '山の神殿を守る岩の守護者。仲間への一撃ならこの身で受ける。' },
-    { id: 'sibylla', name: 'シビラ', title: '星の占い師', skill: '星屑の加護', kind: 'fortune', desc: '運試し。「停止権+1」か「自分のポーン復活」のどちらかがランダムで起こる。', profile: '星の声を聞く占い師。運命は気まぐれだが、彼女の予言はよく当たる。' },
-    { id: 'hayate', name: 'ハヤテ', title: '風の忍者', skill: '分身の術', kind: 'clone', desc: '今操作している自分のナイトの隣の空きマスに、ナイトをもう1つ増やす。', profile: '疾風の里の忍者。分身の術でナイトを増やすのが奥義。' },
-    { id: 'seraphina', name: 'セラフィナ', title: '天空の天使', skill: '大いなる祝福', kind: 'transform', toType: 'q', desc: '今操作している自分のポーン1つをクイーンに変える。', profile: '天空の都から遣わされた天使。小さなポーンにも大きな祝福を。' },
-    { id: 'barbarossa', name: 'バルバロッサ', title: '海賊船長', skill: '砲撃', kind: 'destroy', desc: '相手の色のポーン1つを盤上から取り除く。', profile: '七つの海を荒らした海賊船長。砲撃の的は絶対に外さない。' },
-    { id: 'nicola', name: 'ニコラ', title: '錬金術師', skill: '等価交換', kind: 'exchange', desc: '今操作している自分の駒1つ（キング以外）を、取られた自分の最強の駒とそのマスで入れ替える。', profile: '賢者の石を追う錬金術師。等価交換こそ世界の真理だと信じている。' }
+    { id: 'sibylla', name: 'シビラ', title: '星の占い師', skill: '星屑の加護', kind: 'fortune', desc: '運試し。15%で取られた自分の最強の駒が復活（大当たり）、50%で自分のポーン復活、35%で停止権+1（復活できる駒がない場合は停止権+1）。', profile: '星の声を聞く占い師。運命は気まぐれだが、彼女の予言はよく当たる。' },
+    { id: 'hayate', name: 'ハヤテ', title: '風の忍者', skill: '分身の術', kind: 'clone', unlock: { moves: 4 }, desc: '今操作している自分のナイトの隣の空きマスに、ナイトをもう1つ増やす。', profile: '疾風の里の忍者。分身の術でナイトを増やすのが奥義。' },
+    { id: 'seraphina', name: 'セラフィナ', title: '天空の天使', skill: '大いなる祝福', kind: 'transform', toType: 'q', unlock: { lost: 2 }, desc: '今操作している自分のポーン1つをクイーンに変える。', profile: '天空の都から遣わされた天使。小さなポーンにも大きな祝福を。' },
+    { id: 'barbarossa', name: 'バルバロッサ', title: '海賊船長', skill: '砲撃', kind: 'destroy', unlock: { moves: 6 }, desc: '相手の色のポーン1つを盤上から取り除く。', profile: '七つの海を荒らした海賊船長。砲撃の的は絶対に外さない。' },
+    { id: 'nicola', name: 'ニコラ', title: '錬金術師', skill: '等価交換', kind: 'exchange', unlock: { lost: 1 }, desc: '今操作している自分の駒1つ（キング以外）を、取られた自分の最強の駒とそのマスで入れ替える。', profile: '賢者の石を追う錬金術師。等価交換こそ世界の真理だと信じている。' },
+    { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: '冥府の軍団', kind: 'reviveAll', unlock: { captured: 2, moves: 6 }, desc: '自分が取った相手の駒をすべて、自分の色に変えて初期位置に復活させる（空いている初期位置の分だけ）。', profile: '冥界を治める女王。倒した敵は幽霊の軍団として、彼女のもとに蘇る。' },
+    { id: 'rosetta', name: 'ロゼッタ', title: '薔薇の伯爵夫人', skill: '魅了の抱擁', kind: 'charm', unlock: { moves: 8 }, desc: '相手の色のポーン1つを、場所はそのままに自分の色に変えてしまう。', profile: '薔薇園の伯爵夫人。その微笑みと差し伸べた手に、逆らえる者はいない。' }
 ];
 const SKILL_PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 let playerCharacters = { P1: null, P2: null };
 let charaUsed = { P1: false, P2: false };
 let frozenFor = null;
+let skillRecharge = { P1: 0, P2: 0 };
+let skillFxSquares = [];
 let sleepFor = null;
 let sleepSquare = null;
 let barrierFor = null;
@@ -396,6 +400,7 @@ function initGame() {
     sleepSquare = null;
     barrierFor = null;
     shieldFor = null;
+    skillRecharge = { P1: 0, P2: 0 };
     pendingExtraMove = { P1: false, P2: false };
     skillTargeting = null;
     validMoveDetails = [];
@@ -486,7 +491,7 @@ function snapshotState() {
         lastMovePlayer, lastMoveColor,
         playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
         frozenFor, pendingExtraMove: { ...pendingExtraMove },
-        sleepFor, sleepSquare, barrierFor, shieldFor,
+        sleepFor, sleepSquare, barrierFor, shieldFor, skillRecharge: { ...skillRecharge },
         selectedGameMode, moveHistory: JSON.parse(JSON.stringify(moveHistory)),
         totalMovesCount, rotationsCount, statsRecorded, randomNextRotation,
         lastMove, castlingRights, epSquare,
@@ -519,6 +524,7 @@ function restoreState(snap) {
     sleepSquare = snap.sleepSquare || null;
     barrierFor = snap.barrierFor || null;
     shieldFor = snap.shieldFor || null;
+    skillRecharge = snap.skillRecharge || { P1: 0, P2: 0 };
     charaPhase = isCharaMode() && !(playerCharacters.P1 && playerCharacters.P2);
     if (snap.selectedGameMode) selectedGameMode = snap.selectedGameMode;
     moveHistory = snap.moveHistory || [];
@@ -957,6 +963,15 @@ function executeMoveCustom(from, to, promotion) {
             capturedColor: moveObj.captured ? (currentColor === 'w' ? 'b' : 'w') : null,
             san: moveObj.san
         });
+        if (moveObj.captured && charaUsed[currentPlayer]) {
+            skillRecharge[currentPlayer]++;
+            if (skillRecharge[currentPlayer] >= 3) {
+                charaUsed[currentPlayer] = false;
+                skillRecharge[currentPlayer] = 0;
+                const rechargedPlayer = currentPlayer;
+                setTimeout(() => { messageEl.textContent = `${rechargedPlayer} のスキルが再使用可能になった！`; renderCharaPanel(); }, 800);
+            }
+        }
 
         if (moveObj.captured) {
             if (currentPlayer === 'P1') {
@@ -1635,9 +1650,45 @@ function planClone(player) {
     }
     return null;
 }
+function skillProgress(player) {
+    const ownColor = player === 'P1' ? 'w' : 'b';
+    return {
+        moves: moveHistory.filter(h => h.player === player).length,
+        captured: moveHistory.filter(h => h.player === player && h.captured).length,
+        lost: moveHistory.filter(h => h.captured && h.capturedColor === ownColor).length
+    };
+}
+function skillUnlocked(player) {
+    const ch = charaOf(player);
+    if (!ch || !ch.unlock) return true;
+    const p = skillProgress(player);
+    if (ch.unlock.moves && p.moves < ch.unlock.moves) return false;
+    if (ch.unlock.captured && p.captured < ch.unlock.captured) return false;
+    if (ch.unlock.lost && p.lost < ch.unlock.lost) return false;
+    return true;
+}
+function skillLockText(player) {
+    const ch = charaOf(player);
+    if (!ch || !ch.unlock) return '';
+    const p = skillProgress(player);
+    const parts = [];
+    if (ch.unlock.moves && p.moves < ch.unlock.moves) parts.push(`あと${ch.unlock.moves - p.moves}手`);
+    if (ch.unlock.captured && p.captured < ch.unlock.captured) parts.push(`あと${ch.unlock.captured - p.captured}つ取る`);
+    if (ch.unlock.lost && p.lost < ch.unlock.lost) parts.push(`あと${ch.unlock.lost - p.lost}つ取られる`);
+    return parts.length ? `解放まで：${parts.join('／')}` : '';
+}
+function unlockText(ch) {
+    if (!ch.unlock) return '解放条件：なし（いつでも使える）';
+    const parts = [];
+    if (ch.unlock.moves) parts.push(`自分の着手${ch.unlock.moves}回以上`);
+    if (ch.unlock.captured) parts.push(`相手の駒を${ch.unlock.captured}つ以上取る`);
+    if (ch.unlock.lost) parts.push(`自分の駒が${ch.unlock.lost}つ以上取られる`);
+    return '解放条件：' + parts.join('＋');
+}
 function applySkillEffect(player, data) {
     const ch = charaOf(player);
     if (!ch || charaUsed[player] || gameOver) return false;
+    if (!skillUnlocked(player)) return false;
     const ownColor = player === 'P1' ? 'w' : 'b';
     const activeColor = getActivePieceColor(player);
     const opp = opponentOf(player);
@@ -1726,17 +1777,42 @@ function applySkillEffect(player, data) {
             game.remove(data.square); break;
         }
         case 'fortune': {
+            if (data && data.mode === 'big' && data.type && data.square && !game.get(data.square)) {
+                const bentry = moveHistory.find(h => h.captured === data.type && h.capturedColor === ownColor && !h.revived);
+                if (bentry) { bentry.revived = true; game.put({ type: data.type, color: ownColor }, data.square); skillFxSquares = [data.square]; break; }
+            }
             if (data && data.mode === 'pawn' && data.square && !game.get(data.square)) {
                 const entry = moveHistory.find(h => h.captured === 'p' && h.capturedColor === ownColor && !h.revived);
                 if (entry) { entry.revived = true; game.put({ type: 'p', color: ownColor }, data.square); break; }
             }
             if (player === 'P1') p1Skips++; else p2Skips++; break;
         }
+        case 'reviveAll': {
+            const entries = moveHistory.filter(h => h.player === player && h.captured && !h.converted);
+            if (!entries.length) return false;
+            entries.sort((x, y) => (SKILL_PIECE_VALUES[y.captured] || 0) - (SKILL_PIECE_VALUES[x.captured] || 0));
+            let placed = 0;
+            skillFxSquares = [];
+            entries.forEach(en => {
+                const sq = skillHomeSquares(en.captured, ownColor).find(s => !game.get(s));
+                if (sq) { en.converted = true; en.revived = true; game.put({ type: en.captured, color: ownColor }, sq); placed++; skillFxSquares.push(sq); }
+            });
+            if (!placed) { skillFxSquares = []; return false; }
+            break;
+        }
+        case 'charm': {
+            const pc = data && data.square ? game.get(data.square) : null;
+            const oppColorC = ownColor === 'w' ? 'b' : 'w';
+            if (!pc || pc.type !== 'p' || pc.color !== oppColorC) return false;
+            game.remove(data.square);
+            game.put({ type: 'p', color: ownColor }, data.square); break;
+        }
         case 'undo': {
             if (!historyStack.length) return false;
             const snap = historyStack.pop();
             restoreState(snap);
             charaUsed[player] = true;
+            skillRecharge[player] = 0;
             skillTargeting = null;
             messageEl.textContent = `${ch.name} のスキル「${ch.skill}」！時間を巻き戻した`;
             renderBoard();
@@ -1747,10 +1823,12 @@ function applySkillEffect(player, data) {
         default: return false;
     }
     charaUsed[player] = true;
+    skillRecharge[player] = 0;
     skillTargeting = null;
     messageEl.textContent = `${ch.name} のスキル「${ch.skill}」！`;
     renderBoard();
-    showSkillEffect(player, skillSquaresOf(data));
+    showSkillEffect(player, skillSquaresOf(data).concat(skillFxSquares));
+    skillFxSquares = [];
     broadcastState();
     return true;
 }
@@ -1763,6 +1841,27 @@ function skillSquaresOf(data) {
     if (data.b) s.push(data.b);
     return s;
 }
+const SKILL_FX = {
+    skip: { icons: ['🌙', '✨', '⭐'], tint: 'rgba(250,210,90,.20)', motion: 'fx-rise' },
+    revive: { icons: ['✨', '💫', '🌟'], tint: 'rgba(255,240,180,.25)', motion: 'fx-rise' },
+    revivePawns: { icons: ['🔥', '✨', '⚒️'], tint: 'rgba(255,140,60,.22)', motion: 'fx-rise' },
+    reviveAll: { icons: ['👻', '💜', '✨'], tint: 'rgba(150,90,255,.25)', motion: 'fx-rise' },
+    extra: { icons: ['⭐', '🎵', '✨'], tint: 'rgba(255,120,200,.20)', motion: 'fx-swirl' },
+    freeze: { icons: ['❄️', '❄️', '🧊'], tint: 'rgba(140,200,255,.25)', motion: 'fx-fall' },
+    transform: { icons: ['🔮', '✨', '🦋'], tint: 'rgba(170,110,255,.22)', motion: 'fx-swirl' },
+    swap: { icons: ['🍃', '💨', '🌀'], tint: 'rgba(120,230,160,.20)', motion: 'fx-swirl' },
+    sleep: { icons: ['🫧', '💤', '🌙'], tint: 'rgba(110,150,255,.22)', motion: 'fx-rise' },
+    undo: { icons: ['⏳', '🕰️', '↩️'], tint: 'rgba(210,170,90,.25)', motion: 'fx-fall' },
+    step: { icons: ['🐾', '🐱', '✨'], tint: 'rgba(255,180,120,.20)', motion: 'fx-rise' },
+    convert: { icons: ['🌹', '❤️', '🦇'], tint: 'rgba(255,80,110,.22)', motion: 'fx-fall' },
+    barrier: { icons: ['💧', '🐉', '🌀'], tint: 'rgba(80,200,220,.22)', motion: 'fx-swirl' },
+    shield: { icons: ['🪨', '🛡️', '✨'], tint: 'rgba(190,160,110,.25)', motion: 'fx-rise' },
+    fortune: { icons: ['🔮', '⭐', '🍀'], tint: 'rgba(180,120,255,.22)', motion: 'fx-fall' },
+    clone: { icons: ['🥷', '🍃', '💨'], tint: 'rgba(120,200,140,.20)', motion: 'fx-swirl' },
+    destroy: { icons: ['💥', '🔥', '💣'], tint: 'rgba(255,110,60,.28)', motion: 'fx-rise' },
+    exchange: { icons: ['⚗️', '🧪', '✨'], tint: 'rgba(120,255,170,.20)', motion: 'fx-swirl' },
+    charm: { icons: ['💘', '🌹', '💕'], tint: 'rgba(255,110,180,.24)', motion: 'fx-rise' }
+};
 function showSkillEffect(player, squares) {
     const ch = charaOf(player);
     if (!ch) return;
@@ -1785,6 +1884,22 @@ function showSkillEffect(player, squares) {
             const el = boardEl ? boardEl.querySelector(`[data-square="${sq}"]`) : null;
             if (el) { el.classList.add('skill-hit'); setTimeout(() => el.classList.remove('skill-hit'), 1400); }
         });
+        const fxLayer = document.getElementById('fx-layer');
+        const fx = SKILL_FX[ch.kind] || SKILL_FX.fortune;
+        if (fxLayer && fx) {
+            fxLayer.innerHTML = '';
+            fxLayer.style.background = `radial-gradient(ellipse at center, ${fx.tint}, transparent 75%)`;
+            for (let i = 0; i < 20; i++) {
+                const sp = document.createElement('span');
+                sp.className = 'fx-particle ' + fx.motion;
+                sp.textContent = fx.icons[i % fx.icons.length];
+                sp.style.left = (2 + Math.random() * 92) + '%';
+                sp.style.fontSize = (18 + Math.random() * 18) + 'px';
+                sp.style.animationDelay = (Math.random() * 0.35) + 's';
+                fxLayer.appendChild(sp);
+            }
+            setTimeout(() => { fxLayer.innerHTML = ''; fxLayer.style.background = 'transparent'; }, 2100);
+        }
     } catch (e) {}
 }
 function canUseSkillUI(player) {
@@ -1799,6 +1914,7 @@ function onSkillButton(player) {
     if (!canUseSkillUI(player)) return;
     const ch = charaOf(player);
     if (!ch) return;
+    if (!skillUnlocked(player)) { messageEl.textContent = `${ch.name} のスキルはまだ解放されていません（${skillLockText(player)}）`; return; }
     switch (ch.kind) {
         case 'transform': skillTargeting = { player, skill: 'transform' }; messageEl.textContent = '変身：変えたい、今操作しているポーンをクリック'; return;
         case 'swap': skillTargeting = { player, skill: 'swap', first: null }; messageEl.textContent = 'テレポート：入れ替える駒を2つクリックしてください'; return;
@@ -1815,11 +1931,19 @@ function onSkillButton(player) {
         case 'convert': { const plan = planConvert(player); if (!plan) { messageEl.textContent = '眷属化できる駒がありません'; return; } applySkillEffect(player, plan); return; }
         case 'clone': { const plan = planClone(player); if (!plan) { messageEl.textContent = 'ナイトがいないか、隣が空いていません'; return; } applySkillEffect(player, plan); return; }
         case 'fortune': {
+            const r = Math.random();
+            const big = r < 0.15 ? planRevive(player) : null;
+            if (big) { applySkillEffect(player, { mode: 'big', ...big }); return; }
             const pawns = planRevivePawns(player);
-            if (pawns && Math.random() < 0.5) applySkillEffect(player, { mode: 'pawn', square: pawns.places[0] });
+            if (r < 0.65 && pawns) applySkillEffect(player, { mode: 'pawn', square: pawns.places[0] });
             else applySkillEffect(player, { mode: 'skip' });
             return;
         }
+        case 'reviveAll': {
+            if (!moveHistory.some(h => h.player === player && h.captured && !h.converted)) { messageEl.textContent = 'まだ取った駒がありません'; return; }
+            applySkillEffect(player, {}); return;
+        }
+        case 'charm': skillTargeting = { player, skill: 'charm' }; messageEl.textContent = '魅了：自分の色に変えたい相手のポーンをクリック'; return;
         case 'undo': if (!historyStack.length) { messageEl.textContent = 'まだ巻き戻せる手がありません'; return; } applySkillEffect(player, {}); return;
         default: applySkillEffect(player, {}); return;
     }
@@ -1837,6 +1961,12 @@ function handleSkillTargetClick(square) {
     if (t.skill === 'sleep') {
         if (pc && pc.color === sleepTargetColorFor(t.player)) applySkillEffect(t.player, { square });
         else messageEl.textContent = '相手が次に操作する駒を選んでください';
+        return;
+    }
+    if (t.skill === 'charm') {
+        const oppColor = t.player === 'P1' ? 'b' : 'w';
+        if (pc && pc.type === 'p' && pc.color === oppColor) applySkillEffect(t.player, { square });
+        else messageEl.textContent = '相手の色のポーンを選んでください';
         return;
     }
     if (t.skill === 'destroy') {
@@ -1883,9 +2013,17 @@ function maybeCpuUseSkill() {
         case 'convert': { const p = planConvert(player); if (p) applySkillEffect(player, p); return; }
         case 'clone': { const p = planClone(player); if (p) applySkillEffect(player, p); return; }
         case 'fortune': {
+            const big = rnd < 0.15 ? planRevive(player) : null;
+            if (big) { applySkillEffect(player, { mode: 'big', ...big }); return; }
             const pawns = planRevivePawns(player);
-            if (pawns && rnd < 0.5) applySkillEffect(player, { mode: 'pawn', square: pawns.places[0] });
+            if (pawns && rnd < 0.65) applySkillEffect(player, { mode: 'pawn', square: pawns.places[0] });
             else if (rnd < 0.5) applySkillEffect(player, { mode: 'skip' });
+            return;
+        }
+        case 'reviveAll': { if (moveHistory.some(h => h.player === player && h.captured && !h.converted)) applySkillEffect(player, {}); return; }
+        case 'charm': {
+            const bd2 = game.board();
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd2[r][f]; if (cell && cell.type === 'p' && cell.color === 'w') { if (rnd < 0.7) applySkillEffect(player, { square: cell.square }); return; } }
             return;
         }
         case 'undo': if (historyStack.length >= 3 && rnd < 0.12) applySkillEffect(player, {}); return;
@@ -1943,7 +2081,10 @@ function renderCharaPanel() {
         if (skillEl) skillEl.textContent = ch ? `スキル「${ch.skill}」：${ch.desc}` : '';
         if (btn) {
             btn.disabled = !canUseSkillUI(pl);
-            btn.textContent = !ch ? 'スキル' : (charaUsed[pl] ? 'スキル使用済み' : `スキル：${ch.skill}`);
+            if (!ch) btn.textContent = 'スキル';
+            else if (charaUsed[pl]) btn.textContent = `再使用まで：あと${3 - (skillRecharge[pl] || 0)}つ取る`;
+            else if (!skillUnlocked(pl)) btn.textContent = `🔒 ${skillLockText(pl)}`;
+            else btn.textContent = `スキル：${ch.skill}`;
         }
     });
 }
@@ -1962,10 +2103,14 @@ function openCharaLightbox(charaId) {
     document.getElementById('lb-skill').textContent = `スキル「${ch.skill}」`;
     document.getElementById('lb-desc').textContent = `${ch.desc} ${ch.profile || ''}`;
     lb.classList.remove('hidden');
+    lb.style.display = 'flex';
+    const cb = document.getElementById('lb-close'); if (cb) cb.onclick = closeCharaLightbox;
+    const xb = document.getElementById('lb-close-x'); if (xb) xb.onclick = closeCharaLightbox;
+    const im = document.getElementById('lb-img'); if (im) im.onclick = closeCharaLightbox;
 }
 function closeCharaLightbox() {
     const lb = document.getElementById('chara-lightbox');
-    if (lb) lb.classList.add('hidden');
+    if (lb) { lb.classList.add('hidden'); lb.style.display = 'none'; }
 }
 function buildGuideChara() {
     const grid = document.getElementById('guide-chara-grid');
@@ -1974,7 +2119,7 @@ function buildGuideChara() {
         const card = document.createElement('div');
         card.className = 'guide-chara-card';
         const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
-        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><div class="guide-chara-body"><div class="guide-chara-name">${ch.name} <span class="guide-chara-title">${ch.title}</span></div><div class="guide-chara-skill">スキル「${ch.skill}」：${ch.desc}</div><p class="guide-chara-profile">${ch.profile || ''}</p></div>`;
+        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><div class="guide-chara-body"><div class="guide-chara-name">${ch.name} <span class="guide-chara-title">${ch.title}</span></div><div class="guide-chara-skill">スキル「${ch.skill}」：${ch.desc}</div><div class="guide-chara-unlock">${unlockText(ch)}</div><p class="guide-chara-profile">${ch.profile || ''}</p></div>`;
         const gimg = card.querySelector('img');
         if (gimg) { gimg.title = 'クリックで拡大'; gimg.addEventListener('click', () => openCharaLightbox(ch.id)); }
         grid.appendChild(card);
@@ -1995,6 +2140,8 @@ document.querySelectorAll('.guide-tab').forEach(tab => {
     if (lb) {
         lb.querySelector('.lb-backdrop').addEventListener('click', closeCharaLightbox);
         document.getElementById('lb-close').addEventListener('click', closeCharaLightbox);
+        lb.addEventListener('click', (e) => { if (e.target === lb) closeCharaLightbox(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCharaLightbox(); });
     }
     [['chara-img-p1', 'P1'], ['chara-img-p2', 'P2']].forEach(([id, pl]) => {
         const img = document.getElementById(id);
@@ -2021,7 +2168,7 @@ function buildCharaGrid() {
         card.className = 'chara-card';
         card.dataset.chara = ch.id;
         const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
-        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><span class="chara-zoom-btn" title="立ち絵を拡大">🔍</span><span class="chara-card-name">${ch.name}</span><span class="chara-card-title">${ch.title}</span><span class="chara-card-skill">「${ch.skill}」${ch.desc}</span>`;
+        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><span class="chara-zoom-btn" title="立ち絵を拡大">🔍</span><span class="chara-card-name">${ch.name}</span><span class="chara-card-title">${ch.title}</span><span class="chara-card-skill">「${ch.skill}」${ch.desc}</span><span class="chara-card-unlock">${unlockText(ch)}</span>`;
         card.addEventListener('click', () => onCharaCardPick(ch.id));
         const zb = card.querySelector('.chara-zoom-btn');
         if (zb) zb.addEventListener('click', (e) => { e.stopPropagation(); openCharaLightbox(ch.id); });
@@ -2079,371 +2226,6 @@ function updateCharaModalVisibility() {
     } else {
         modal.classList.add('hidden');
     }
-}
-
-function handleOnlineData(data) {
-    if (!data) return;
-    if (data.type === 'snapshot') {
-        isApplyingRemote = true;
-        restoreState(data.snapshot);
-        isApplyingRemote = false;
-    } else if (data.type === 'hello' && myRole === 'P1') {
-        broadcastState();
-    } else if (data.type === 'chat') {
-        appendChatMessage(false, data.text || '');
-    } else if (data.type === 'draw-offer') {
-        showOffer('draw', '相手が引き分けを申し出ています');
-    } else if (data.type === 'draw-response') {
-        if (data.accept) finishDraw('同意による引き分け');
-        else setOnlineStatus('引き分けは断られました');
-    } else if (data.type === 'rematch-request') {
-        showOffer('rematch', '相手が再戦を希望しています（先手・後手が入れ替わります）');
-    } else if (data.type === 'rematch-response') {
-        if (data.accept) {
-            myRole = myRole === 'P1' ? 'P2' : 'P1';
-            initGame();
-            broadcastState();
-            setOnlineStatus(`再戦開始（あなたは ${myRole}）`);
-        } else {
-            setOnlineStatus('再戦は断られました');
-        }
-    }
-}
-
-function attachOnlineConn(conn) {
-    onlineConn = conn;
-    conn.on('open', () => {
-        onlineConnected = true;
-        setOnlineStatus(`接続しました。対戦開始（あなたは ${myRole}）`);
-        if (myRole === 'P1') broadcastState();
-        else sendOnline({ type: 'hello' });
-    });
-    conn.on('data', (data) => handleOnlineData(data));
-    conn.on('close', () => {
-        onlineConnected = false;
-        setOnlineStatus('相手が切断しました');
-    });
-}
-
-function sendOnline(obj) {
-    if (onlineTransport === 'socket') {
-        if (onlineSocket && onlineConnected) { try { onlineSocket.emit('relay', obj); } catch (e) {} }
-    } else if (onlineConn && onlineConnected) {
-        try { onlineConn.send(obj); } catch (e) {}
-    }
-}
-function broadcastState() {
-    if (!isOnlineMode() || isApplyingRemote || !onlineConnected) return;
-    sendOnline({ type: 'snapshot', snapshot: snapshotState() });
-}
-
-function setupSocketOnline() {
-    onlineTransport = 'socket';
-    const inputCode = roomCodeInputEl ? roomCodeInputEl.value.trim().toUpperCase() : '';
-    const urlCode = new URLSearchParams(window.location.search).get('room');
-    try {
-        onlineSocket = io();
-    } catch (e) {
-        setOnlineStatus('サーバーに接続できませんでした');
-        return;
-    }
-    if (inputCode || urlCode) {
-        myRole = 'P2';
-        onlineRoomCode = (inputCode || urlCode).toUpperCase();
-        setOnlineStatus(`ルーム ${onlineRoomCode} に参加中…（あなたは P2）`);
-        onlineSocket.emit('join-room', onlineRoomCode);
-    } else {
-        myRole = 'P1';
-        setOnlineStatus('ルームを作成中…（あなたは P1）');
-        onlineSocket.emit('create-room');
-    }
-    onlineSocket.on('room-created', (code) => {
-        onlineRoomCode = code;
-        setOnlineStatus(`ルーム ${code} を作成。相手の参加を待っています（あなたは P1）`);
-        updateModeDisplay();
-    });
-    onlineSocket.on('joined', () => {
-        onlineConnected = true;
-        setOnlineStatus(`接続しました。対戦開始（あなたは ${myRole}）`);
-        updateModeDisplay();
-    });
-    onlineSocket.on('peer-joined', () => {
-        onlineConnected = true;
-        setOnlineStatus('接続しました。対戦開始（あなたは P1）');
-        broadcastState();
-        updateModeDisplay();
-    });
-    onlineSocket.on('peer-left', () => {
-        onlineConnected = false;
-        setOnlineStatus('相手が切断しました');
-    });
-    onlineSocket.on('join-error', (msg) => {
-        setOnlineStatus(`参加できません: ${msg || 'ルームが見つかりません'}`);
-    });
-    onlineSocket.on('relay', (data) => handleOnlineData(data));
-    onlineSocket.on('connect_error', () => {
-        setOnlineStatus('サーバーに接続できません。サーバーが起動しているか確認してください');
-    });
-    updateModeDisplay();
-}
-
-function teardownOnline() {
-    onlineConnected = false;
-    onlineConn = null;
-    onlineTransport = null;
-    if (onlineSocket) {
-        try { onlineSocket.disconnect(); } catch (e) {}
-        onlineSocket = null;
-    }
-    if (peer) {
-        try { peer.destroy(); } catch (e) {}
-        peer = null;
-    }
-}
-
-document.addEventListener('pointermove', (e) => {
-    if (!touchDrag) return;
-    if (!touchDrag.active) {
-        const dx = e.clientX - touchDrag.x, dy = e.clientY - touchDrag.y;
-        if (dx * dx + dy * dy < 100) return;
-        touchDrag.active = true;
-    }
-    let target = null;
-    if (document.elementFromPoint) {
-        const el = document.elementFromPoint(e.clientX, e.clientY);
-        const sqEl = el && el.closest ? el.closest('.square') : null;
-        if (sqEl) target = sqEl.dataset.square;
-    }
-    touchDrag.target = target;
-    boardEl.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    if (target) {
-        const tEl = boardEl.querySelector(`[data-square="${target}"]`);
-        if (tEl) tEl.classList.add('drag-over');
-    }
-});
-document.addEventListener('pointerup', () => {
-    if (touchDrag) {
-        const td = touchDrag;
-        touchDrag = null;
-        boardEl.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-        if (td.active) {
-            suppressNextClick = true;
-            if (td.target && td.target !== td.from) {
-                const moves = getSimulatedMoves(td.from, getActivePieceColor());
-                if (moves.some(m => m.to === td.target)) attemptMove(td.from, td.target);
-            }
-        }
-    }
-    if (pointerHintSquare && !dragFromSquare) {
-        pointerHintSquare = null;
-        clearDragHints();
-    }
-});
-document.addEventListener('pointercancel', () => {
-    if (pointerHintSquare && !dragFromSquare) {
-        pointerHintSquare = null;
-        clearDragHints();
-    }
-});
-
-// ===== チャット =====
-function appendChatMessage(mine, text) {
-    if (!chatMessagesEl) return;
-    const div = document.createElement('div');
-    if (mine) div.className = 'chat-msg-me';
-    div.textContent = (mine ? 'あなた: ' : '相手: ') + text;
-    chatMessagesEl.appendChild(div);
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-}
-function sendChat(text) {
-    const t = (text || '').trim();
-    if (!t) return;
-    appendChatMessage(true, t);
-    if (onlineConnected) {
-        sendOnline({ type: 'chat', text: t });
-    }
-}
-if (chatToggleBtn && chatPanelEl) {
-    chatToggleBtn.addEventListener('click', () => chatPanelEl.classList.toggle('hidden'));
-}
-if (chatSendBtn && chatInputEl) {
-    chatSendBtn.addEventListener('click', () => { sendChat(chatInputEl.value); chatInputEl.value = ''; });
-    chatInputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { sendChat(chatInputEl.value); chatInputEl.value = ''; }
-    });
-}
-document.querySelectorAll('.level-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-        cpuVariantLevel = chip.dataset.level;
-        document.querySelectorAll('.level-chip').forEach(c => c.classList.toggle('selected', c === chip));
-        refreshModeSummaries();
-    });
-});
-document.querySelectorAll('.stamp-btn').forEach(btn => {
-    btn.addEventListener('click', () => sendChat(btn.dataset.stamp));
-});
-
-// ===== 申し出（引き分け／再戦） =====
-function showOffer(type, text) {
-    pendingOfferType = type;
-    if (offerTextEl) offerTextEl.textContent = text;
-    if (offerPanelEl) offerPanelEl.classList.remove('hidden');
-}
-function hideOffer() {
-    pendingOfferType = null;
-    if (offerPanelEl) offerPanelEl.classList.add('hidden');
-}
-if (offerAcceptBtn) {
-    offerAcceptBtn.addEventListener('click', () => {
-        const type = pendingOfferType;
-        hideOffer();
-        if (!onlineConnected) return;
-        if (type === 'draw') {
-            sendOnline({ type: 'draw-response', accept: true });
-            finishDraw('同意による引き分け');
-        } else if (type === 'rematch') {
-            sendOnline({ type: 'rematch-response', accept: true });
-            myRole = myRole === 'P1' ? 'P2' : 'P1';
-            initGame();
-            broadcastState();
-            setOnlineStatus(`再戦開始（あなたは ${myRole}）`);
-        }
-    });
-}
-if (offerDeclineBtn) {
-    offerDeclineBtn.addEventListener('click', () => {
-        const type = pendingOfferType;
-        hideOffer();
-        if (!onlineConnected || !type) return;
-        sendOnline({ type: type + '-response', accept: false });
-    });
-}
-if (rematchBtn) {
-    rematchBtn.addEventListener('click', () => {
-        if (onlineConnected) {
-            sendOnline({ type: 'rematch-request' });
-            setOnlineStatus('再戦をリクエストしました。相手の返事を待っています');
-        }
-    });
-}
-
-if (copyUrlBtn) {
-    copyUrlBtn.addEventListener('click', () => {
-        if (!onlineRoomCode) return;
-        const base = window.location.href.split('?')[0].split('#')[0];
-        const url = `${base}?room=${onlineRoomCode}`;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(() => setOnlineStatus(`招待URLをコピーしました: ${url}`));
-        } else {
-            setOnlineStatus(`招待URL: ${url}`);
-        }
-    });
-}
-
-// ===== 招待URL（?room=コード）を開いたら、自動でオンライン参加する =====
-(function autoJoinFromUrl() {
-    try {
-        const code = new URLSearchParams(window.location.search).get('room');
-        if (!code) return;
-        selectedGameMode = 'online';
-        modeItems.forEach(c => c.classList.toggle('selected', c.dataset.mode === 'online'));
-        if (onlineJoinBoxEl) onlineJoinBoxEl.classList.remove('hidden');
-        menuScreen.classList.add('hidden');
-        gameScreen.classList.remove('hidden');
-        p2NameLabel.textContent = 'P2 (相手)';
-        updateModeDisplay();
-        initGame();
-        setupOnline();
-    } catch (e) {}
-})();
-
-// ===== CPU同士の自動対戦（データ画面・検証用簡易シミュレーション） =====
-function simPickMove(mode, moves, fen, color, player, counter) {
-    if (moves.length === 0) return null;
-    const winning = moves.find(m => m.captured === 'k' && COLOR_OWNERS[m.color] === player);
-    if (winning) return winning;
-    if (mode === 'cpu-easy') return moves[Math.floor(Math.random() * moves.length)];
-    if (mode === 'cpu-normal' || mode === 'cpu-random') {
-        const caps = moves.filter(m => m.captured);
-        const pool = caps.length ? caps : moves;
-        return pool[Math.floor(Math.random() * pool.length)];
-    }
-    // 上級・鬼（簡易版）: 1手評価＋（鬼のみ）相手の最善応手まで読む
-    let best = -Infinity, sel = moves[0];
-    orderMovesForSearch(moves).forEach(m => {
-        const tg = new Chess(fen);
-        tg.move(m);
-        let score = evaluateBoard(tg, player === 'P1' ? 'w' : 'b');
-        if (mode === 'cpu-demon') {
-            const boardOnly = tg.fen().split(' ')[0];
-            const oppPlayer = player === 'P1' ? 'P2' : 'P1';
-            const bottomNow = player === 'P1' ? color : (color === 'w' ? 'b' : 'w');
-            const bottomNext = (counter + 1) % 2 === 0 ? (bottomNow === 'w' ? 'b' : 'w') : bottomNow;
-            const oppColor = oppPlayer === 'P1' ? bottomNext : (bottomNext === 'w' ? 'b' : 'w');
-            let oppFen;
-            try { oppFen = new Chess(`${boardOnly} ${oppColor} - - 0 1`); } catch (e) { oppFen = null; }
-            if (oppFen) {
-                const oppMoves = oppFen.moves({ verbose: true })
-                    .filter(om => !(om.captured === 'k' && COLOR_OWNERS[om.color] !== oppPlayer));
-                if (oppMoves.some(om => om.captured === 'k')) {
-                    score = -100000;
-                } else if (oppMoves.length) {
-                    let min = Infinity;
-                    oppMoves.forEach(om => {
-                        const og = new Chess(`${boardOnly} ${oppColor} - - 0 1`);
-                        og.move(om);
-                        min = Math.min(min, evaluateBoard(og, player === 'P1' ? 'w' : 'b'));
-                    });
-                    score = min;
-                }
-            }
-        }
-        if (score > best) { best = score; sel = m; }
-    });
-    return sel;
-}
-
-function simulateBattleGame(modeA, modeB) {
-    const sg = new Chess();
-    let sRotated = false, sCounter = 0, sPlayer = 'P1', sSkipNext = false;
-    const sSkips = { P1: settings.initialSkips, P2: settings.initialSkips };
-    const sCaps = { P1: 0, P2: 0 };
-    let moves = 0;
-    while (moves < 160) {
-        const bottomColor = sRotated ? 'b' : 'w';
-        const color = sPlayer === 'P1' ? bottomColor : (bottomColor === 'w' ? 'b' : 'w');
-        const fen = `${sg.fen().split(' ')[0]} ${color} - - 0 1`;
-        let sim;
-        try { sim = new Chess(fen); } catch (e) { break; }
-        const legal = sim.moves({ verbose: true })
-            .filter(m => !(m.captured === 'k' && COLOR_OWNERS[m.color] !== sPlayer));
-        if (legal.length === 0) return { winner: null, moves };
-        const mode = sPlayer === 'P1' ? modeA : modeB;
-        if (sSkips[sPlayer] > 0 && !sSkipNext && mode === 'cpu-demon' && Math.random() < 0.3) {
-            sSkipNext = true; sSkips[sPlayer]--;
-        }
-        const chosen = simPickMove(mode, legal, fen, color, sPlayer, sCounter);
-        if (!chosen) return { winner: null, moves };
-        const sim2 = new Chess(fen);
-        const mo = sim2.move({ from: chosen.from, to: chosen.to, promotion: 'q' });
-        if (!mo) return { winner: null, moves };
-        sg.load(sim2.fen());
-        moves++;
-        if (mo.captured) {
-            sCaps[sPlayer]++;
-            if (sCaps[sPlayer] >= settings.capturesForSkip) { sSkips[sPlayer]++; sCaps[sPlayer] = 0; }
-        }
-        if (mo.captured === 'k') return { winner: sPlayer, moves };
-        if (isKingCheckmated(sg.fen(), 'b') && sPlayer === 'P1' && color === 'w') return { winner: 'P1', moves };
-        if (isKingCheckmated(sg.fen(), 'w') && sPlayer === 'P2' && color === 'b') return { winner: 'P2', moves };
-        sCounter++;
-        if (sCounter >= 2) {
-            sCounter = 0;
-            if (sSkipNext) sSkipNext = false; else sRotated = !sRotated;
-        }
-        sPlayer = sPlayer === 'P1' ? 'P2' : 'P1';
-    }
-    return { winner: null, moves };
 }
 
 let battleRunning = false;
