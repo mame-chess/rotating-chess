@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール・キャラ図鑑</button>
             </div>
-            <p class="version-note">Rotating Chess v4.5</p>
+            <p class="version-note">Rotating Chess v4.6</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -88,6 +88,7 @@
             <h2 class="hub-screen-title">CPUと対戦・観戦</h2>
             <div class="mode-menu-container">
                 <div class="mode-list">
+                        <div class="mode-group-label">回転チェス ― 強さがそのままモードです</div>
                         <button class="mode-item" data-mode="cpu-easy">
                             <span class="badge badge-easy">初級</span>
                             <div class="mode-info">
@@ -116,6 +117,7 @@
                                 <div class="mode-desc">ミニマックス法＋α-β探索で3手先まで読む＋回転停止権を戦略使用</div>
                             </div>
                         </button>
+                        <div class="mode-group-label mode-group-label-sub">その他のモード ― CPUの強さは下のボタンで選べます</div>
                         <button class="mode-item random-item" data-mode="cpu-random">
                             <span class="badge badge-random">ランダム回転</span>
                             <div class="mode-info">
@@ -127,14 +129,14 @@
                             <span class="badge badge-normal">通常</span>
                             <div class="mode-info">
                                 <div class="mode-title">通常チェス (CPU対戦)</div>
-                                <div class="mode-desc">回転なしの普通のチェスで中級CPUと対戦</div>
+                                <div class="mode-desc">回転なしの普通のチェス。CPUの強さは下のボタンで変更できます</div>
                             </div>
                         </button>
                         <button class="mode-item" data-mode="chara-cpu">
                             <span class="badge badge-hard">キャラ</span>
                             <div class="mode-info">
                                 <div class="mode-title">キャラ対戦 (CPU対戦)</div>
-                                <div class="mode-desc">キャラとスキルで中級CPUと対戦する回転チェス</div>
+                                <div class="mode-desc">キャラとスキルで戦う回転チェス。CPUの強さは下のボタンで変更できます</div>
                             </div>
                         </button>
                         <button class="mode-item" data-mode="watch">
@@ -146,7 +148,7 @@
                         </button>
                 </div>
                 <div id="cpu-level-box" class="level-box hidden">
-                    <span class="level-box-label">通常／キャラ／ランダム回転（CPU）の強さ</span>
+                    <span class="level-box-label">🤖 選択中のモードのCPUの強さ（通常／キャラ／ランダム回転 共通）</span>
                     <div class="level-chips">
                         <button class="level-chip" data-level="cpu-easy">初級</button>
                         <button class="level-chip selected" data-level="cpu-normal">中級</button>
@@ -550,6 +552,10 @@
                 <p id="battle-progress" class="screen-note"></p>
                 <div id="battle-result" class="battle-result"></div>
                 <p class="screen-note">自動対戦は検証用の簡易版です。探索の深さと手数上限を抑えて実行します。</p>
+                <h4 class="watch-stats-title">観戦モードの勝率（CPU同士）</h4>
+                <p class="screen-note">観戦モード（CPU同士）で対戦が終わると自動で記録され、強さの組み合わせごとに勝率が計算されます。</p>
+                <div id="watch-stats" class="watch-stats"></div>
+                <button id="watch-stats-clear" class="secondary-btn">観戦記録を消す</button>
             </div>
         </div>
     </div>
