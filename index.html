@@ -38,9 +38,9 @@
             <div class="menu-utility">
                 <button id="menu-settings-btn" class="utility-btn">設定</button>
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
-                <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール</button>
+                <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール・キャラ図鑑</button>
             </div>
-            <p class="version-note">Rotating Chess v4.1</p>
+            <p class="version-note">Rotating Chess v4.2</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -369,7 +369,7 @@
             <div class="header-bar">
                 <button id="guide-back-btn" class="secondary-btn">← 戻る</button>
             </div>
-            <h2 class="guide-title">駒図鑑・ルール説明</h2>
+            <h2 class="guide-title">駒図鑑・ルール・キャラ図鑑</h2>
             <div class="guide-tabs">
                 <button class="guide-tab selected" data-gtab="pieces">駒の説明</button>
                 <button class="guide-tab" data-gtab="rules">ルールの説明</button>
@@ -394,7 +394,24 @@
                     <h4>引き分け</h4>
                     <p>両者キングのみになったとき、同じ局面が3回繰り返されたとき（千日手）、動ける駒がなくなったとき（ステイルメイト）、両者が同意したときに引き分けになります。</p>
                     <h4>特殊な動き</h4>
-                    <p>キャスリングとアンパッサンは通常のチェス通り使えます（回転しても権利は保持されます）。ポーンが端まで進むと、クイーン・ルーク・ビショップ・ナイトのいずれかに昇格できます。</p>
+                    <p>チェスの特殊な動き（キャスリング／アンパッサン／昇格）も、すべて通常のルール通り使えます。</p>
+                    <h4>キャスリング（入城）</h4>
+                    <p>キングとルークを同時に動かす特殊な手です。キングをルークの方向へ2マス動かすと、ルークがキングを飛び越えた隣のマスに移動します。やり方：キングをルークの方へ2マス動かすだけです（自動でルークも動きます）。</p>
+                    <ul>
+                        <li>キング側（短い入城）：キングが右へ2マス、ルークはその左隣へ</li>
+                        <li>クイーン側（長い入城）：キングが左へ2マス、ルークはその右隣へ</li>
+                        <li>使える条件：キングとルークがまだ一度も動いていない／間のマスが全部空いている／キングがチェックされていない／キングが通り道と移動先で攻撃されていない</li>
+                        <li>このゲームでは、盤面が回転してもキャスリングの権利はそのまま保持されます（回転は見た目と操作する駒が変わるだけです）</li>
+                    </ul>
+                    <h4>アンパッサン（通り過ぎざまの取り）</h4>
+                    <p>相手のポーンが初期位置から2マス進んで、自分のポーンの真横に止まったときだけ使える特殊な取り方です。自分のポーンを斜め前に進めると、相手のポーンを取れます（自分のポーンは、相手のポーンが通過したマスに着地します）。</p>
+                    <ul>
+                        <li>取れるのは、相手が2マス進めた直後の自分の手番だけです（1手でも遅れると取れません）</li>
+                        <li>自分のポーンが相手陣地側の段（金なら5段目、青なら4段目）にいるときに使えます</li>
+                        <li>このゲームでも通常通り使えます</li>
+                    </ul>
+                    <h4>ポーンの昇格（プロモーション）</h4>
+                    <p>ポーンが相手陣地のいちばん奥の段まで進むと、クイーン・ルーク・ビショップ・ナイトのいずれかに昇格できます。選ぶ画面が出るので、好きな駒を選んでください（ふつうは最強のクイーンを選びます）。</p>
                     <h4>ランダム回転モード</h4>
                     <p>回転のタイミングが1〜4手のランダムになる特別ルールです。このモードでは初めの色に関係なく、今動かしている駒でキングを取るか、チェックメイトすれば勝利です。</p>
                     <h4>通常チェス（回転なし）</h4>
@@ -468,10 +485,6 @@
                 </label>
             </div>
 
-            <div class="settings-section">
-                <h3>特殊ルールの扱い（確定事項）</h3>
-                <p class="screen-note">キャスリングとアンパッサンは、通常のチェスのルール通り使えます。回転は見た目と操作する駒が変わるだけなので、権利は回転してもそのまま保持されます。</p>
-            </div>
         </div>
 
         <!-- 4. 対戦データ画面 -->
@@ -530,7 +543,24 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="characters.js"></script>
     <script src="characters2.js"></script>
+    <script src="characters3.js"></script>
+    <script src="characters4.js"></script>
+    <script src="characters5.js"></script>
+    <script src="characters6.js"></script>
     <script src="script.js"></script>
+    <div id="skill-effect-banner" class="hidden"></div>
+    <div id="chara-lightbox" class="hidden">
+        <div class="lb-backdrop"></div>
+        <figure class="lb-box">
+            <img id="lb-img" alt="">
+            <figcaption class="lb-caption">
+                <div id="lb-name" class="lb-name"></div>
+                <div id="lb-skill" class="lb-skill"></div>
+                <p id="lb-desc" class="lb-desc"></p>
+            </figcaption>
+            <button id="lb-close" class="secondary-btn">閉じる</button>
+        </figure>
+    </div>
 </body>
 
 </html>

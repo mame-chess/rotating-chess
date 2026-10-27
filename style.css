@@ -595,3 +595,42 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .guide-chara-profile { font-size: 12px; line-height: 1.6; opacity: .85; margin: 6px 0 0; }
 .chara-modal-back { display: block; margin: 14px auto 0; }
 .chara-grid { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); }
+
+/* ===== v4.2：スキルボタン・発動エフェクト・立ち絵拡大 ===== */
+.chara-skill-btn { position: relative; border: none; cursor: pointer; color: #fff; font-weight: 800; letter-spacing: .03em; padding: 10px 22px;
+  background: linear-gradient(135deg, #7c3aed 0%, #c026d3 55%, #f59e0b 130%);
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+  filter: drop-shadow(0 3px 6px rgba(60,20,120,.5));
+  text-shadow: 0 1px 2px rgba(0,0,0,.35); transition: transform .12s, filter .12s; }
+.chara-skill-btn::before { content: "✦ "; color: #ffe58a; }
+.chara-skill-btn::after { content: " ✦"; color: #ffe58a; }
+.chara-skill-btn:not(:disabled):hover { transform: scale(1.05); filter: brightness(1.1); }
+.chara-skill-btn:not(:disabled) { animation: skillGlow 2.2s ease-in-out infinite; }
+.chara-skill-btn:disabled { background: linear-gradient(135deg, #9ca3af, #6b7280); filter: none; animation: none; cursor: default; }
+@keyframes skillGlow { 0%,100% { filter: drop-shadow(0 3px 6px rgba(60,20,120,.5)) brightness(1); } 50% { filter: drop-shadow(0 0 12px rgba(255,210,80,.95)) brightness(1.12); } }
+#skill-effect-banner { position: fixed; left: 50%; top: 34%; transform: translate(-50%, -50%); z-index: 1200; text-align: center; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(30,10,60,.88), rgba(30,10,60,.55) 70%, transparent); padding: 26px 54px; border-radius: 24px; }
+#skill-effect-banner .se-player { color: #e9d5ff; font-size: 15px; font-weight: 700; letter-spacing: .2em; }
+#skill-effect-banner .se-skill { color: #ffe58a; font-size: 34px; font-weight: 900; text-shadow: 0 0 18px rgba(255,180,0,.8), 0 2px 4px rgba(0,0,0,.6); }
+#skill-effect-banner.anim { animation: seBanner 1.6s ease-out forwards; }
+@keyframes seBanner { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.6); } 12% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); } 22% { transform: translate(-50%,-50%) scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-56%) scale(1.02); } }
+#board.skill-flash { animation: boardPulse .9s ease-out; }
+@keyframes boardPulse { 0% { filter: brightness(1); } 25% { filter: brightness(1.35) saturate(1.3); } 100% { filter: brightness(1); } }
+.square.skill-hit { animation: skillHit 1.4s ease-out; }
+@keyframes skillHit { 0% { box-shadow: inset 0 0 0 4px #ffe58a, inset 0 0 24px 10px rgba(255,200,0,.85); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
+#chara-lightbox { position: fixed; inset: 0; z-index: 1300; display: flex; align-items: center; justify-content: center; }
+#chara-lightbox.hidden { display: none; }
+#chara-lightbox .lb-backdrop { position: absolute; inset: 0; background: rgba(10,6,24,.82); backdrop-filter: blur(3px); }
+.lb-box { position: relative; margin: 0; max-width: min(92vw, 520px); max-height: 92vh; overflow: auto; text-align: center; }
+.lb-box img { width: 100%; max-height: 64vh; object-fit: contain; border-radius: 16px; box-shadow: 0 18px 60px rgba(0,0,0,.6), 0 0 0 2px rgba(255,215,130,.6); background: #1b1430; }
+.lb-caption { color: #fff; padding: 12px 6px 4px; }
+.lb-name { font-size: 20px; font-weight: 900; }
+.lb-skill { color: #ffe58a; font-weight: 800; margin-top: 2px; }
+.lb-desc { font-size: 13px; line-height: 1.7; opacity: .92; margin: 6px 0 10px; }
+.guide-chara-card img { cursor: zoom-in; transition: transform .15s; }
+.guide-chara-card img:hover { transform: scale(1.02); }
+.chara-card { position: relative; }
+.chara-zoom-btn { position: absolute; top: 6px; right: 6px; background: rgba(20,12,40,.72); color: #fff; border-radius: 999px; padding: 4px 7px; font-size: 13px; line-height: 1; cursor: zoom-in; }
+.chara-zoom-btn:hover { background: rgba(124,58,237,.9); }
+.chara-face { cursor: zoom-in; }
+.guide-rules ul { margin: 4px 0 10px; padding-left: 20px; line-height: 1.7; font-size: 13.5px; }
