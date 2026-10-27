@@ -89,6 +89,8 @@ function saveSettings() {
 }
 
 let lastMove = null;
+let lastMovePlayer = null; // 最後に着手したプレイヤー（勝敗判定用）
+let lastMoveColor = null; // 最後に着手した駒の色
 let validMoveDetails = [];
 let castlingRights = 'KQkq';
 let epSquare = '-';
@@ -305,6 +307,8 @@ function initGame() {
     statsRecorded = false;
     randomNextRotation = isRandomMode() ? drawRandomRotationCountdown() : null;
     lastMove = null;
+    lastMovePlayer = null;
+    lastMoveColor = null;
     validMoveDetails = [];
     castlingRights = 'KQkq';
     epSquare = '-';
@@ -389,6 +393,7 @@ function snapshotState() {
         isBoardRotated, moveCounter, skipNextRotation,
         currentPlayer, gameOver, winnerPlayer, winReason,
         p1Skips, p2Skips, p1Captures, p2Captures,
+        lastMovePlayer, lastMoveColor,
         selectedGameMode, moveHistory: JSON.parse(JSON.stringify(moveHistory)),
         totalMovesCount, rotationsCount, statsRecorded, randomNextRotation,
         lastMove, castlingRights, epSquare,
@@ -411,6 +416,8 @@ function restoreState(snap) {
     winReason = snap.winReason || null;
     p1Skips = snap.p1Skips; p2Skips = snap.p2Skips;
     p1Captures = snap.p1Captures; p2Captures = snap.p2Captures;
+    lastMovePlayer = snap.lastMovePlayer || null;
+    lastMoveColor = snap.lastMoveColor || null;
     if (snap.selectedGameMode) selectedGameMode = snap.selectedGameMode;
     moveHistory = snap.moveHistory || [];
     totalMovesCount = snap.totalMovesCount || 0;
@@ -804,6 +811,8 @@ function executeMoveCustom(from, to, promotion) {
         if (fenPartsAfter[2]) castlingRights = fenPartsAfter[2];
         if (fenPartsAfter[3]) epSquare = fenPartsAfter[3];
         lastMove = { from, to };
+        lastMovePlayer = currentPlayer;
+        lastMoveColor = currentColor;
         totalMovesCount++;
         moveHistory.push({
             n: totalMovesCount, player: currentPlayer, color: currentColor,
@@ -937,14 +946,14 @@ function checkWinConditions() {
     const blackKingCheckmate = isKingCheckmated(currentFen, 'b');
     const whiteKingCheckmate = isKingCheckmated(currentFen, 'w');
 
-    if (blackKingCheckmate) {
+    if (blackKingCheckmate && lastMovePlayer === 'P1' && lastMoveColor === 'w') {
         gameOver = true;
         winnerPlayer = 'P1';
         winReason = 'checkmate';
         recordGameResult();
         updateWinOverlay();
         messageEl.textContent = '★ P1 (あなた) の勝利！(チェックメイト)';
-    } else if (whiteKingCheckmate) {
+    } else if (whiteKingCheckmate && lastMovePlayer === 'P2' && lastMoveColor === 'b') {
         gameOver = true;
         winnerPlayer = 'P2';
         winReason = 'checkmate';
@@ -984,6 +993,7 @@ function isKingCheckmated(fenStr, kingColor) {
 
 function chooseCpuMove(player, levelKey) {
     const color = getActivePieceColor(player);
+    const ownColor = player === 'P1' ? 'w' : 'b'; // そのプレイヤーの「初めの色」。評価は常にこの色基準
     const activeFen = buildActiveFen(color);
     let simGame;
     try { simGame = new Chess(activeFen); } catch (e) { return null; }
@@ -1008,8 +1018,15 @@ function chooseCpuMove(player, levelKey) {
     if (levelKey === 'cpu-easy') {
         selectedMove = moves[Math.floor(Math.random() * moves.length)];
     } else if (levelKey === 'cpu-normal') {
-        const captureMoves = moves.filter(m => m.captured);
-        selectedMove = captureMoves.length > 0 ? captureMoves[Math.floor(Math.random() * captureMoves.length)] : moves[Math.floor(Math.random() * moves.length)];
+        if (color === ownColor) {
+            const captureMoves = moves.filter(m => m.captured);
+            selectedMove = captureMoves.length > 0 ? captureMoves[Math.floor(Math.random() * captureMoves.length)] : moves[Math.floor(Math.random() * moves.length)];
+        } else {
+            // 相手の色を操作しているときは、自分の色の駒を減らす「取る手」を避ける
+            const safeMoves = moves.filter(m => !m.captured);
+            const pool = safeMoves.length > 0 ? safeMoves : moves;
+            selectedMove = pool[Math.floor(Math.random() * pool.length)];
+        }
     } else if (levelKey === 'cpu-hard' || levelKey === 'cpu-demon') {
         // ミニマックス法＋α-β探索（上級：合計2手先、鬼：合計3手先まで読む）
         const depth = levelKey === 'cpu-demon' ? 2 : 1; // ルートの1手＋この深さ
@@ -1025,7 +1042,7 @@ function chooseCpuMove(player, levelKey) {
             const testGame = new Chess(activeFen);
             testGame.move(m);
             const childBoard = testGame.fen().split(' ')[0];
-            const score = minimaxAlphaBeta(childBoard, 1, depth, alpha, Infinity, false, color, player);
+            const score = minimaxAlphaBeta(childBoard, 1, depth, alpha, Infinity, false, color, player, ownColor);
             if (score > bestScore) {
                 bestScore = score;
                 selectedMove = m;
@@ -1125,7 +1142,8 @@ function getSearchActiveColor(ply, rootColor, rootPlayer) {
 }
 // ミニマックス法＋α-β探索。評価はルートで CPU が動かした色を基準にする。
 // maximizing=true が CPU (P2) の手番、false が相手 (P1) の手番。
-function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootColor, rootPlayer) {
+function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootColor, rootPlayer, evalColor) {
+    const ec = evalColor || rootColor;
     const rp = rootPlayer || 'P2';
     const activeColor = getSearchActiveColor(ply, rootColor, rp);
     const nodePlayer = maximizing ? rp : (rp === 'P2' ? 'P1' : 'P2');
@@ -1136,10 +1154,10 @@ function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootCo
         return 0;
     }
 
-    if (depth <= 0) return evaluateBoard(nodeGame, rootColor);
+    if (depth <= 0) return evaluateBoard(nodeGame, ec);
 
     const moves = filterForbiddenKingCaptures(nodeGame.moves({ verbose: true }), nodePlayer);
-    if (moves.length === 0) return evaluateBoard(nodeGame, rootColor);
+    if (moves.length === 0) return evaluateBoard(nodeGame, ec);
 
     const ordered = orderMovesForSearch(moves);
 
@@ -1149,7 +1167,7 @@ function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootCo
             if (isWinningKingCapture(m, nodePlayer)) return 100000 - ply;
             const child = new Chess(buildFenFromBoard(boardOnly, activeColor));
             child.move(m);
-            value = Math.max(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, false, rootColor, rp));
+            value = Math.max(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, false, rootColor, rp, ec));
             alpha = Math.max(alpha, value);
             if (alpha >= beta) break; // βカット
         }
@@ -1160,7 +1178,7 @@ function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootCo
             if (isWinningKingCapture(m, nodePlayer)) return -100000 + ply;
             const child = new Chess(buildFenFromBoard(boardOnly, activeColor));
             child.move(m);
-            value = Math.min(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, true, rootColor, rp));
+            value = Math.min(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, true, rootColor, rp, ec));
             beta = Math.min(beta, value);
             if (alpha >= beta) break; // αカット
         }
@@ -1678,7 +1696,7 @@ function simPickMove(mode, moves, fen, color, player, counter) {
     orderMovesForSearch(moves).forEach(m => {
         const tg = new Chess(fen);
         tg.move(m);
-        let score = evaluateBoard(tg, color);
+        let score = evaluateBoard(tg, player === 'P1' ? 'w' : 'b');
         if (mode === 'cpu-demon') {
             const boardOnly = tg.fen().split(' ')[0];
             const oppPlayer = player === 'P1' ? 'P2' : 'P1';
@@ -1697,7 +1715,7 @@ function simPickMove(mode, moves, fen, color, player, counter) {
                     oppMoves.forEach(om => {
                         const og = new Chess(`${boardOnly} ${oppColor} - - 0 1`);
                         og.move(om);
-                        min = Math.min(min, evaluateBoard(og, color));
+                        min = Math.min(min, evaluateBoard(og, player === 'P1' ? 'w' : 'b'));
                     });
                     score = min;
                 }
@@ -1739,8 +1757,8 @@ function simulateBattleGame(modeA, modeB) {
             if (sCaps[sPlayer] >= settings.capturesForSkip) { sSkips[sPlayer]++; sCaps[sPlayer] = 0; }
         }
         if (mo.captured === 'k') return { winner: sPlayer, moves };
-        if (isKingCheckmated(sg.fen(), 'b')) return { winner: 'P1', moves };
-        if (isKingCheckmated(sg.fen(), 'w')) return { winner: 'P2', moves };
+        if (isKingCheckmated(sg.fen(), 'b') && sPlayer === 'P1' && color === 'w') return { winner: 'P1', moves };
+        if (isKingCheckmated(sg.fen(), 'w') && sPlayer === 'P2' && color === 'b') return { winner: 'P2', moves };
         sCounter++;
         if (sCounter >= 2) {
             sCounter = 0;
