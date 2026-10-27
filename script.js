@@ -438,6 +438,8 @@ function finishGame(winner, reason) {
 }
 
 let dragDropped = false;
+let touchDrag = null;
+let suppressNextClick = false;
 let hintSquares = [];
 let pointerHintSquare = null;
 function clearDragHints() {
@@ -494,11 +496,14 @@ function renderBoard() {
             }
 
             squareEl.addEventListener('click', () => handleSquareClick(squareName));
-            squareEl.addEventListener('pointerdown', () => {
+            squareEl.addEventListener('pointerdown', (e) => {
                 const pc = game.get(squareName);
                 if (pc && pc.color === getBottomPieceColor() && !gameOver) {
                     pointerHintSquare = squareName;
                     showDragHints(squareName);
+                    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                        touchDrag = { from: squareName, active: false, target: null, x: e.clientX, y: e.clientY };
+                    }
                 }
             });
             squareEl.addEventListener('dragstart', (e) => {
@@ -702,6 +707,7 @@ document.querySelectorAll('.promotion-btn').forEach(btn => {
 });
 
 function handleSquareClick(square) {
+    if (suppressNextClick) { suppressNextClick = false; return; }
     if (gameOver || game.game_over()) return;
     if (selectedGameMode.startsWith('cpu') && currentPlayer === 'P2') return;
     if (isOnlineMode()) {
@@ -743,6 +749,8 @@ function handleSquareClick(square) {
 // 確実に着手を反映させる安全移動関数
 function executeMoveCustom(from, to, promotion) {
     if (gameOver) return;
+    // オンライン対戦では、接続が完了していて自分の手番のときだけ着手できる（クリック／ドラッグ共通）
+    if (isOnlineMode() && (!onlineConnected || currentPlayer !== myRole)) return;
 
     const targetPiece = game.get(to);
     const movingPiece = game.get(from);
@@ -1423,7 +1431,39 @@ function teardownOnline() {
     }
 }
 
+document.addEventListener('pointermove', (e) => {
+    if (!touchDrag) return;
+    if (!touchDrag.active) {
+        const dx = e.clientX - touchDrag.x, dy = e.clientY - touchDrag.y;
+        if (dx * dx + dy * dy < 100) return;
+        touchDrag.active = true;
+    }
+    let target = null;
+    if (document.elementFromPoint) {
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const sqEl = el && el.closest ? el.closest('.square') : null;
+        if (sqEl) target = sqEl.dataset.square;
+    }
+    touchDrag.target = target;
+    boardEl.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    if (target) {
+        const tEl = boardEl.querySelector(`[data-square="${target}"]`);
+        if (tEl) tEl.classList.add('drag-over');
+    }
+});
 document.addEventListener('pointerup', () => {
+    if (touchDrag) {
+        const td = touchDrag;
+        touchDrag = null;
+        boardEl.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        if (td.active) {
+            suppressNextClick = true;
+            if (td.target && td.target !== td.from) {
+                const moves = getSimulatedMoves(td.from, getBottomPieceColor());
+                if (moves.some(m => m.to === td.target)) attemptMove(td.from, td.target);
+            }
+        }
+    }
     if (pointerHintSquare && !dragFromSquare) {
         pointerHintSquare = null;
         clearDragHints();
