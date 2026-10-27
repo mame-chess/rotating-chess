@@ -313,6 +313,14 @@ function getBottomPieceColor() {
     return isBoardRotated ? 'b' : 'w';
 }
 
+// そのプレイヤーが今操作できる駒の色。P1は画面下側、P2は画面上側の色を操作し、
+// 両者が1手ずつ動かして盤面が回転すると、操作する色が入れ替わる
+function getActivePieceColor(player) {
+    const p = player || currentPlayer;
+    const bottom = getBottomPieceColor();
+    return p === 'P1' ? bottom : (bottom === 'w' ? 'b' : 'w');
+}
+
 // ランダム回転モード：次の回転まで 1〜4 手を秘密に抽選する（画面には出さない）
 function drawRandomRotationCountdown() {
     const min = Math.max(1, settings.randomMin);
@@ -334,7 +342,7 @@ function buildFenFromBoard(boardOnly, color) {
 }
 
 function positionKey() {
-    return game.fen().split(' ')[0] + '|' + getBottomPieceColor() + '|' + currentPlayer;
+    return game.fen().split(' ')[0] + '|' + getActivePieceColor() + '|' + currentPlayer;
 }
 function recordPosition() {
     const k = positionKey();
@@ -448,7 +456,7 @@ function clearDragHints() {
 }
 function showDragHints(from) {
     clearDragHints();
-    const moves = getSimulatedMoves(from, getBottomPieceColor());
+    const moves = getSimulatedMoves(from, getActivePieceColor());
     moves.forEach(m => {
         const el = boardEl.querySelector(`[data-square="${m.to}"]`);
         if (el) {
@@ -498,7 +506,7 @@ function renderBoard() {
             squareEl.addEventListener('click', () => handleSquareClick(squareName));
             squareEl.addEventListener('pointerdown', (e) => {
                 const pc = game.get(squareName);
-                if (pc && pc.color === getBottomPieceColor() && !gameOver) {
+                if (pc && pc.color === getActivePieceColor() && !gameOver) {
                     pointerHintSquare = squareName;
                     showDragHints(squareName);
                     if (e.pointerType === 'touch' || e.pointerType === 'pen') {
@@ -508,7 +516,7 @@ function renderBoard() {
             });
             squareEl.addEventListener('dragstart', (e) => {
                 const pc = game.get(squareName);
-                if (pc && pc.color === getBottomPieceColor() && !gameOver) {
+                if (pc && pc.color === getActivePieceColor() && !gameOver) {
                     dragFromSquare = squareName;
                     dragDropped = false;
                     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
@@ -529,7 +537,7 @@ function renderBoard() {
                 e.preventDefault();
                 squareEl.classList.remove('drag-over');
                 if (dragFromSquare && dragFromSquare !== squareName) {
-                    const moves = getSimulatedMoves(dragFromSquare, getBottomPieceColor());
+                    const moves = getSimulatedMoves(dragFromSquare, getActivePieceColor());
                     if (moves.some(m => m.to === squareName)) {
                         dragDropped = true;
                         attemptMove(dragFromSquare, squareName);
@@ -543,9 +551,9 @@ function renderBoard() {
 
     const playerLabel = getPlayerLabel(currentPlayer);
     const currentSkips = currentPlayer === 'P1' ? p1Skips : p2Skips;
-    const bottomColorName = getBottomPieceColor() === 'w' ? '金' : '青';
+    const bottomColorName = getActivePieceColor() === 'w' ? '金' : '青';
 
-    turnEl.textContent = `${playerLabel} の番 [手前: ${bottomColorName}]`;
+    turnEl.textContent = `${playerLabel} の番 [操作する色: ${bottomColorName}]`;
     // ランダム回転モードでは「回転まであと何手か」を伏せる
     movesLeftEl.textContent = isRandomMode() ? '？' : (2 - moveCounter);
 
@@ -599,7 +607,7 @@ function updateDangerWarning() {
     if (gameOver) { dangerWarningEl.classList.add('hidden'); return; }
     const msgs = [];
     try {
-        const sim = new Chess(buildActiveFen(getBottomPieceColor()));
+        const sim = new Chess(buildActiveFen(getActivePieceColor()));
         const kingCap = sim.moves({ verbose: true }).find(m => m.captured === 'k');
         if (kingCap) {
             if (isRandomMode() || isWinningKingCapture(kingCap, currentPlayer)) {
@@ -728,9 +736,9 @@ function handleSquareClick(square) {
         }
     }
 
-    // 手前の駒をクリックした場合
+    // 自分が操作できる色の駒をクリックした場合
     const piece = game.get(square);
-    const bottomColor = getBottomPieceColor();
+    const bottomColor = getActivePieceColor();
 
     if (piece && piece.color === bottomColor) {
         selectedSquare = square;
@@ -754,7 +762,7 @@ function executeMoveCustom(from, to, promotion) {
 
     const targetPiece = game.get(to);
     const movingPiece = game.get(from);
-    const currentColor = getBottomPieceColor();
+    const currentColor = getActivePieceColor();
 
     // 安全装置：相手の色の駒で自分の色のキングを取る手は、ここでも実行させない
     // （ランダム回転モードでは初めの色が関係ないため適用しない）
@@ -869,7 +877,7 @@ function executeMoveCustom(from, to, promotion) {
         if (!gameOver) {
             if (isOnlyKingsLeft()) { finishDraw('両者キングのみ'); return; }
             if (recordPosition() >= 3) { finishDraw('同じ局面が3回（千日手）'); return; }
-            if (!hasAnyLegalMove(getBottomPieceColor())) { finishDraw('ステイルメイト'); return; }
+            if (!hasAnyLegalMove(getActivePieceColor())) { finishDraw('ステイルメイト'); return; }
         }
 
         if (!gameOver && !game.game_over() && selectedGameMode.startsWith('cpu') && currentPlayer === 'P2') {
@@ -961,7 +969,7 @@ function isKingCheckmated(fenStr, kingColor) {
 
 function makeCpuMove() {
     if (gameOver) return;
-    const cpuColor = getBottomPieceColor();
+    const cpuColor = getActivePieceColor('P2');
     const activeFen = buildActiveFen(cpuColor);
 
     let simGame = new Chess(activeFen);
@@ -1039,12 +1047,16 @@ function orderMovesForSearch(moves) {
     return [...moves].sort((a, b) => ((PIECE_VALUES[b.captured] || 0) - (PIECE_VALUES[a.captured] || 0)));
 }
 
-// 探索の ply 目で「手前」になる色。2手ごとの回転を、ルート時点の moveCounter から計算する。
+// 探索の ply 目に、その手番のプレイヤーが操作できる色。
+// ルート（ply=0）は CPU(P2) の手で rootColor はその時点の CPU の操作色。
+// 2手ごとの回転による下側の色の入れ替わりも、ルート時点の moveCounter から計算する。
 // ※探索内では回転停止権の消費までは再現せず、回転スケジュールのみを近似する
 function getSearchActiveColor(ply, rootColor) {
     const rotations = Math.floor((moveCounter + ply) / 2) - Math.floor(moveCounter / 2);
-    if (rotations % 2 === 0) return rootColor;
-    return rootColor === 'w' ? 'b' : 'w';
+    const rootBottom = rootColor === 'w' ? 'b' : 'w';
+    const bottom = rotations % 2 === 0 ? rootBottom : rootColor;
+    const nodePlayer = ply % 2 === 0 ? 'P2' : 'P1';
+    return nodePlayer === 'P1' ? bottom : (bottom === 'w' ? 'b' : 'w');
 }
 
 // ミニマックス法＋α-β探索。評価はルートで CPU が動かした色を基準にする。
@@ -1459,7 +1471,7 @@ document.addEventListener('pointerup', () => {
         if (td.active) {
             suppressNextClick = true;
             if (td.target && td.target !== td.from) {
-                const moves = getSimulatedMoves(td.from, getBottomPieceColor());
+                const moves = getSimulatedMoves(td.from, getActivePieceColor());
                 if (moves.some(m => m.to === td.target)) attemptMove(td.from, td.target);
             }
         }
@@ -1600,8 +1612,9 @@ function simPickMove(mode, moves, fen, color, player, counter) {
         if (mode === 'cpu-demon') {
             const boardOnly = tg.fen().split(' ')[0];
             const oppPlayer = player === 'P1' ? 'P2' : 'P1';
-            const rotations = Math.floor((counter + 1) / 2) - Math.floor(counter / 2);
-            const oppColor = rotations % 2 === 0 ? color : (color === 'w' ? 'b' : 'w');
+            const bottomNow = player === 'P1' ? color : (color === 'w' ? 'b' : 'w');
+            const bottomNext = (counter + 1) % 2 === 0 ? (bottomNow === 'w' ? 'b' : 'w') : bottomNow;
+            const oppColor = oppPlayer === 'P1' ? bottomNext : (bottomNext === 'w' ? 'b' : 'w');
             let oppFen;
             try { oppFen = new Chess(`${boardOnly} ${oppColor} - - 0 1`); } catch (e) { oppFen = null; }
             if (oppFen) {
@@ -1632,7 +1645,8 @@ function simulateBattleGame(modeA, modeB) {
     const sCaps = { P1: 0, P2: 0 };
     let moves = 0;
     while (moves < 160) {
-        const color = sRotated ? 'b' : 'w';
+        const bottomColor = sRotated ? 'b' : 'w';
+        const color = sPlayer === 'P1' ? bottomColor : (bottomColor === 'w' ? 'b' : 'w');
         const fen = `${sg.fen().split(' ')[0]} ${color} - - 0 1`;
         let sim;
         try { sim = new Chess(fen); } catch (e) { break; }
