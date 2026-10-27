@@ -300,6 +300,10 @@ function simPickMove(mode, moves, fen, color, player, counter) {
     if (moves.length === 0) return null;
     const winning = moves.find(m => m.captured === 'k' && COLOR_OWNERS[m.color] === player);
     if (winning) return winning;
+    // 自分の色の駒を取る手は選ばない（他に手がある場合）
+    const ownColor = player === 'P1' ? 'w' : 'b';
+    const nonOwnCaps = moves.filter(m => !m.captured || (m.color === 'w' ? 'b' : 'w') !== ownColor);
+    if (nonOwnCaps.length) moves = nonOwnCaps;
     if (mode === 'cpu-easy') return moves[Math.floor(Math.random() * moves.length)];
     if (mode === 'cpu-normal' || mode === 'cpu-random') {
         const caps = moves.filter(m => m.captured);
@@ -356,10 +360,25 @@ function simulateBattleGame(modeA, modeB) {
     let sGuardP2 = true;
     let sDoubleP2 = true;
     let sExtraNow = false;
+    let sEndgame = false;
+    const sCounts = {};
     let moves = 0;
     while (moves < 240) {
         const bottomColor = sRotated ? 'b' : 'w';
-        const color = sPlayer === 'P1' ? bottomColor : (bottomColor === 'w' ? 'b' : 'w');
+        const color = sEndgame ? (sPlayer === 'P1' ? 'w' : 'b') : (sPlayer === 'P1' ? bottomColor : (bottomColor === 'w' ? 'b' : 'w'));
+        const posKey = sg.fen().split(' ')[0] + '|' + sPlayer + '|' + color;
+        sCounts[posKey] = (sCounts[posKey] || 0) + 1;
+        if (sCounts[posKey] >= 3) {
+            if (!sEndgame) {
+                sEndgame = true;
+                for (const k in sCounts) delete sCounts[k];
+            } else {
+                const adjE = evaluateBoard(sg, 'w');
+                if (adjE >= 50) return { winner: 'P1', moves, adjudicated: true };
+                if (adjE <= -50) return { winner: 'P2', moves, adjudicated: true };
+                return { winner: null, moves };
+            }
+        }
         const fen = `${sg.fen().split(' ')[0]} ${color} - - 0 1`;
         let sim;
         try { sim = new Chess(fen); } catch (e) { break; }
@@ -400,7 +419,7 @@ function simulateBattleGame(modeA, modeB) {
         if (isKingCheckmated(sg.fen(), 'b') && sPlayer === 'P1' && color === 'w') return { winner: 'P1', moves };
         if (isKingCheckmated(sg.fen(), 'w') && sPlayer === 'P2' && color === 'b') return { winner: 'P2', moves };
         if (sg.board().flat().every(x => !x || x.type === 'k')) return { winner: null, moves };
-        if (!isExtraMove) {
+        if (!isExtraMove && !sEndgame) {
             sCounter++;
             if (sCounter >= 2) {
                 sCounter = 0;
@@ -408,7 +427,7 @@ function simulateBattleGame(modeA, modeB) {
             }
         }
         let extraTurn = false;
-        if (sPlayer === 'P2' && sDoubleP2 && (mo.captured || isKingInCheck(sg.fen(), 'w'))) {
+        if (!sEndgame && sPlayer === 'P2' && sDoubleP2 && (mo.captured || isKingInCheck(sg.fen(), 'w'))) {
             sDoubleP2 = false;
             extraTurn = true;
             sExtraNow = true;
@@ -416,31 +435,52 @@ function simulateBattleGame(modeA, modeB) {
         if (!extraTurn) sPlayer = sPlayer === 'P1' ? 'P2' : 'P1';
     }
     const adj = evaluateBoard(sg, 'w');
-    if (adj > 150) return { winner: 'P1', moves, adjudicated: true };
-    if (adj < -150) return { winner: 'P2', moves, adjudicated: true };
+    if (adj >= 50) return { winner: 'P1', moves, adjudicated: true };
+    if (adj <= -50) return { winner: 'P2', moves, adjudicated: true };
     return { winner: null, moves };
 }
 
 // script.js からの分割（CPUスキル・キャラパネル・図鑑・キャラ選択・観戦UI・駒図鑑）
-function maybeCpuUseSkill() {
-    const player = cpuSide;
+function opponentNextColor(player) {
+    // 相手が次の自分の手番で操作する色（回転の位相から計算）。ランダム回転では確定できないため null
+    const opp = opponentOf(player);
+    if (isNormalMode() || (typeof endgamePhase !== 'undefined' && endgamePhase)) return opp === 'P1' ? 'w' : 'b';
+    if (isRandomMode()) return null;
+    const nextRotated = (moveCounter + 1 >= 2) ? !isBoardRotated : isBoardRotated;
+    const nextBottom = nextRotated ? 'b' : 'w';
+    return opp === 'P1' ? nextBottom : (nextBottom === 'w' ? 'b' : 'w');
+}
+function maybeCpuUseSkill() { maybeUseSkillFor(cpuSide); }
+function maybeUseSkillFor(player) {
     if (!isCharaMode() || charaUsed[player] || charaPhase || gameOver) return;
     const ch = charaOf(player);
     if (!ch) return;
     if (!skillUnlocked(player)) return;
     const rnd = Math.random();
     const activeColor = getActivePieceColor(player);
+    const ownColor = player === 'P1' ? 'w' : 'b';
+    const enemyColor = ownColor === 'w' ? 'b' : 'w';
+    const opp = opponentOf(player);
+    const oppNext = opponentNextColor(player);
+    // 相手の色を操作している手番では、盤面の駒を操るスキルは意味を失う／逆効果になるため使わない
+    const BOARD_KINDS = ['counter', 'transform', 'step', 'clone', 'swap', 'dashSlash', 'destroy', 'pushback', 'charm', 'exchange'];
+    if (activeColor !== ownColor && BOARD_KINDS.includes(ch.kind)) return;
     switch (ch.kind) {
         case 'skip': case 'shield': applySkillEffect(player, {}); return;
         case 'extra': if (rnd < 0.3) applySkillEffect(player, {}); return;
-        case 'freeze': case 'barrier': if (totalMovesCount > 4 && rnd < 0.3) applySkillEffect(player, {}); return;
+        case 'freeze': case 'barrier': {
+            // 相手が次に「自分の色」を操作する手番でないと、相手の取り／チェックを止める意味がない
+            const oppOwnNext = oppNext === null || oppNext === (opp === 'P1' ? 'w' : 'b');
+            if (totalMovesCount > 4 && rnd < 0.3 && oppOwnNext) applySkillEffect(player, {});
+            return;
+        }
         case 'revive': { const p = planRevive(player); if (p) applySkillEffect(player, p); return; }
         case 'revivePawns': { const p = planRevivePawns(player); if (p) applySkillEffect(player, p); return; }
         case 'convert': { const p = planConvert(player); if (p) applySkillEffect(player, p); return; }
         case 'clone': { const p = planClone(player); if (p) applySkillEffect(player, p); return; }
         case 'fortune': {
             const roll = Math.random();
-            const hasLost = moveHistory.some(h => h.captured && h.capturedColor === 'b' && !h.revived);
+            const hasLost = moveHistory.some(h => h.captured && h.capturedColor === ownColor && !h.revived);
             if (roll < 0.10 && hasLost) applySkillEffect(player, { mode: 'all' });
             else if (roll < 0.40) applySkillEffect(player, { mode: 'guard' });
             else if (roll < 0.80) {
@@ -450,9 +490,9 @@ function maybeCpuUseSkill() {
             } else applySkillEffect(player, { mode: 'pawn', square: planKingGuardPawn(player) });
             return;
         }
-        case 'reviveAll': { if (moveHistory.some(h => h.captured && h.capturedColor === 'b' && !h.revived)) applySkillEffect(player, {}); return; }
+        case 'reviveAll': { if (moveHistory.some(h => h.captured && h.capturedColor === ownColor && !h.revived)) applySkillEffect(player, {}); return; }
         case 'charm': {
-            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k' && cell.type !== 'q' && !charmWouldGiveCheck(cell.square, player));
+            const targets = boardCells().filter(cell => cell.color === enemyColor && cell.type !== 'k' && cell.type !== 'q' && !charmWouldGiveCheck(cell.square, player));
             targets.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
             if (targets.length && rnd < 0.7) applySkillEffect(player, { square: targets[0].square });
             return;
@@ -465,17 +505,20 @@ function maybeCpuUseSkill() {
             return;
         }
         case 'pushback': {
-            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k');
+            const targets = boardCells().filter(cell => cell.color === enemyColor && cell.type !== 'k');
             targets.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
             for (const cell of targets) {
                 const c = squareCoords(cell.square);
-                const dest = coordsToSquare(c.f, c.r - 1);
+                const backDir = cell.color === 'w' ? -1 : 1;
+                const dest = coordsToSquare(c.f, c.r + backDir);
                 if (dest && !game.get(dest)) { if (rnd < 0.5) applySkillEffect(player, { square: cell.square }); return; }
             }
             return;
         }
         case 'counter': {
-            const own = boardCells().filter(cell => cell.color === activeColor);
+            // 自分の色の駒にだけ付ける。相手が次に自分の色を操作して攻めてくる局面でのみ意味がある
+            if (oppNext !== null && oppNext !== enemyColor) return;
+            const own = boardCells().filter(cell => cell.color === ownColor && cell.type !== 'k');
             own.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
             if (own.length && rnd < 0.6) applySkillEffect(player, { square: own[0].square });
             return;
@@ -483,7 +526,7 @@ function maybeCpuUseSkill() {
         case 'dashSlash': {
             let bestMove = null, bestValue = -1;
             const ownPieces = boardCells().filter(cell => cell.color === activeColor && cell.type !== 'k');
-            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k');
+            const targets = boardCells().filter(cell => cell.color === enemyColor && cell.type !== 'k');
             ownPieces.forEach(a => targets.forEach(b => {
                 const ac = squareCoords(a.square), bc = squareCoords(b.square);
                 const aligned = ac.f === bc.f || ac.r === bc.r || Math.abs(ac.f - bc.f) === Math.abs(ac.r - bc.r);
@@ -495,18 +538,18 @@ function maybeCpuUseSkill() {
         case 'undo': if (historyStack.length >= 3 && rnd < 0.12) applySkillEffect(player, {}); return;
         case 'transform': {
             const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square }); return; } }
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: boardCells()[r * 8 + f].square }); return; } }
             return;
         }
         case 'sleep': {
             const tc = sleepTargetColorFor(player);
             let best = null, bv = -1;
-            game.board().flat().forEach(cell => { if (cell && cell.color === tc && (SKILL_PIECE_VALUES[cell.type] || 0) > bv) { bv = SKILL_PIECE_VALUES[cell.type]; best = cell.square; } });
+            boardCells().forEach(cell => { if (cell.color === tc && (SKILL_PIECE_VALUES[cell.type] || 0) > bv) { bv = SKILL_PIECE_VALUES[cell.type]; best = cell.square; } });
             if (best && rnd < 0.5) applySkillEffect(player, { square: best });
             return;
         }
         case 'destroy': {
-            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k');
+            const targets = boardCells().filter(cell => cell.color === enemyColor && cell.type !== 'k');
             targets.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
             if (targets.length && rnd < 0.6) applySkillEffect(player, { square: targets[0].square });
             return;
@@ -517,14 +560,14 @@ function maybeCpuUseSkill() {
                 const cell = bd[r][f];
                 if (cell && cell.type === 'p' && cell.color === activeColor) {
                     const nr = cell.color === 'w' ? r - 1 : r + 1;
-                    if (nr >= 0 && nr < 8 && !bd[nr][f]) { applySkillEffect(player, { a: cell.square, b: files[f] + (8 - nr) }); return; }
+                    if (nr >= 0 && nr < 8 && !bd[nr][f]) { applySkillEffect(player, { a: boardCells()[r * 8 + f].square, b: files[f] + (8 - nr) }); return; }
                 }
             }
             return;
         }
         case 'exchange': {
             const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square, toType: 'r' }); return; } }
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: boardCells()[r * 8 + f].square, toType: 'r' }); return; } }
             return;
         }
         case 'swap': return;
@@ -838,7 +881,17 @@ function renderCharaStats() {
         box.innerHTML = '<p class="screen-note">まだキャラ対戦の記録がありません。キャラ対戦が終わると、使ったキャラごとの勝率が表示されます。</p>';
         return;
     }
-    box.innerHTML = entries.map(([cid, v]) => {
+    const tierOf = (rate, games) => games < 3 ? null : rate >= 65 ? 'S' : rate >= 55 ? 'A' : rate >= 45 ? 'B' : 'C';
+    const tiers = { S: [], A: [], B: [], C: [] };
+    entries.forEach(([cid, v]) => {
+        const rate = v.wins / v.games * 100;
+        const tier = tierOf(rate, v.games);
+        if (tier) tiers[tier].push({ cid, rate: rate.toFixed(1), games: v.games });
+    });
+    const tierHtml = ['S', 'A', 'B', 'C'].filter(k => tiers[k].length).map(k =>
+        `<div class="watch-stat-row"><span class="ws-match">ティア ${k}</span><span class="ws-rec">${tiers[k].map(x => { const ch = CHARACTERS.find(c => c.id === x.cid); return `${ch ? ch.name : x.cid}（${x.rate}%）`; }).join('、')}</span></div>`
+    ).join('');
+    box.innerHTML = (tierHtml ? `<div class="watch-stat-row"><span class="ws-match">キャラティア表</span><span class="ws-games">3戦以上で判定</span></div>` + tierHtml : '') + entries.map(([cid, v]) => {
         const ch = CHARACTERS.find(c => c.id === cid);
         const name = ch ? ch.name : cid;
         const rate = (v.wins / v.games * 100).toFixed(1);
@@ -1004,7 +1057,8 @@ function makeCpuMove() {
 let watchTimer = null;
 let watchPlaying = false;
 let watchMatchNo = 1;
-function isWatchMode() { return selectedGameMode === 'watch'; }
+function isWatchMode() { return selectedGameMode === 'watch' || selectedGameMode === 'chara-watch'; }
+function isCharaWatchMode() { return selectedGameMode === 'chara-watch'; }
 function watchLevelFor(player) {
     const sel = document.getElementById(player === 'P1' ? 'watch-p1-level' : 'watch-p2-level');
     return sel ? sel.value : 'cpu-normal';
@@ -1023,6 +1077,7 @@ function scheduleWatch() {
 }
 function watchStep() {
     if (!watchPlaying || !isWatchMode() || gameOver) return;
+    if (isCharaWatchMode()) maybeUseSkillFor(currentPlayer);
     let mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
     // 観戦の反復回避：同じ盤面を3回目に作る手は、他に手があれば避ける（同じ動きの繰り返しでの引き分け防止）
     if (mv) {
@@ -1056,6 +1111,7 @@ function watchStep() {
             if (!isWatchMode() || !watchPlaying) return;
             watchMatchNo++;
             if (typeof watchDiceSwap === 'function') watchDiceSwap();
+            if (isCharaWatchMode()) setupCharaWatch();
             initGame();
             startWatch();
         }, 3000);
@@ -1077,12 +1133,60 @@ function pauseWatch() {
     stopWatchTimer();
     updateWatchUI();
 }
+function buildWatchCharaSelects() {
+    ['watch-chara-p1', 'watch-chara-p2'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel || sel.childElementCount > 0) return;
+        const opt = document.createElement('option');
+        opt.value = 'random'; opt.textContent = 'ランダム';
+        sel.appendChild(opt);
+        CHARACTERS.forEach(ch => {
+            const o = document.createElement('option');
+            o.value = ch.id; o.textContent = ch.name;
+            sel.appendChild(o);
+        });
+    });
+}
+function setupCharaWatch() {
+    buildWatchCharaSelects();
+    const pick = (selId, exclude) => {
+        const sel = document.getElementById(selId);
+        let v = sel ? sel.value : 'random';
+        if (v === 'random') {
+            const pool = CHARACTERS.map(c => c.id).filter(id => id !== exclude);
+            v = pool[Math.floor(Math.random() * pool.length)];
+        }
+        return v;
+    };
+    const p1 = pick('watch-chara-p1', null);
+    const p2 = pick('watch-chara-p2', p1);
+    playerCharacters = { P1: p1, P2: p2 };
+    charaPhase = false;
+    renderCharaPanel();
+}
 function updateWatchUI() {
     const panel = document.getElementById('watch-panel');
     if (panel) panel.classList.toggle('hidden', !isWatchMode());
+    document.querySelectorAll('.watch-chara-row').forEach(r => r.classList.toggle('hidden', !isCharaWatchMode()));
+    if (isCharaWatchMode()) buildWatchCharaSelects();
     const btn = document.getElementById('watch-toggle-btn');
     if (btn) btn.textContent = watchPlaying ? '一時停止' : '再開する';
     const info = document.getElementById('watch-match-info');
     if (info) info.textContent = `第${watchMatchNo}試合` + (typeof watchDiceNote !== 'undefined' && watchDiceNote ? `（${watchDiceNote}）` : '');
 }
 
+// ===== 最終決戦と形勢判定（script.js から分割） =====
+function enterEndgamePhase() {
+    endgamePhase = true;
+    isBoardRotated = false;
+    if (boardEl) boardEl.classList.remove('rotate-180');
+    positionCounts = {};
+    positionCounts[positionKey()] = 1;
+    messageEl.textContent = '千日手！盤面の回転を止めて、通常チェスで最終決戦を行います';
+}
+function adjudicateByPosition(reason) {
+    const diff = evaluateBoard(game, 'w');
+    if (diff >= 50) { finishGame('P1', 'adjudication'); messageEl.textContent = `${reason}のため形勢判定：P1 の勝ち`; }
+    else if (diff <= -50) { finishGame('P2', 'adjudication'); messageEl.textContent = `${reason}のため形勢判定：P2 の勝ち`; }
+    else finishDraw(reason + '・形勢互角');
+}
