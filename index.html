@@ -108,6 +108,13 @@
                             </div>
                             <span class="key-hint">Key: 8</span>
                         </button>
+                        <button class="mode-item" data-mode="watch">
+                            <span class="badge badge-hard">観戦</span>
+                            <div class="mode-info">
+                                <div class="mode-title">CPU同士 観戦</div>
+                                <div class="mode-desc">CPU同士の対戦を盤面で観戦できます。両者の強さと対戦速度を調整できます</div>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
@@ -212,6 +219,39 @@
                             <button id="resign-btn" class="secondary-btn">投了</button>
                             <button id="export-btn" class="secondary-btn">記録を保存</button>
                         </div>
+                    </div>
+
+                    <div id="watch-panel" class="status-panel hidden">
+                        <h4>観戦設定（CPU同士）</h4>
+                        <div class="watch-row">
+                            <label for="watch-p1-level">P1 の強さ</label>
+                            <select id="watch-p1-level">
+                                <option value="cpu-easy">初級</option>
+                                <option value="cpu-normal" selected>中級</option>
+                                <option value="cpu-hard">上級</option>
+                                <option value="cpu-demon">鬼</option>
+                            </select>
+                        </div>
+                        <div class="watch-row">
+                            <label for="watch-p2-level">P2 の強さ</label>
+                            <select id="watch-p2-level">
+                                <option value="cpu-easy">初級</option>
+                                <option value="cpu-normal" selected>中級</option>
+                                <option value="cpu-hard">上級</option>
+                                <option value="cpu-demon">鬼</option>
+                            </select>
+                        </div>
+                        <div class="watch-row">
+                            <label for="watch-speed">対戦速度</label>
+                            <select id="watch-speed">
+                                <option value="2200">ゆっくり</option>
+                                <option value="1100" selected>普通</option>
+                                <option value="500">速い</option>
+                                <option value="180">最速</option>
+                            </select>
+                        </div>
+                        <button id="watch-toggle-btn" class="action-btn">一時停止</button>
+                        <p class="watch-note">観戦中は盤面を操作できません。速度は対戦中でも変更できます。</p>
                     </div>
 
                     <div class="captured-panel">

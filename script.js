@@ -12,11 +12,14 @@ const PIECE_SHAPES = {
 };
 function pieceSVG(type, color) {
     const light = color === 'w';
-    const fill = light ? '#d9b45c' : '#54748f';
-    const stroke = light ? '#7a5c14' : '#263c50';
-    const bg = light ? '#a8832a' : '#314d66';
+    const gid = light ? 'gradGold' : 'gradBlue';
+    const stroke = light ? '#6e5210' : '#22384e';
+    const bg = light ? '#8a6a1d' : '#2c475f';
     const shapes = PIECE_SHAPES[type].split('BG').join(bg);
-    return `<svg viewBox="0 0 45 45" class="piece-svg" aria-hidden="true"><g fill="${fill}" stroke="${stroke}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">${shapes}</g></svg>`;
+    const defs = light
+        ? '<defs><linearGradient id="gradGold" x1="0" y1="0" x2="0.55" y2="1"><stop offset="0" stop-color="#f7e3a1"/><stop offset="0.45" stop-color="#dcb95f"/><stop offset="1" stop-color="#ad8327"/></linearGradient></defs>'
+        : '<defs><linearGradient id="gradBlue" x1="0" y1="0" x2="0.55" y2="1"><stop offset="0" stop-color="#aecfe8"/><stop offset="0.45" stop-color="#5f829e"/><stop offset="1" stop-color="#314d68"/></linearGradient></defs>';
+    return `<svg viewBox="0 0 45 45" class="piece-svg" aria-hidden="true">${defs}<ellipse cx="22.5" cy="41.8" rx="12.5" ry="1.8" fill="#000" opacity="0.16" stroke="none"/><g fill="url(#${gid})" stroke="${stroke}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">${shapes}</g></svg>`;
 }
 
 const PIECE_VALUES = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 1000 };
@@ -36,7 +39,8 @@ const MODE_LABELS = {
     'cpu-easy': 'CPU対戦 (Easy)｜初級',
     'cpu-normal': 'CPU対戦 (Normal)｜中級',
     'cpu-hard': 'CPU対戦 (Hard)｜上級・ミニマックス探索',
-    'cpu-demon': 'CPU対戦 (鬼)｜👹 鬼・深い先読み'
+    'cpu-demon': 'CPU対戦 (鬼)｜深い先読み',
+    'watch': 'CPU同士｜観戦モード'
 };
 
 function isRandomMode() { return selectedGameMode === 'pvp-random' || selectedGameMode === 'cpu-random'; }
@@ -192,10 +196,12 @@ window.addEventListener('keydown', (e) => {
 startBtn.addEventListener('click', () => {
     menuScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
-    p2NameLabel.textContent = selectedGameMode.startsWith('cpu') ? 'P2 (CPU)' : 'P2 (相手)';
+    p2NameLabel.textContent = (selectedGameMode.startsWith('cpu') || isWatchMode()) ? 'P2 (CPU)' : 'P2 (相手)';
     updateModeDisplay();
     initGame();
     if (isOnlineMode()) setupOnline();
+    if (isWatchMode()) { updateWatchUI(); startWatch(); }
+    else { pauseWatch(); updateWatchUI(); }
 });
 
 function updateModeDisplay() {
@@ -210,11 +216,13 @@ function updateModeDisplay() {
 }
 
 function getPlayerLabel(player) {
+    if (isWatchMode()) return player === 'P1' ? 'P1 (CPU)' : 'P2 (CPU)';
     if (player === 'P1') return 'P1 (あなた)';
     return selectedGameMode.startsWith('cpu') ? 'P2 (CPU)' : 'P2 (相手)';
 }
 
 backMenuBtn.addEventListener('click', () => {
+    pauseWatch();
     teardownOnline();
     gameScreen.classList.add('hidden');
     menuScreen.classList.remove('hidden');
@@ -224,11 +232,14 @@ backMenuBtn.addEventListener('click', () => {
 restartBtn.addEventListener('click', () => {
     initGame();
     broadcastState();
+    if (isWatchMode()) { updateWatchUI(); startWatch(); }
+    else { pauseWatch(); updateWatchUI(); }
 });
 
 // ===== 画面遷移（メニュー／ゲーム／設定／データ） =====
 let settingsReturnTo = 'menu';
 function showScreen(name) {
+    if (name !== 'game') pauseWatch();
     menuScreen.classList.toggle('hidden', name !== 'menu');
     gameScreen.classList.toggle('hidden', name !== 'game');
     if (settingsScreen) settingsScreen.classList.toggle('hidden', name !== 'settings');
@@ -505,6 +516,7 @@ function renderBoard() {
 
             squareEl.addEventListener('click', () => handleSquareClick(squareName));
             squareEl.addEventListener('pointerdown', (e) => {
+                if (isWatchMode()) return;
                 const pc = game.get(squareName);
                 if (pc && pc.color === getActivePieceColor() && !gameOver) {
                     pointerHintSquare = squareName;
@@ -590,7 +602,7 @@ function renderCapturedPieces() {
         el.innerHTML = '';
         by[player].forEach(h => {
             const sp = document.createElement('span');
-            sp.className = 'piece-' + (h.capturedColor || 'w');
+            sp.className = 'captured-piece piece-' + (h.capturedColor || 'w');
             sp.innerHTML = pieceSVG(h.captured, h.capturedColor || 'w');
             el.appendChild(sp);
         });
@@ -715,6 +727,7 @@ document.querySelectorAll('.promotion-btn').forEach(btn => {
 });
 
 function handleSquareClick(square) {
+    if (isWatchMode()) return;
     if (suppressNextClick) { suppressNextClick = false; return; }
     if (gameOver || game.game_over()) return;
     if (selectedGameMode.startsWith('cpu') && currentPlayer === 'P2') return;
@@ -967,45 +980,42 @@ function isKingCheckmated(fenStr, kingColor) {
     }
 }
 
-function makeCpuMove() {
-    if (gameOver) return;
-    const cpuColor = getActivePieceColor('P2');
-    const activeFen = buildActiveFen(cpuColor);
+function chooseCpuMove(player, levelKey) {
+    const color = getActivePieceColor(player);
+    const activeFen = buildActiveFen(color);
+    let simGame;
+    try { simGame = new Chess(activeFen); } catch (e) { return null; }
+    const moves = filterForbiddenKingCaptures(simGame.moves({ verbose: true }), player);
+    if (moves.length === 0) return null;
 
-    let simGame = new Chess(activeFen);
-    // CPUにも同じ禁止手を適用する：青の駒で金キングは取れない／自分の色なら勝利手として残す
-    const moves = filterForbiddenKingCaptures(simGame.moves({ verbose: true }), 'P2');
-    if (moves.length === 0) return;
-
-    let selectedMove = null;
-
-    if (p2Skips > 0 && !skipNextRotation) {
-        if (selectedGameMode === 'cpu-demon' && (Math.random() < 0.4 || simGame.in_check())) {
+    // 回転停止権の使用判断（そのプレイヤーの残り回数を使う）
+    const skipsLeft = player === 'P1' ? p1Skips : p2Skips;
+    if (skipsLeft > 0 && !skipNextRotation) {
+        const useSkip = levelKey === 'cpu-demon'
+            ? (Math.random() < 0.4 || simGame.in_check())
+            : (Math.random() < 0.2);
+        if (useSkip) {
             skipNextRotation = true;
-            p2Skips--;
-            skipBtn.textContent = '回転停止予約中！';
-            skipBtn.style.backgroundColor = '#ef4444';
-        } else if (Math.random() < 0.2) {
-            skipNextRotation = true;
-            p2Skips--;
+            if (player === 'P1') p1Skips--; else p2Skips--;
             skipBtn.textContent = '回転停止予約中！';
             skipBtn.style.backgroundColor = '#ef4444';
         }
     }
 
-    if (selectedGameMode === 'cpu-easy') {
+    let selectedMove = null;
+    if (levelKey === 'cpu-easy') {
         selectedMove = moves[Math.floor(Math.random() * moves.length)];
-    } else if (selectedGameMode === 'cpu-normal' || selectedGameMode === 'cpu-random') {
+    } else if (levelKey === 'cpu-normal') {
         const captureMoves = moves.filter(m => m.captured);
         selectedMove = captureMoves.length > 0 ? captureMoves[Math.floor(Math.random() * captureMoves.length)] : moves[Math.floor(Math.random() * moves.length)];
-    } else if (selectedGameMode === 'cpu-hard' || selectedGameMode === 'cpu-demon') {
+    } else if (levelKey === 'cpu-hard' || levelKey === 'cpu-demon') {
         // ミニマックス法＋α-β探索（上級：合計2手先、鬼：合計3手先まで読む）
-        const depth = selectedGameMode === 'cpu-demon' ? 2 : 1; // ルートの1手＋この深さ
+        const depth = levelKey === 'cpu-demon' ? 2 : 1; // ルートの1手＋この深さ
         let bestScore = -Infinity;
         let alpha = -Infinity;
         const ordered = orderMovesForSearch(moves);
         ordered.forEach(m => {
-            if (isWinningKingCapture(m, 'P2')) {
+            if (isWinningKingCapture(m, player)) {
                 selectedMove = m;
                 bestScore = Infinity;
                 return;
@@ -1013,7 +1023,7 @@ function makeCpuMove() {
             const testGame = new Chess(activeFen);
             testGame.move(m);
             const childBoard = testGame.fen().split(' ')[0];
-            const score = minimaxAlphaBeta(childBoard, 1, depth, alpha, Infinity, false, cpuColor);
+            const score = minimaxAlphaBeta(childBoard, 1, depth, alpha, Infinity, false, color, player);
             if (score > bestScore) {
                 bestScore = score;
                 selectedMove = m;
@@ -1021,9 +1031,61 @@ function makeCpuMove() {
             if (score > alpha) alpha = score;
         });
     }
-
     if (!selectedMove) selectedMove = moves[Math.floor(Math.random() * moves.length)];
-    executeMoveCustom(selectedMove.from, selectedMove.to);
+    return selectedMove;
+}
+
+function makeCpuMove() {
+    if (gameOver) return;
+    const level = selectedGameMode === 'cpu-random' ? 'cpu-normal' : selectedGameMode;
+    const mv = chooseCpuMove('P2', level);
+    if (mv) executeMoveCustom(mv.from, mv.to);
+}
+
+// ===== CPU同士の観戦モード =====
+let watchTimer = null;
+let watchPlaying = false;
+function isWatchMode() { return selectedGameMode === 'watch'; }
+function watchLevelFor(player) {
+    const sel = document.getElementById(player === 'P1' ? 'watch-p1-level' : 'watch-p2-level');
+    return sel ? sel.value : 'cpu-normal';
+}
+function watchDelay() {
+    const sel = document.getElementById('watch-speed');
+    return sel ? parseInt(sel.value, 10) : 1000;
+}
+function stopWatchTimer() {
+    if (watchTimer) { clearTimeout(watchTimer); watchTimer = null; }
+}
+function scheduleWatch() {
+    stopWatchTimer();
+    if (!watchPlaying || !isWatchMode() || gameOver) return;
+    watchTimer = setTimeout(watchStep, watchDelay());
+}
+function watchStep() {
+    if (!watchPlaying || !isWatchMode() || gameOver) return;
+    const mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
+    if (!mv) { pauseWatch(); return; }
+    executeMoveCustom(mv.from, mv.to);
+    if (!gameOver) scheduleWatch();
+    else pauseWatch();
+}
+function startWatch() {
+    if (!isWatchMode()) return;
+    watchPlaying = true;
+    updateWatchUI();
+    scheduleWatch();
+}
+function pauseWatch() {
+    watchPlaying = false;
+    stopWatchTimer();
+    updateWatchUI();
+}
+function updateWatchUI() {
+    const panel = document.getElementById('watch-panel');
+    if (panel) panel.classList.toggle('hidden', !isWatchMode());
+    const btn = document.getElementById('watch-toggle-btn');
+    if (btn) btn.textContent = watchPlaying ? '一時停止' : '再開する';
 }
 
 function evaluateBoard(chessObj, cpuColor) {
@@ -1051,19 +1113,20 @@ function orderMovesForSearch(moves) {
 // ルート（ply=0）は CPU(P2) の手で rootColor はその時点の CPU の操作色。
 // 2手ごとの回転による下側の色の入れ替わりも、ルート時点の moveCounter から計算する。
 // ※探索内では回転停止権の消費までは再現せず、回転スケジュールのみを近似する
-function getSearchActiveColor(ply, rootColor) {
+function getSearchActiveColor(ply, rootColor, rootPlayer) {
+    const rp = rootPlayer || 'P2';
     const rotations = Math.floor((moveCounter + ply) / 2) - Math.floor(moveCounter / 2);
-    const rootBottom = rootColor === 'w' ? 'b' : 'w';
-    const bottom = rotations % 2 === 0 ? rootBottom : rootColor;
-    const nodePlayer = ply % 2 === 0 ? 'P2' : 'P1';
+    const rootBottom = rp === 'P1' ? rootColor : (rootColor === 'w' ? 'b' : 'w');
+    const bottom = rotations % 2 === 0 ? rootBottom : (rootBottom === 'w' ? 'b' : 'w');
+    const nodePlayer = ply % 2 === 0 ? rp : (rp === 'P2' ? 'P1' : 'P2');
     return nodePlayer === 'P1' ? bottom : (bottom === 'w' ? 'b' : 'w');
 }
-
 // ミニマックス法＋α-β探索。評価はルートで CPU が動かした色を基準にする。
 // maximizing=true が CPU (P2) の手番、false が相手 (P1) の手番。
-function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootColor) {
-    const activeColor = getSearchActiveColor(ply, rootColor);
-    const nodePlayer = maximizing ? 'P2' : 'P1';
+function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootColor, rootPlayer) {
+    const rp = rootPlayer || 'P2';
+    const activeColor = getSearchActiveColor(ply, rootColor, rp);
+    const nodePlayer = maximizing ? rp : (rp === 'P2' ? 'P1' : 'P2');
     let nodeGame;
     try {
         nodeGame = new Chess(buildFenFromBoard(boardOnly, activeColor));
@@ -1084,7 +1147,7 @@ function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootCo
             if (isWinningKingCapture(m, nodePlayer)) return 100000 - ply;
             const child = new Chess(buildFenFromBoard(boardOnly, activeColor));
             child.move(m);
-            value = Math.max(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, false, rootColor));
+            value = Math.max(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, false, rootColor, rp));
             alpha = Math.max(alpha, value);
             if (alpha >= beta) break; // βカット
         }
@@ -1095,7 +1158,7 @@ function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootCo
             if (isWinningKingCapture(m, nodePlayer)) return -100000 + ply;
             const child = new Chess(buildFenFromBoard(boardOnly, activeColor));
             child.move(m);
-            value = Math.min(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, true, rootColor));
+            value = Math.min(value, minimaxAlphaBeta(child.fen().split(' ')[0], ply + 1, depth - 1, alpha, beta, true, rootColor, rp));
             beta = Math.min(beta, value);
             if (alpha >= beta) break; // αカット
         }
@@ -1104,6 +1167,7 @@ function minimaxAlphaBeta(boardOnly, ply, depth, alpha, beta, maximizing, rootCo
 }
 
 skipBtn.addEventListener('click', () => {
+    if (isWatchMode()) return;
     if (isOnlineMode() && currentPlayer !== myRole) return;
     const currentSkips = currentPlayer === 'P1' ? p1Skips : p2Skips;
     if (!gameOver && currentSkips > 0 && !skipNextRotation) {
@@ -1121,6 +1185,7 @@ skipBtn.addEventListener('click', () => {
 // ===== 待った（1手戻す） =====
 if (undoBtn) {
     undoBtn.addEventListener('click', () => {
+        if (isWatchMode()) return;
         if (historyStack.length === 0) return;
         let snap = historyStack.pop();
         // CPU対戦では、自分の手番まで2手分戻す
@@ -1135,6 +1200,7 @@ if (undoBtn) {
 // ===== 投了 =====
 if (resignBtn) {
     resignBtn.addEventListener('click', () => {
+        if (isWatchMode()) return;
         if (gameOver) return;
         const loser = isOnlineMode() ? myRole : currentPlayer;
         const winner = loser === 'P1' ? 'P2' : 'P1';
@@ -1145,6 +1211,7 @@ if (resignBtn) {
 // ===== 引き分け =====
 if (drawBtn) {
     drawBtn.addEventListener('click', () => {
+        if (isWatchMode()) return;
         if (gameOver) return;
         if (isOnlineMode()) {
             if (onlineConnected) {
@@ -1202,6 +1269,7 @@ function saveStats(stats) {
 }
 
 function recordGameResult() {
+    if (selectedGameMode === 'watch') return;
     if (statsRecorded) return;
     if (!winnerPlayer && winReason !== 'draw') return;
     statsRecorded = true;
@@ -1713,4 +1781,22 @@ if (battleStartBtn) {
         };
         step();
     });
+}
+
+
+// 観戦パネルの操作
+const watchToggleBtn = document.getElementById('watch-toggle-btn');
+if (watchToggleBtn) {
+    watchToggleBtn.addEventListener('click', () => {
+        if (gameOver) return;
+        if (watchPlaying) pauseWatch(); else startWatch();
+    });
+}
+['watch-p1-level', 'watch-p2-level'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.addEventListener('change', () => { /* 次の手から新しい強さが適用される */ });
+});
+const watchSpeedSel = document.getElementById('watch-speed');
+if (watchSpeedSel) {
+    watchSpeedSel.addEventListener('change', () => { if (watchPlaying) scheduleWatch(); });
 }

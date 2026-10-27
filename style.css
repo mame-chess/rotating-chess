@@ -301,6 +301,10 @@ button.secondary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     width: min(92vw, 540px);
     aspect-ratio: 1 / 1;
     margin: 0 auto;
+    background: var(--board-border);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(43, 32, 16, 0.35), inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -2px 4px rgba(0,0,0,0.35);
 }
 
 .board { touch-action: none;
@@ -351,9 +355,9 @@ button.secondary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     cursor: grab;
     transition: transform 0.8s ease-in-out;
 }
-.piece-svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); }
+.piece-svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.38)); }
 .board.rotate-180 .square .piece { transform: rotate(180deg); }
-.captured-piece { display: inline-block; width: 20px; line-height: 0; vertical-align: middle; margin-right: 1px; }
+.captured-piece { display: inline-block; width: 15px; line-height: 0; vertical-align: middle; margin-right: 0; }
 
 .status-panel, .captured-panel, .history-panel, .settings-section {
     background: var(--panel);
@@ -394,9 +398,9 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .sub-actions .secondary-btn { flex: 1; white-space: nowrap; padding: 6px 4px; font-size: 0.74rem; }
 
 .captured-panel h4, .history-panel h4 { margin: 0 0 8px; font-size: 0.86rem; }
-.captured-row { display: flex; align-items: center; gap: 8px; min-height: 26px; font-size: 0.85rem; }
+.captured-row { display: flex; align-items: center; gap: 6px; min-height: 21px; font-size: 0.8rem; }
 .captured-label { font-weight: bold; width: 26px; flex: none; }
-.captured-list { flex: 1; font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; font-size: 1.05rem; letter-spacing: 2px; word-break: break-all; }
+.captured-list { flex: 1; line-height: 0; word-break: break-all; }
 .material-diff { font-size: 0.76rem; color: var(--muted); white-space: nowrap; }
 
 .move-history {
@@ -481,3 +485,9 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 }
 
 .version-note { text-align: center; color: var(--muted); font-size: 0.75rem; margin: 10px 0 0; }
+
+/* ---------- 観戦パネル ---------- */
+#watch-panel h4 { margin: 0 0 10px; font-size: 0.9rem; }
+.watch-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; }
+.watch-row select { padding: 5px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--panel); color: var(--ink); font: inherit; font-size: 0.85rem; }
+.watch-note { font-size: 0.72rem; color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
