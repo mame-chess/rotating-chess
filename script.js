@@ -142,6 +142,9 @@ let gameOver = false;
 let winnerPlayer = null;
 let winReason = null; // 'king' | 'checkmate' | 'resignation'
 let p2KingGuard = true;
+let cpuSide = 'P2';
+let p2DoubleMove = false;
+let doubleMoveArmed = false;
 let p1Skips = 1;
 let p2Skips = 1;
 let p1Captures = 0;
@@ -253,6 +256,7 @@ const chatMessagesEl = document.getElementById('chat-messages');
 const chatInputEl = document.getElementById('chat-input');
 const chatSendBtn = document.getElementById('chat-send-btn');
 const rematchBtn = document.getElementById('rematch-btn');
+const doubleBtn = document.getElementById('double-btn');
 const offerPanelEl = document.getElementById('offer-panel');
 const offerTextEl = document.getElementById('offer-text');
 const offerAcceptBtn = document.getElementById('offer-accept-btn');
@@ -296,15 +300,16 @@ document.querySelectorAll('.hub-start').forEach(b => b.addEventListener('click',
 function startSelectedGame() {
     if (selectedGameMode === 'watch') watchMatchNo = 1;
     showScreen('game');
-    p2NameLabel.textContent = (isCpuGame() || isWatchMode()) ? 'P2 (CPU)' : 'P2 (相手)';
+    refreshSideLabels();
     updateModeDisplay();
     initGame();
     if (isOnlineMode()) setupOnline();
     if (isCharaMode()) openCharaSelection();
     if (isWatchMode()) { updateWatchUI(); startWatch(); }
     else { pauseWatch(); updateWatchUI(); }
+    if (isCpuGame() && !isCharaMode() && cpuSide === 'P1') setTimeout(makeCpuMove, 800);
 }
-startBtn.addEventListener('click', () => { startSelectedGame(); });
+startBtn.addEventListener('click', () => { beginGameWithDice(); });
 
 function updateModeDisplay() {
     if (!currentModeEl) return;
@@ -317,10 +322,17 @@ function updateModeDisplay() {
     if (onlinePanelEl) onlinePanelEl.classList.toggle('hidden', !isOnlineMode());
 }
 
+function humanSide() { return cpuSide === 'P2' ? 'P1' : 'P2'; }
 function getPlayerLabel(player) {
     if (isWatchMode()) return player === 'P1' ? 'P1 (CPU)' : 'P2 (CPU)';
-    if (player === 'P1') return 'P1 (あなた)';
-    return isCpuGame() ? 'P2 (CPU)' : 'P2 (相手)';
+    if (isCpuGame()) return player === cpuSide ? `${player} (CPU)` : `${player} (あなた)`;
+    if (isOnlineMode()) return player === myRole ? `${player} (あなた)` : `${player} (相手)`;
+    return player === 'P1' ? 'P1 (あなた)' : 'P2 (相手)';
+}
+function refreshSideLabels() {
+    const p1n = document.querySelector('.p-box.p1 .p-name');
+    if (p1n) p1n.textContent = getPlayerLabel('P1');
+    if (p2NameLabel) p2NameLabel.textContent = getPlayerLabel('P2');
 }
 
 backMenuBtn.addEventListener('click', () => {
@@ -402,6 +414,8 @@ function initGame() {
     p1Skips = settings.initialSkips;
     p2Skips = settings.initialSkips + (['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode) ? 0 : 1);
     p2KingGuard = !isRandomMode() && !['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode);
+    p2DoubleMove = !['normal-pvp', 'normal-cpu', 'normal-online'].includes(selectedGameMode);
+    doubleMoveArmed = false;
     p1Captures = 0;
     p2Captures = 0;
 
@@ -519,7 +533,7 @@ function snapshotState() {
     return {
         boardFen: game.fen(),
         isBoardRotated, moveCounter, skipNextRotation,
-        currentPlayer, gameOver, winnerPlayer, winReason, p2KingGuard,
+        currentPlayer, gameOver, winnerPlayer, winReason, p2KingGuard, cpuSide, p2DoubleMove, doubleMoveArmed,
         p1Skips, p2Skips, p1Captures, p2Captures,
         lastMovePlayer, lastMoveColor,
         playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
@@ -565,6 +579,10 @@ function restoreState(snap) {
     doomPieceType = snap.doomPieceType || null;
     doomPieceColor = snap.doomPieceColor || null;
     p2KingGuard = snap.p2KingGuard !== false;
+    cpuSide = snap.cpuSide || 'P2';
+    p2DoubleMove = !!snap.p2DoubleMove;
+    doubleMoveArmed = !!snap.doubleMoveArmed;
+    refreshSideLabels();
     counterFor = snap.counterFor || null;
     counterSquare = snap.counterSquare || null;
     counterPieceType = snap.counterPieceType || null;
@@ -752,6 +770,14 @@ function renderBoard() {
     p2CapturesEl.textContent = p2Captures;
 
     skipBtn.disabled = gameOver || currentSkips <= 0 || skipNextRotation;
+    if (doubleBtn) {
+        doubleBtn.style.display = isNormalMode() ? 'none' : '';
+        doubleBtn.disabled = gameOver || isWatchMode() || currentPlayer !== 'P2' || !p2DoubleMove || (isOnlineMode() && myRole !== 'P2') || (isCpuGame() && cpuSide === 'P2');
+        doubleBtn.textContent = doubleMoveArmed ? '連続手番 予約中！' : (p2DoubleMove ? '連続手番を使う (後手ハンデ)' : '連続手番は使用済み');
+        doubleBtn.style.backgroundColor = doubleMoveArmed ? '#ef4444' : '';
+    }
+    const p2d = document.getElementById('p2-double');
+    if (p2d) p2d.textContent = isNormalMode() ? '' : `連続手番: ${p2DoubleMove ? '残り1回' : '使用済み'}`;
     if (undoBtn) undoBtn.disabled = historyStack.length === 0 || (isOnlineMode() && !onlineConnected);
     if (resignBtn) resignBtn.disabled = gameOver;
     if (drawBtn) drawBtn.disabled = gameOver;
@@ -913,7 +939,7 @@ function handleSquareClick(square) {
     if (isWatchMode()) return;
     if (suppressNextClick) { suppressNextClick = false; return; }
     if (gameOver || game.game_over()) return;
-    if (isCpuGame() && currentPlayer === 'P2') return;
+    if (isCpuGame() && currentPlayer === cpuSide) return;
     if (isOnlineMode()) {
         if (!onlineConnected) return; // 相手の接続待ち
         if (currentPlayer !== myRole) return; // 自分の手番だけ操作できる
@@ -955,7 +981,7 @@ function executeMoveCustom(from, to, promotion) {
     if (gameOver) return;
     if (isCharaMode() && charaPhase) return;
     // オンライン対戦では、接続が完了していて自分の手番のときだけ着手できる（クリック／ドラッグ共通）
-    if (isOnlineMode() && (!onlineConnected || currentPlayer !== myRole)) return;
+    if (isOnlineMode() && (!onlineConnected || currentPlayer !== myRole || !onlineDiceDone)) return;
 
     const targetPiece = game.get(to);
     const movingPiece = game.get(from);
@@ -1139,7 +1165,7 @@ function executeMoveCustom(from, to, promotion) {
             messageEl.textContent = 'アンコール！もう1手動けます';
             renderBoard();
             broadcastState();
-            if (isCpuGame() && currentPlayer === 'P2' && !gameOver) setTimeout(makeCpuMove, 600);
+            if (isCpuGame() && currentPlayer === cpuSide && !gameOver) setTimeout(makeCpuMove, 600);
             return;
         }
         if (starGuardFor && opponentOf(currentPlayer) === starGuardFor) starGuardFor = null;
@@ -1194,6 +1220,15 @@ function executeMoveCustom(from, to, promotion) {
             }
         }
 
+        if (doubleMoveArmed && currentPlayer === 'P2' && !gameOver) {
+            doubleMoveArmed = false;
+            p2DoubleMove = false;
+            messageEl.textContent = '後手の連続手番！P2 がもう1手動けます';
+            renderBoard();
+            broadcastState();
+            if (isCpuGame() && currentPlayer === cpuSide) setTimeout(makeCpuMove, 600);
+            return;
+        }
         currentPlayer = currentPlayer === 'P1' ? 'P2' : 'P1';
         renderBoard();
         broadcastState();
@@ -1205,7 +1240,7 @@ function executeMoveCustom(from, to, promotion) {
             if (!hasAnyLegalMove(getActivePieceColor())) { finishDraw('ステイルメイト'); return; }
         }
 
-        if (!gameOver && !game.game_over() && isCpuGame() && currentPlayer === 'P2') {
+        if (!gameOver && !game.game_over() && isCpuGame() && currentPlayer === cpuSide) {
             setTimeout(makeCpuMove, 500);
         }
     }
@@ -1386,81 +1421,6 @@ function chooseCpuMove(player, levelKey) {
     return selectedMove;
 }
 
-function makeCpuMove() {
-    if (gameOver) return;
-    maybeCpuUseSkill();
-    const level = getCpuLevelForMode();
-    const mv = chooseCpuMove('P2', level);
-    if (mv) executeMoveCustom(mv.from, mv.to);
-}
-
-// ===== CPU同士の観戦モード =====
-let watchTimer = null;
-let watchPlaying = false;
-let watchMatchNo = 1;
-function isWatchMode() { return selectedGameMode === 'watch'; }
-function watchLevelFor(player) {
-    const sel = document.getElementById(player === 'P1' ? 'watch-p1-level' : 'watch-p2-level');
-    return sel ? sel.value : 'cpu-normal';
-}
-function watchDelay() {
-    const sel = document.getElementById('watch-speed');
-    return sel ? parseInt(sel.value, 10) : 1000;
-}
-function stopWatchTimer() {
-    if (watchTimer) { clearTimeout(watchTimer); watchTimer = null; }
-}
-function scheduleWatch() {
-    stopWatchTimer();
-    if (!watchPlaying || !isWatchMode() || gameOver) return;
-    watchTimer = setTimeout(watchStep, watchDelay());
-}
-function watchStep() {
-    if (!watchPlaying || !isWatchMode() || gameOver) return;
-    const mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
-    if (!mv) { pauseWatch(); return; }
-    executeMoveCustom(mv.from, mv.to);
-    if (!gameOver && totalMovesCount >= 300) {
-        const adjScore = evaluateBoard(game, 'w');
-        if (adjScore > 150) { finishGame('P1', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P1 の勝ち'; }
-        else if (adjScore < -150) { finishGame('P2', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P2 の勝ち'; }
-        else finishDraw('手数上限・形勢互角');
-    }
-    if (!gameOver) scheduleWatch();
-    else if (watchAutoEnabled()) {
-        watchTimer = setTimeout(() => {
-            if (!isWatchMode() || !watchPlaying) return;
-            watchMatchNo++;
-            initGame();
-            startWatch();
-        }, 3000);
-    }
-    else pauseWatch();
-}
-function watchAutoEnabled() {
-    const el = document.getElementById('watch-auto');
-    return !!(el && el.checked);
-}
-function startWatch() {
-    if (!isWatchMode()) return;
-    watchPlaying = true;
-    updateWatchUI();
-    scheduleWatch();
-}
-function pauseWatch() {
-    watchPlaying = false;
-    stopWatchTimer();
-    updateWatchUI();
-}
-function updateWatchUI() {
-    const panel = document.getElementById('watch-panel');
-    if (panel) panel.classList.toggle('hidden', !isWatchMode());
-    const btn = document.getElementById('watch-toggle-btn');
-    if (btn) btn.textContent = watchPlaying ? '一時停止' : '再開する';
-    const info = document.getElementById('watch-match-info');
-    if (info) info.textContent = `第${watchMatchNo}試合`;
-}
-
 function evaluateBoard(chessObj, cpuColor) {
     let score = 0;
     const board = chessObj.board();
@@ -1567,7 +1527,7 @@ if (undoBtn) {
         if (historyStack.length === 0) return;
         let snap = historyStack.pop();
         // CPU対戦では、自分の手番まで2手分戻す
-        if (selectedGameMode.startsWith('cpu') && snap.currentPlayer === 'P2' && historyStack.length > 0) {
+        if (selectedGameMode.startsWith('cpu') && snap.currentPlayer === cpuSide && historyStack.length > 0) {
             snap = historyStack.pop();
         }
         restoreState(snap);
