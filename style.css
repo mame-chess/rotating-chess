@@ -634,3 +634,19 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .chara-zoom-btn:hover { background: rgba(124,58,237,.9); }
 .chara-face { cursor: zoom-in; }
 .guide-rules ul { margin: 4px 0 10px; padding-left: 20px; line-height: 1.7; font-size: 13.5px; }
+
+/* ===== v4.3：スキルFX・ライトボックス修正・条件表示 ===== */
+.board-container { position: relative; }
+#fx-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 7; transition: background .4s; }
+.fx-particle { position: absolute; line-height: 1; opacity: 0; text-shadow: 0 2px 8px rgba(0,0,0,.35); will-change: transform, opacity; }
+.fx-rise { bottom: -10%; animation: fxRise 1.7s ease-out forwards; }
+.fx-fall { top: -10%; animation: fxFall 1.7s ease-out forwards; }
+.fx-swirl { bottom: -10%; animation: fxSwirl 1.8s ease-out forwards; }
+@keyframes fxRise { 0% { opacity: 0; transform: translateY(0) scale(.6) rotate(0deg); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-46vh) scale(1.15) rotate(24deg); } }
+@keyframes fxFall { 0% { opacity: 0; transform: translateY(0) scale(.6) rotate(0deg); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(46vh) scale(1.1) rotate(-20deg); } }
+@keyframes fxSwirl { 0% { opacity: 0; transform: translate(0,0) rotate(0deg) scale(.6); } 15% { opacity: 1; } 55% { transform: translate(26px,-24vh) rotate(190deg) scale(1.05); } 100% { opacity: 0; transform: translate(-18px,-46vh) rotate(380deg) scale(1.15); } }
+.lb-close-x { position: absolute; top: 14px; right: 16px; z-index: 6; width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(255,255,255,.75); background: rgba(20,12,40,.85); color: #fff; font-size: 21px; font-weight: 700; cursor: pointer; }
+.lb-close-x:hover { background: rgba(190,40,60,.9); }
+#lb-img { cursor: zoom-out; }
+.guide-chara-unlock { font-size: 11.5px; font-weight: 700; color: #8a5a12; margin-top: 5px; }
+.chara-card-unlock { display: block; font-size: 10.5px; font-weight: 700; color: #8a5a12; margin-top: 3px; }

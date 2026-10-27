@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール・キャラ図鑑</button>
             </div>
-            <p class="version-note">Rotating Chess v4.2</p>
+            <p class="version-note">Rotating Chess v4.3</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -250,6 +250,7 @@
                 <div class="board-area">
                     <div class="board-container">
                         <div id="board" class="board"></div>
+                        <div id="fx-layer"></div>
                         <div id="win-overlay" class="win-overlay hidden">
                             <div id="win-text" class="win-text">P1 の勝利！</div>
                             <div id="win-sub" class="win-sub">キング撃破！</div>
@@ -416,6 +417,13 @@
                     <p>回転のタイミングが1〜4手のランダムになる特別ルールです。このモードでは初めの色に関係なく、今動かしている駒でキングを取るか、チェックメイトすれば勝利です。</p>
                     <h4>通常チェス（回転なし）</h4>
                     <p>回転も色の入れ替えもない、普通のチェスです。P1は金、P2は青を最後まで操作し、チェックメイトで勝敗が決まります。メニューの各ハブ（2人対戦／CPU／オンライン）から選べます。</p>
+                    <h4>キャラ対戦（スキル）</h4>
+                    <p>対戦前にキャラを1体選び、そのキャラのスキルを使えます。スキルを使うのは自分の手番です。</p>
+                    <ul>
+                        <li>解放条件：強いスキルには解放条件があるキャラがいます（例：自分の着手を6回以上／相手の駒を2つ以上取る／自分の駒が2つ以上取られる）。条件は各キャラの説明（キャラの説明タブと選択画面）に書いてあります。条件を満たすまでは使えませんが、対戦が進めば自然に満たせるものと、負けているほど満たしやすいものを中心にしています。</li>
+                        <li>リチャージ：いちど使ったスキルは、そのあと相手の駒を3つ取ると再び使えるようになります。何回でもリチャージできます。</li>
+                        <li>スキルボタンには、解放までの残りや、再使用まであと何つ取ればいいかが表示されます。</li>
+                    </ul>
                     <h4>CPU同士の観戦</h4>
                     <p>メニューの「CPU同士 観戦」では、コンピュータ同士の対戦を盤面で観戦できます。両者の強さと対戦速度を調整できます。</p>
                 </div>
@@ -423,7 +431,7 @@
 
             <section class="guide-section hidden" id="guide-tab-chara">
                 <h3>キャラの説明</h3>
-                <p class="guide-note">キャラ対戦モードで選べるキャラクターたちです。スキルは対戦中に1回だけ、自分の手番に使えます。</p>
+                <p class="guide-note">キャラ対戦モードで選べるキャラクターたちです。スキルは自分の手番に使えます。強いスキルには「解放条件」があるキャラもいます（各カードに表示）。いちど使ったスキルは、そのあと相手の駒を3つ取ると再び使えるようになります（リチャージ）。立ち絵をクリックすると拡大表示できます。</p>
                 <div id="guide-chara-grid" class="guide-chara-grid"></div>
             </section>
         </div>
@@ -547,10 +555,12 @@
     <script src="characters4.js"></script>
     <script src="characters5.js"></script>
     <script src="characters6.js"></script>
+    <script src="characters7.js"></script>
     <script src="script.js"></script>
     <div id="skill-effect-banner" class="hidden"></div>
-    <div id="chara-lightbox" class="hidden">
+    <div id="chara-lightbox" class="hidden" style="display:none">
         <div class="lb-backdrop"></div>
+        <button id="lb-close-x" class="lb-close-x" aria-label="閉じる">✕</button>
         <figure class="lb-box">
             <img id="lb-img" alt="">
             <figcaption class="lb-caption">
