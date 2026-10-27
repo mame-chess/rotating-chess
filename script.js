@@ -46,6 +46,23 @@ let frozenFor = null;
 let pendingExtraMove = { P1: false, P2: false };
 let charaPhase = false;
 let skillTargeting = null;
+const CPU_LEVEL_NAMES = { 'cpu-easy': '初級', 'cpu-normal': '中級', 'cpu-hard': '上級', 'cpu-demon': '鬼' };
+let cpuVariantLevel = 'cpu-normal'; // 通常チェス／キャラ対戦（CPU）の難易度
+function getCpuLevelForMode() {
+    if (selectedGameMode === 'cpu-random') return 'cpu-normal';
+    if (selectedGameMode === 'normal-cpu' || selectedGameMode === 'chara-cpu') return cpuVariantLevel;
+    return selectedGameMode;
+}
+function selectedModeSummary() {
+    let label = MODE_LABELS[selectedGameMode] || selectedGameMode;
+    if (selectedGameMode === 'normal-cpu' || selectedGameMode === 'chara-cpu') label += `（CPU：${CPU_LEVEL_NAMES[cpuVariantLevel]}）`;
+    return label;
+}
+function refreshModeSummaries() {
+    document.querySelectorAll('.selected-mode-name').forEach(el => { el.textContent = selectedModeSummary(); });
+    const box = document.getElementById('cpu-level-box');
+    if (box) box.classList.toggle('hidden', !(selectedGameMode === 'normal-cpu' || selectedGameMode === 'chara-cpu'));
+}
 function charaOf(player) { const id = playerCharacters[player]; return CHARACTERS.find(c => c.id === id) || null; }
 
 const MODE_LABELS = {
@@ -59,11 +76,11 @@ const MODE_LABELS = {
     'cpu-demon': 'CPU対戦 (鬼)｜深い先読み',
     'watch': 'CPU同士｜観戦モード',
     'normal-pvp': '通常チェス｜2人対戦 (回転なし)',
-    'normal-cpu': '通常チェス｜CPU対戦 (回転なし・中級)',
+    'normal-cpu': '通常チェス｜CPU対戦 (回転なし)',
     'normal-online': '通常チェス｜オンライン対戦 (回転なし)',
     'online-random': 'ランダム回転｜オンライン対戦 (特別ルール)',
     'chara-pvp': 'キャラ対戦｜2人対戦 (回転＋スキル)',
-    'chara-cpu': 'キャラ対戦｜CPU対戦 (回転＋スキル・中級)',
+    'chara-cpu': 'キャラ対戦｜CPU対戦 (回転＋スキル)',
     'chara-online': 'キャラ対戦｜オンライン対戦 (回転＋スキル)'
 };
 
@@ -205,6 +222,7 @@ modeItems.forEach((item) => {
         modeItems.forEach(c => c.classList.remove('selected'));
         item.classList.add('selected');
         selectedGameMode = item.dataset.mode;
+        refreshModeSummaries();
         if (onlineJoinBoxEl) {
             onlineJoinBoxEl.classList.toggle('hidden', !isOnlineMode());
         }
@@ -217,9 +235,19 @@ window.addEventListener('keydown', (e) => {
     if (hubVisible) startSelectedGame();
 });
 
-document.getElementById('hub-btn-local').addEventListener('click', () => showScreen('hub-local'));
-document.getElementById('hub-btn-cpu').addEventListener('click', () => showScreen('hub-cpu'));
-document.getElementById('hub-btn-online').addEventListener('click', () => showScreen('hub-online'));
+function openHub(name, screenId) {
+    showScreen(name);
+    const screen = document.getElementById(screenId);
+    if (!screen) return;
+    if (!screen.querySelector(`[data-mode="${selectedGameMode}"]`)) {
+        const first = screen.querySelector('.mode-item');
+        if (first) first.click();
+    }
+    refreshModeSummaries();
+}
+document.getElementById('hub-btn-local').addEventListener('click', () => openHub('hub-local', 'hub-local-screen'));
+document.getElementById('hub-btn-cpu').addEventListener('click', () => openHub('hub-cpu', 'hub-cpu-screen'));
+document.getElementById('hub-btn-online').addEventListener('click', () => openHub('hub-online', 'hub-online-screen'));
 document.querySelectorAll('.hub-back').forEach(b => b.addEventListener('click', () => showScreen('menu')));
 document.querySelectorAll('.hub-start').forEach(b => b.addEventListener('click', () => startSelectedGame()));
 
@@ -237,7 +265,7 @@ startBtn.addEventListener('click', () => { startSelectedGame(); });
 
 function updateModeDisplay() {
     if (!currentModeEl) return;
-    let label = MODE_LABELS[selectedGameMode] || selectedGameMode;
+    let label = selectedModeSummary();
     if (isOnlineMode()) {
         label += onlineRoomCode ? `｜ルーム: ${onlineRoomCode}｜あなたは ${myRole}` : `｜あなたは ${myRole}`;
     }
@@ -1126,7 +1154,7 @@ function chooseCpuMove(player, levelKey) {
 function makeCpuMove() {
     if (gameOver) return;
     maybeCpuUseSkill();
-    const level = (selectedGameMode === 'cpu-random' || selectedGameMode === 'normal-cpu' || selectedGameMode === 'chara-cpu') ? 'cpu-normal' : selectedGameMode;
+    const level = getCpuLevelForMode();
     const mv = chooseCpuMove('P2', level);
     if (mv) executeMoveCustom(mv.from, mv.to);
 }
@@ -1890,6 +1918,13 @@ if (chatSendBtn && chatInputEl) {
         if (e.key === 'Enter') { sendChat(chatInputEl.value); chatInputEl.value = ''; }
     });
 }
+document.querySelectorAll('.level-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        cpuVariantLevel = chip.dataset.level;
+        document.querySelectorAll('.level-chip').forEach(c => c.classList.toggle('selected', c === chip));
+        refreshModeSummaries();
+    });
+});
 document.querySelectorAll('.stamp-btn').forEach(btn => {
     btn.addEventListener('click', () => sendChat(btn.dataset.stamp));
 });
