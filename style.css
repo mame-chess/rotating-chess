@@ -516,3 +516,39 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .guide-rules h4 { margin: 14px 0 4px; font-size: 0.92rem; color: var(--accent); }
 .guide-rules h4:first-child { margin-top: 0; }
 .guide-rules p { margin: 0; font-size: 0.84rem; line-height: 1.7; }
+
+/* ===== キャラ選択モード ===== */
+.chara-panel-title { margin: 0 0 8px; font-size: 14px; }
+.chara-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.chara-row + .chara-row { border-top: 1px solid rgba(0,0,0,.08); }
+.chara-face { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid #b98a2f; background: #fff; flex: 0 0 auto; }
+.chara-info { flex: 1 1 auto; min-width: 0; }
+.chara-name { font-weight: 700; font-size: 13px; }
+.chara-skill { font-size: 11px; opacity: .85; line-height: 1.45; }
+.chara-skill-btn { flex: 0 0 auto; padding: 8px 10px; font-size: 12px; border-radius: 8px; border: 1px solid #8a6a1d; background: #f3d98b; cursor: pointer; }
+.chara-skill-btn:disabled { opacity: .45; cursor: default; }
+.chara-modal { position: fixed; inset: 0; background: rgba(20,16,8,.55); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 16px; }
+.chara-modal.hidden { display: none; }
+.chara-modal-box { background: #fdf8ec; border: 2px solid #8a6a1d; border-radius: 14px; max-width: 760px; width: 100%; max-height: 92vh; overflow: auto; padding: 20px; }
+.chara-modal-box h3 { margin: 0 0 14px; text-align: center; }
+.chara-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.chara-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; background: #fff; border: 2px solid #d8c491; border-radius: 12px; cursor: pointer; text-align: center; }
+.chara-card:hover { border-color: #b98a2f; transform: translateY(-2px); }
+.chara-card:disabled { opacity: .35; cursor: default; transform: none; }
+.chara-card img { width: 92px; height: 92px; border-radius: 50%; object-fit: cover; }
+.chara-card-name { font-weight: 800; font-size: 16px; }
+.chara-card-title { font-size: 11px; opacity: .75; }
+.chara-card-skill { font-size: 11px; line-height: 1.5; }
+.chara-modal-note { text-align: center; font-size: 12px; opacity: .8; margin: 14px 0 0; }
+@media (max-width: 640px) { .chara-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ===== ハブ画面 ===== */
+.hub-container { display: flex; flex-direction: column; gap: 12px; max-width: 560px; margin: 18px auto; }
+.hub-btn { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; padding: 16px 18px; background: #fffdf6; border: 2px solid #b98a2f; border-radius: 12px; cursor: pointer; text-align: left; }
+.hub-btn:hover { background: #fdf3d8; transform: translateY(-1px); }
+.hub-title { font-size: 18px; font-weight: 800; }
+.hub-desc { font-size: 12px; opacity: .8; }
+.hub-screen-title { text-align: center; margin: 6px 0 14px; }
+.guide-chara-list { display: flex; flex-direction: column; gap: 10px; margin: 10px 0; }
+.guide-chara { display: flex; gap: 12px; align-items: center; background: #fffdf6; border: 1px solid #d8c491; border-radius: 10px; padding: 8px 12px; font-size: 13px; line-height: 1.55; }
+.guide-chara img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
