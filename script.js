@@ -279,7 +279,7 @@ modeItems.forEach((item) => {
 window.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     const hubVisible = ['hub-local-screen', 'hub-cpu-screen', 'hub-online-screen'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
-    if (hubVisible) startSelectedGame();
+    if (hubVisible) beginGameWithDice();
 });
 
 function openHub(name, screenId) {
@@ -296,7 +296,7 @@ document.getElementById('hub-btn-local').addEventListener('click', () => openHub
 document.getElementById('hub-btn-cpu').addEventListener('click', () => openHub('hub-cpu', 'hub-cpu-screen'));
 document.getElementById('hub-btn-online').addEventListener('click', () => openHub('hub-online', 'hub-online-screen'));
 document.querySelectorAll('.hub-back').forEach(b => b.addEventListener('click', () => showScreen('menu')));
-document.querySelectorAll('.hub-start').forEach(b => b.addEventListener('click', () => startSelectedGame()));
+document.querySelectorAll('.hub-start').forEach(b => b.addEventListener('click', () => beginGameWithDice()));
 
 function startSelectedGame() {
     if (selectedGameMode === 'watch') watchMatchNo = 1;
