@@ -749,3 +749,62 @@ const menuGuideBtn = document.getElementById('menu-guide-btn');
 if (menuGuideBtn) menuGuideBtn.addEventListener('click', () => { renderGuide(); showScreen('guide'); });
 const guideBackBtn = document.getElementById('guide-back-btn');
 if (guideBackBtn) guideBackBtn.addEventListener('click', () => showScreen('menu'));
+
+// ===== 観戦モードの対戦記録と勝率 =====
+const WATCH_KEY = 'rotatingChessWatchV1';
+function loadWatchRecords() {
+    try { return JSON.parse(localStorage.getItem(WATCH_KEY)) || []; } catch (e) { return []; }
+}
+function recordWatchResult(winner) {
+    if (typeof isWatchMode !== 'function' || !isWatchMode()) return;
+    const recs = loadWatchRecords();
+    recs.push({ a: watchLevelFor('P1'), b: watchLevelFor('P2'), winner: winner || 'draw', ts: Date.now() });
+    if (recs.length > 300) recs.splice(0, recs.length - 300);
+    try { localStorage.setItem(WATCH_KEY, JSON.stringify(recs)); } catch (e) { /* 保存できない環境では無視 */ }
+    renderWatchStats();
+}
+function renderCharaStats() {
+    const box = document.getElementById('chara-stats');
+    if (!box) return;
+    const stats = loadStats();
+    const cs = stats.chara || {};
+    const entries = Object.entries(cs).filter(([, v]) => v.games > 0).sort((a, b) => b[1].games - a[1].games);
+    if (!entries.length) {
+        box.innerHTML = '<p class="screen-note">まだキャラ対戦の記録がありません。キャラ対戦が終わると、使ったキャラごとの勝率が表示されます。</p>';
+        return;
+    }
+    box.innerHTML = entries.map(([cid, v]) => {
+        const ch = CHARACTERS.find(c => c.id === cid);
+        const name = ch ? ch.name : cid;
+        const rate = (v.wins / v.games * 100).toFixed(1);
+        return `<div class="watch-stat-row"><span class="ws-match">${name}</span><span class="ws-games">${v.games}戦</span><span class="ws-rec">${v.wins}勝（${rate}%）</span><span class="ws-draw">引分 ${v.draws || 0}</span></div>`;
+    }).join('');
+}
+
+function renderWatchStats() {
+    const box = document.getElementById('watch-stats');
+    if (!box) return;
+    const recs = loadWatchRecords();
+    if (!recs.length) {
+        box.innerHTML = '<p class="screen-note">まだ観戦の記録がありません。CPU同士の観戦で対戦が終わると、ここに勝率が表示されます。</p>';
+        return;
+    }
+    const agg = {};
+    recs.forEach(r => {
+        const key = r.a + '|' + r.b;
+        if (!agg[key]) agg[key] = { a: r.a, b: r.b, games: 0, p1: 0, p2: 0, draws: 0 };
+        agg[key].games++;
+        if (r.winner === 'P1') agg[key].p1++;
+        else if (r.winner === 'P2') agg[key].p2++;
+        else agg[key].draws++;
+    });
+    const pct = (n, g) => (g ? (n / g * 100).toFixed(1) : '0.0') + '%';
+    const rows = Object.values(agg).sort((x, y) => y.games - x.games).map(g =>
+        `<div class="watch-stat-row"><span class="ws-match">${CPU_LEVEL_NAMES[g.a] || g.a} vs ${CPU_LEVEL_NAMES[g.b] || g.b}</span>` +
+        `<span class="ws-games">${g.games}戦</span>` +
+        `<span class="ws-rec">P1 ${g.p1}勝（${pct(g.p1, g.games)}）</span>` +
+        `<span class="ws-rec">P2 ${g.p2}勝（${pct(g.p2, g.games)}）</span>` +
+        `<span class="ws-draw">引分 ${g.draws}</span></div>`).join('');
+    box.innerHTML = `<p class="screen-note">観戦の対戦記録：全${recs.length}試合（P1の強さ × P2の強さ ごとの勝率）</p>` + rows;
+}
+
