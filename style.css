@@ -700,3 +700,26 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .watch-stat-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; background: rgba(255,255,255,0.55); border: 1px solid rgba(120, 100, 50, 0.25); border-radius: 8px; padding: 7px 10px; font-size: 13px; }
 .watch-stat-row .ws-match { font-weight: 800; }
 .watch-stat-row .ws-games { font-weight: 700; color: #6b5a2a; }
+
+body[data-theme="wood"] {
+    --bg: #e6d7bd;
+    --panel: #faf2df;
+    --panel-2: #f0e3c8;
+    --border: #b89b62;
+    --ink: #3a2a17;
+    --muted: #8a6f47;
+    --accent: #7a4d21;
+    --accent-soft: #e8d5ae;
+    --local: #7a4d21;
+    --cpu: #9c5a1e;
+    --danger: #a63a2c;
+    --sq-light: #eccd9c;
+    --sq-dark: #a5713a;
+    --board-border: #5f3d1e;
+    --win: #7a5200;
+    --shadow: rgba(80, 55, 20, 0.4);
+}
+body[data-theme="wood"] .square .piece-w svg { filter: sepia(0.55) saturate(1.15) brightness(1.07) drop-shadow(0 2px 2px rgba(60,35,5,.45)); }
+body[data-theme="wood"] .square .piece-b svg { filter: sepia(0.85) saturate(1.2) brightness(0.52) contrast(1.05) drop-shadow(0 2px 2px rgba(40,20,0,.5)); }
+.watch-auto-label { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; margin-top: 10px; cursor: pointer; }
+.watch-auto-label input { width: 16px; height: 16px; cursor: pointer; }

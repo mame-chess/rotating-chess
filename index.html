@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール・キャラ図鑑</button>
             </div>
-            <p class="version-note">Rotating Chess v4.6</p>
+            <p class="version-note">Rotating Chess v4.7</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -359,7 +359,9 @@
                             </select>
                         </div>
                         <button id="watch-toggle-btn" class="action-btn">一時停止</button>
-                        <p class="watch-note">観戦中は盤面を操作できません。速度は対戦中でも変更できます。</p>
+                        <label class="watch-auto-label"><input type="checkbox" id="watch-auto"> 決着したら自動で次の試合を開始（連戦）</label>
+                        <p id="watch-match-info" class="watch-note"></p>
+                        <p class="watch-note">観戦中は盤面を操作できません。速度は対戦中でも変更できます。対戦結果はデータ画面に記録されます。</p>
                     </div>
 
                     <div class="captured-panel">
@@ -467,6 +469,7 @@
                     <label class="theme-card"><input type="radio" name="theme" value="classic"> クラシック<span>木目調・紙のような色合い</span></label>
                     <label class="theme-card"><input type="radio" name="theme" value="mono"> モノクロ<span>白黒・グレーの落ち着いた配色</span></label>
                     <label class="theme-card"><input type="radio" name="theme" value="neon"> ネオン<span>従来の暗い画面＋緑の配色</span></label>
+                    <label class="theme-card"><input type="radio" name="theme" value="wood"> 木目<span>木製の盤と駒のような温かい質感</span></label>
                 </div>
             </div>
 
@@ -523,6 +526,8 @@
                 <h3>対戦統計</h3>
                 <p id="stats-summary" class="screen-note">まだ対戦データがありません。対戦が終わると自動で記録されます。</p>
                 <div id="stats-graph" class="stats-graph"></div>
+                <h4 class="watch-stats-title">キャラ別の勝率</h4>
+                <div id="chara-stats" class="watch-stats"></div>
                 <button id="stats-reset-btn" class="secondary-btn">データをリセット</button>
             </div>
 
