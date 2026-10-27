@@ -1740,6 +1740,7 @@ function applySkillEffect(player, data) {
             skillTargeting = null;
             messageEl.textContent = `${ch.name} のスキル「${ch.skill}」！時間を巻き戻した`;
             renderBoard();
+            showSkillEffect(player, []);
             broadcastState();
             return true;
         }
@@ -1749,8 +1750,42 @@ function applySkillEffect(player, data) {
     skillTargeting = null;
     messageEl.textContent = `${ch.name} のスキル「${ch.skill}」！`;
     renderBoard();
+    showSkillEffect(player, skillSquaresOf(data));
     broadcastState();
     return true;
+}
+function skillSquaresOf(data) {
+    if (!data) return [];
+    const s = [];
+    if (data.square) s.push(data.square);
+    if (Array.isArray(data.places)) s.push(...data.places);
+    if (data.a) s.push(data.a);
+    if (data.b) s.push(data.b);
+    return s;
+}
+function showSkillEffect(player, squares) {
+    const ch = charaOf(player);
+    if (!ch) return;
+    try {
+        const banner = document.getElementById('skill-effect-banner');
+        if (banner) {
+            banner.innerHTML = `<div class="se-player">${player === 'P1' ? 'P1' : 'P2'} ${ch.name}</div><div class="se-skill">✦「${ch.skill}」✦</div>`;
+            banner.classList.remove('hidden', 'anim');
+            void banner.offsetWidth;
+            banner.classList.add('anim');
+            setTimeout(() => { banner.classList.add('hidden'); banner.classList.remove('anim'); }, 1600);
+        }
+        if (boardEl) {
+            boardEl.classList.remove('skill-flash');
+            void boardEl.offsetWidth;
+            boardEl.classList.add('skill-flash');
+            setTimeout(() => boardEl.classList.remove('skill-flash'), 900);
+        }
+        (squares || []).forEach(sq => {
+            const el = boardEl ? boardEl.querySelector(`[data-square="${sq}"]`) : null;
+            if (el) { el.classList.add('skill-hit'); setTimeout(() => el.classList.remove('skill-hit'), 1400); }
+        });
+    } catch (e) {}
 }
 function canUseSkillUI(player) {
     if (!isCharaMode() || charaPhase || gameOver) return false;
@@ -1917,6 +1952,21 @@ function renderCharaPanel() {
     if (b) b.addEventListener('click', () => onSkillButton(k.toUpperCase()));
 });
 
+function openCharaLightbox(charaId) {
+    const ch = CHARACTERS.find(c => c.id === charaId);
+    if (!ch) return;
+    const lb = document.getElementById('chara-lightbox');
+    if (!lb) return;
+    document.getElementById('lb-img').src = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
+    document.getElementById('lb-name').textContent = `${ch.name}（${ch.title}）`;
+    document.getElementById('lb-skill').textContent = `スキル「${ch.skill}」`;
+    document.getElementById('lb-desc').textContent = `${ch.desc} ${ch.profile || ''}`;
+    lb.classList.remove('hidden');
+}
+function closeCharaLightbox() {
+    const lb = document.getElementById('chara-lightbox');
+    if (lb) lb.classList.add('hidden');
+}
 function buildGuideChara() {
     const grid = document.getElementById('guide-chara-grid');
     if (!grid || grid.childElementCount > 0) return;
@@ -1925,6 +1975,8 @@ function buildGuideChara() {
         card.className = 'guide-chara-card';
         const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
         card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><div class="guide-chara-body"><div class="guide-chara-name">${ch.name} <span class="guide-chara-title">${ch.title}</span></div><div class="guide-chara-skill">スキル「${ch.skill}」：${ch.desc}</div><p class="guide-chara-profile">${ch.profile || ''}</p></div>`;
+        const gimg = card.querySelector('img');
+        if (gimg) { gimg.title = 'クリックで拡大'; gimg.addEventListener('click', () => openCharaLightbox(ch.id)); }
         grid.appendChild(card);
     });
 }
@@ -1938,6 +1990,17 @@ document.querySelectorAll('.guide-tab').forEach(tab => {
         });
     });
 });
+(function () {
+    const lb = document.getElementById('chara-lightbox');
+    if (lb) {
+        lb.querySelector('.lb-backdrop').addEventListener('click', closeCharaLightbox);
+        document.getElementById('lb-close').addEventListener('click', closeCharaLightbox);
+    }
+    [['chara-img-p1', 'P1'], ['chara-img-p2', 'P2']].forEach(([id, pl]) => {
+        const img = document.getElementById(id);
+        if (img) { img.title = 'クリックで拡大'; img.addEventListener('click', () => { if (playerCharacters[pl]) openCharaLightbox(playerCharacters[pl]); }); }
+    });
+})();
 function leaveCharaToMenu() {
     charaPhase = false;
     skillTargeting = null;
@@ -1958,8 +2021,10 @@ function buildCharaGrid() {
         card.className = 'chara-card';
         card.dataset.chara = ch.id;
         const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
-        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><span class="chara-card-name">${ch.name}</span><span class="chara-card-title">${ch.title}</span><span class="chara-card-skill">「${ch.skill}」${ch.desc}</span>`;
+        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><span class="chara-zoom-btn" title="立ち絵を拡大">🔍</span><span class="chara-card-name">${ch.name}</span><span class="chara-card-title">${ch.title}</span><span class="chara-card-skill">「${ch.skill}」${ch.desc}</span>`;
         card.addEventListener('click', () => onCharaCardPick(ch.id));
+        const zb = card.querySelector('.chara-zoom-btn');
+        if (zb) zb.addEventListener('click', (e) => { e.stopPropagation(); openCharaLightbox(ch.id); });
         grid.appendChild(card);
     });
 }
