@@ -552,3 +552,29 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .guide-chara-list { display: flex; flex-direction: column; gap: 10px; margin: 10px 0; }
 .guide-chara { display: flex; gap: 12px; align-items: center; background: #fffdf6; border: 1px solid #d8c491; border-radius: 10px; padding: 8px 12px; font-size: 13px; line-height: 1.55; }
 .guide-chara img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+
+/* ===== ハブの色分け・余白・難易度（v4ブラッシュアップ） ===== */
+.hub-btn { border-left: 10px solid #b98a2f; }
+.hub-btn.hub-local { border-color: #2563eb; background: #eef4ff; }
+.hub-btn.hub-local:hover { background: #dde9ff; }
+.hub-btn.hub-local .hub-title { color: #1d4ed8; }
+.hub-btn.hub-cpu { border-color: #7c3aed; background: #f4efff; }
+.hub-btn.hub-cpu:hover { background: #e7dbff; }
+.hub-btn.hub-cpu .hub-title { color: #6d28d9; }
+.hub-btn.hub-online { border-color: #0e9488; background: #e9fbf7; }
+.hub-btn.hub-online:hover { background: #d2f5ec; }
+.hub-btn.hub-online .hub-title { color: #0f766e; }
+.screen .mode-list { margin-bottom: 12px; }
+.selected-mode-line { text-align: center; font-size: 13px; font-weight: 700; border-top: 1px dashed #d8c491; padding-top: 16px; margin: 20px 0 0; }
+.selected-mode-name { color: #8a6a1d; }
+.screen .start-btn { margin-top: 14px; }
+.level-box { display: flex; flex-direction: column; gap: 8px; align-items: center; background: #fbf3da; border: 1px solid #d8c491; border-radius: 10px; padding: 12px; margin-top: 14px; }
+.level-box.hidden { display: none; }
+.level-box-label { font-size: 12px; font-weight: 700; }
+.level-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.level-chip { padding: 7px 16px; border-radius: 999px; border: 1.5px solid #b98a2f; background: #fff; cursor: pointer; font-size: 13px; font-weight: 700; }
+.level-chip.selected { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.mode-item.selected { box-shadow: 0 0 0 2px #b98a2f inset, 0 2px 8px rgba(90, 64, 10, .18); }
+.chara-card img { width: 100%; height: 150px; border-radius: 10px; object-fit: cover; object-position: top center; }
+.chara-face { object-position: top center; }
+.guide-chara img { object-position: top center; }

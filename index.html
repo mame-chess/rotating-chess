@@ -21,15 +21,15 @@
             </p>
 
             <div class="hub-container">
-                <button class="hub-btn" id="hub-btn-local">
+                <button class="hub-btn hub-local" id="hub-btn-local">
                     <span class="hub-title">2人対戦（この端末）</span>
                     <span class="hub-desc">回転チェス／ランダム回転／通常チェス／キャラ対戦</span>
                 </button>
-                <button class="hub-btn" id="hub-btn-cpu">
+                <button class="hub-btn hub-cpu" id="hub-btn-cpu">
                     <span class="hub-title">CPUと対戦・観戦</span>
                     <span class="hub-desc">強さ4段階／ランダム回転／通常チェス／キャラ対戦／CPU同士の観戦</span>
                 </button>
-                <button class="hub-btn" id="hub-btn-online">
+                <button class="hub-btn hub-online" id="hub-btn-online">
                     <span class="hub-title">オンライン対戦</span>
                     <span class="hub-desc">回転チェス／ランダム回転／通常チェス／キャラ対戦を、離れた相手と</span>
                 </button>
@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール</button>
             </div>
-            <p class="version-note">Rotating Chess v3</p>
+            <p class="version-note">Rotating Chess v4</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -78,6 +78,7 @@
                             </div>
                         </button>
                 </div>
+                <p class="selected-mode-line">選択中：<span class="selected-mode-name">回転チェス (2人対戦)</span></p>
                 <button id="start-btn" class="start-btn">ゲームスタート (Enter)</button>
             </div>
         </div>
@@ -144,6 +145,16 @@
                             </div>
                         </button>
                 </div>
+                <div id="cpu-level-box" class="level-box hidden">
+                    <span class="level-box-label">通常チェス／キャラ対戦（CPU）の強さ</span>
+                    <div class="level-chips">
+                        <button class="level-chip" data-level="cpu-easy">初級</button>
+                        <button class="level-chip selected" data-level="cpu-normal">中級</button>
+                        <button class="level-chip" data-level="cpu-hard">上級</button>
+                        <button class="level-chip" data-level="cpu-demon">鬼</button>
+                    </div>
+                </div>
+                <p class="selected-mode-line">選択中：<span class="selected-mode-name">CPU対戦 (Easy)</span></p>
                 <button class="start-btn hub-start">ゲームスタート (Enter)</button>
             </div>
         </div>
@@ -187,6 +198,7 @@
                     <input id="room-code-input" type="text" placeholder="例: ABC123（空欄でスタートすると部屋を作成）" maxlength="12">
                     <p class="online-join-note">空欄のままスタート = ホスト（P1）として部屋を作成します。招待URLから開いた場合は、自動で参加します。相手もこの公開ページを開いて、同じモードで待つ必要はありません（モードは自動で同期します）。</p>
                 </div>
+                <p class="selected-mode-line">選択中：<span class="selected-mode-name">回転チェス (オンライン)</span></p>
                 <button class="start-btn hub-start">ゲームスタート (Enter)</button>
             </div>
         </div>
