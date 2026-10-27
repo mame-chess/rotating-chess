@@ -31,6 +31,23 @@ const PIECE_VALUES = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 1000 };
 const PLAYER_COLORS = { P1: 'w', P2: 'b' };
 const COLOR_OWNERS = { w: 'P1', b: 'P2' };
 
+const CHARACTERS = [
+    { id: 'luna', name: 'ルナ', title: '月のうさぎ巫女', skill: 'つきのまもり', desc: '回転停止権を1つ増やす。ピンチの回転を止めたいときに。' },
+    { id: 'mint', name: 'ミント', title: '森の妖精', skill: 'リバイブ', desc: '取られた自分の色の駒のうち、いちばん強い駒を初期位置に復活させる。' },
+    { id: 'sora', name: 'ソラ', title: '空のパイロット', skill: 'テレポート', desc: '今操作している自分の駒2つの位置を入れ替える。' },
+    { id: 'hikari', name: 'ヒカリ', title: 'ステージのアイドル', skill: 'アンコール', desc: '自分の着手のあと、もう1手続けて動ける。' },
+    { id: 'yuki', name: 'ユキ', title: '雪の少女', skill: 'ふぶき', desc: '次の相手の手番、相手は駒を取ることができない。' },
+    { id: 'momo', name: 'モモ', title: '小さな魔女', skill: 'へんしん', desc: '今操作している自分のポーン1つをナイトに変える。' }
+];
+const SKILL_PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+let playerCharacters = { P1: null, P2: null };
+let charaUsed = { P1: false, P2: false };
+let frozenFor = null;
+let pendingExtraMove = { P1: false, P2: false };
+let charaPhase = false;
+let skillTargeting = null;
+function charaOf(player) { const id = playerCharacters[player]; return CHARACTERS.find(c => c.id === id) || null; }
+
 const MODE_LABELS = {
     'pvp': 'P1 vs P2｜2人対戦 (ローカル)',
     'online': 'オンライン対戦｜離れた相手と対戦',
@@ -40,11 +57,21 @@ const MODE_LABELS = {
     'cpu-normal': 'CPU対戦 (Normal)｜中級',
     'cpu-hard': 'CPU対戦 (Hard)｜上級・ミニマックス探索',
     'cpu-demon': 'CPU対戦 (鬼)｜深い先読み',
-    'watch': 'CPU同士｜観戦モード'
+    'watch': 'CPU同士｜観戦モード',
+    'normal-pvp': '通常チェス｜2人対戦 (回転なし)',
+    'normal-cpu': '通常チェス｜CPU対戦 (回転なし・中級)',
+    'normal-online': '通常チェス｜オンライン対戦 (回転なし)',
+    'online-random': 'ランダム回転｜オンライン対戦 (特別ルール)',
+    'chara-pvp': 'キャラ対戦｜2人対戦 (回転＋スキル)',
+    'chara-cpu': 'キャラ対戦｜CPU対戦 (回転＋スキル・中級)',
+    'chara-online': 'キャラ対戦｜オンライン対戦 (回転＋スキル)'
 };
 
-function isRandomMode() { return selectedGameMode === 'pvp-random' || selectedGameMode === 'cpu-random'; }
-function isOnlineMode() { return selectedGameMode === 'online'; }
+function isRandomMode() { return selectedGameMode.includes('random'); }
+function isOnlineMode() { return ['online', 'online-random', 'normal-online', 'chara-online'].includes(selectedGameMode); }
+function isNormalMode() { return selectedGameMode.startsWith('normal'); }
+function isCharaMode() { return selectedGameMode.startsWith('chara'); }
+function isCpuGame() { return selectedGameMode.startsWith('cpu') || selectedGameMode === 'normal-cpu' || selectedGameMode === 'chara-cpu'; }
 
 // ゲーム状態
 let selectedSquare = null;
@@ -179,32 +206,34 @@ modeItems.forEach((item) => {
         item.classList.add('selected');
         selectedGameMode = item.dataset.mode;
         if (onlineJoinBoxEl) {
-            onlineJoinBoxEl.classList.toggle('hidden', selectedGameMode !== 'online');
+            onlineJoinBoxEl.classList.toggle('hidden', !isOnlineMode());
         }
     });
 });
 
 window.addEventListener('keydown', (e) => {
-    if (!menuScreen.classList.contains('hidden')) {
-        if (/^[1-9]$/.test(e.key)) {
-            const idx = parseInt(e.key) - 1;
-            if (modeItems[idx]) modeItems[idx].click();
-        } else if (e.key === 'Enter') {
-            startBtn.click();
-        }
-    }
+    if (e.key !== 'Enter') return;
+    const hubVisible = ['hub-local-screen', 'hub-cpu-screen', 'hub-online-screen'].some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
+    if (hubVisible) startSelectedGame();
 });
 
-startBtn.addEventListener('click', () => {
-    menuScreen.classList.add('hidden');
-    gameScreen.classList.remove('hidden');
-    p2NameLabel.textContent = (selectedGameMode.startsWith('cpu') || isWatchMode()) ? 'P2 (CPU)' : 'P2 (相手)';
+document.getElementById('hub-btn-local').addEventListener('click', () => showScreen('hub-local'));
+document.getElementById('hub-btn-cpu').addEventListener('click', () => showScreen('hub-cpu'));
+document.getElementById('hub-btn-online').addEventListener('click', () => showScreen('hub-online'));
+document.querySelectorAll('.hub-back').forEach(b => b.addEventListener('click', () => showScreen('menu')));
+document.querySelectorAll('.hub-start').forEach(b => b.addEventListener('click', () => startSelectedGame()));
+
+function startSelectedGame() {
+    showScreen('game');
+    p2NameLabel.textContent = (isCpuGame() || isWatchMode()) ? 'P2 (CPU)' : 'P2 (相手)';
     updateModeDisplay();
     initGame();
     if (isOnlineMode()) setupOnline();
+    if (isCharaMode()) openCharaSelection();
     if (isWatchMode()) { updateWatchUI(); startWatch(); }
     else { pauseWatch(); updateWatchUI(); }
-});
+}
+startBtn.addEventListener('click', () => { startSelectedGame(); });
 
 function updateModeDisplay() {
     if (!currentModeEl) return;
@@ -220,7 +249,7 @@ function updateModeDisplay() {
 function getPlayerLabel(player) {
     if (isWatchMode()) return player === 'P1' ? 'P1 (CPU)' : 'P2 (CPU)';
     if (player === 'P1') return 'P1 (あなた)';
-    return selectedGameMode.startsWith('cpu') ? 'P2 (CPU)' : 'P2 (相手)';
+    return isCpuGame() ? 'P2 (CPU)' : 'P2 (相手)';
 }
 
 backMenuBtn.addEventListener('click', () => {
@@ -244,6 +273,10 @@ function showScreen(name) {
     if (name !== 'game') pauseWatch();
     menuScreen.classList.toggle('hidden', name !== 'menu');
     gameScreen.classList.toggle('hidden', name !== 'game');
+    ['hub-local', 'hub-cpu', 'hub-online'].forEach(hb => {
+        const el = document.getElementById(hb + '-screen');
+        if (el) el.classList.toggle('hidden', name !== hb);
+    });
     if (settingsScreen) settingsScreen.classList.toggle('hidden', name !== 'settings');
     const gs = document.getElementById('guide-screen');
     if (gs) gs.classList.toggle('hidden', name !== 'guide');
@@ -309,6 +342,10 @@ function initGame() {
     lastMove = null;
     lastMovePlayer = null;
     lastMoveColor = null;
+    charaUsed = { P1: false, P2: false };
+    frozenFor = null;
+    pendingExtraMove = { P1: false, P2: false };
+    skillTargeting = null;
     validMoveDetails = [];
     castlingRights = 'KQkq';
     epSquare = '-';
@@ -334,6 +371,7 @@ function getBottomPieceColor() {
 // 両者が1手ずつ動かして盤面が回転すると、操作する色が入れ替わる
 function getActivePieceColor(player) {
     const p = player || currentPlayer;
+    if (isNormalMode()) return p === 'P1' ? 'w' : 'b';
     const bottom = getBottomPieceColor();
     return p === 'P1' ? bottom : (bottom === 'w' ? 'b' : 'w');
 }
@@ -394,6 +432,8 @@ function snapshotState() {
         currentPlayer, gameOver, winnerPlayer, winReason,
         p1Skips, p2Skips, p1Captures, p2Captures,
         lastMovePlayer, lastMoveColor,
+        playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
+        frozenFor, pendingExtraMove: { ...pendingExtraMove },
         selectedGameMode, moveHistory: JSON.parse(JSON.stringify(moveHistory)),
         totalMovesCount, rotationsCount, statsRecorded, randomNextRotation,
         lastMove, castlingRights, epSquare,
@@ -418,6 +458,11 @@ function restoreState(snap) {
     p1Captures = snap.p1Captures; p2Captures = snap.p2Captures;
     lastMovePlayer = snap.lastMovePlayer || null;
     lastMoveColor = snap.lastMoveColor || null;
+    playerCharacters = snap.playerCharacters || { P1: null, P2: null };
+    charaUsed = snap.charaUsed || { P1: false, P2: false };
+    frozenFor = snap.frozenFor || null;
+    pendingExtraMove = snap.pendingExtraMove || { P1: false, P2: false };
+    charaPhase = isCharaMode() && !(playerCharacters.P1 && playerCharacters.P2);
     if (snap.selectedGameMode) selectedGameMode = snap.selectedGameMode;
     moveHistory = snap.moveHistory || [];
     totalMovesCount = snap.totalMovesCount || 0;
@@ -576,7 +621,8 @@ function renderBoard() {
 
     turnEl.textContent = `${playerLabel} の番 [操作する色: ${bottomColorName}]`;
     // ランダム回転モードでは「回転まであと何手か」を伏せる
-    movesLeftEl.textContent = isRandomMode() ? '？' : (2 - moveCounter);
+    movesLeftEl.textContent = isNormalMode() ? '―' : (isRandomMode() ? '？' : (2 - moveCounter));
+    skipBtn.style.display = isNormalMode() ? 'none' : '';
 
     p1SkipsEl.textContent = p1Skips;
     p2SkipsEl.textContent = p2Skips;
@@ -591,6 +637,8 @@ function renderBoard() {
     captureGoalEls.forEach(el => { el.textContent = settings.capturesForSkip; });
 
     renderCapturedPieces();
+    renderCharaPanel();
+    updateCharaModalVisibility();
     updateDangerWarning();
     renderMoveHistory();
     updateWinOverlay();
@@ -602,7 +650,7 @@ function renderCapturedPieces() {
     const by = { P1: [], P2: [] };
     const val = { P1: 0, P2: 0 };
     moveHistory.forEach(h => {
-        if (h.captured) {
+        if (h.captured && !h.revived) {
             by[h.player].push(h);
             val[h.player] += PIECE_VALUES[h.captured] || 0;
         }
@@ -708,8 +756,10 @@ function isWinningKingCapture(move, player) {
 function getSimulatedMoves(square, color) {
     try {
         const simGame = new Chess(buildActiveFen(color));
-        const moves = simGame.moves({ square: square, verbose: true });
-        return filterForbiddenKingCaptures(moves, currentPlayer);
+        let moves = simGame.moves({ square: square, verbose: true });
+        moves = filterForbiddenKingCaptures(moves, currentPlayer);
+        if (frozenFor && frozenFor === currentPlayer) moves = moves.filter(m => !m.captured);
+        return moves;
     } catch (e) {
         return [];
     }
@@ -736,10 +786,11 @@ document.querySelectorAll('.promotion-btn').forEach(btn => {
 });
 
 function handleSquareClick(square) {
+    if (skillTargeting) { handleSkillTargetClick(square); return; }
     if (isWatchMode()) return;
     if (suppressNextClick) { suppressNextClick = false; return; }
     if (gameOver || game.game_over()) return;
-    if (selectedGameMode.startsWith('cpu') && currentPlayer === 'P2') return;
+    if (isCpuGame() && currentPlayer === 'P2') return;
     if (isOnlineMode()) {
         if (!onlineConnected) return; // 相手の接続待ち
         if (currentPlayer !== myRole) return; // 自分の手番だけ操作できる
@@ -779,6 +830,7 @@ function handleSquareClick(square) {
 // 確実に着手を反映させる安全移動関数
 function executeMoveCustom(from, to, promotion) {
     if (gameOver) return;
+    if (isCharaMode() && charaPhase) return;
     // オンライン対戦では、接続が完了していて自分の手番のときだけ着手できる（クリック／ドラッグ共通）
     if (isOnlineMode() && (!onlineConnected || currentPlayer !== myRole)) return;
 
@@ -793,6 +845,12 @@ function executeMoveCustom(from, to, promotion) {
         if (isForbiddenKingCapture(attemptedMove, currentPlayer)) {
             return;
         }
+    }
+
+    // ふぶきで凍っているプレイヤーは、この手番では駒を取れない
+    if (frozenFor === currentPlayer) {
+        const isEpCapture = movingPiece && movingPiece.type === 'p' && !targetPiece && to === epSquare && from[0] !== to[0];
+        if (targetPiece || isEpCapture) { messageEl.textContent = 'ふぶきで凍っている！この手番は駒を取れません'; return; }
     }
 
     const activeFen = buildActiveFen(currentColor);
@@ -855,40 +913,51 @@ function executeMoveCustom(from, to, promotion) {
             }
         }
 
-        // ===== 盤面回転 =====
-        if (isRandomMode()) {
-            moveCounter++;
-            if (randomNextRotation !== null) randomNextRotation--;
+        if (frozenFor === currentPlayer) frozenFor = null;
+        if (isCharaMode() && pendingExtraMove[currentPlayer]) {
+            pendingExtraMove[currentPlayer] = false;
+            messageEl.textContent = 'アンコール！もう1手動けます';
+            renderBoard();
+            broadcastState();
+            if (isCpuGame() && currentPlayer === 'P2' && !gameOver) setTimeout(makeCpuMove, 600);
+            return;
+        }
+        if (!isNormalMode()) {
+            // ===== 盤面回転 =====
+            if (isRandomMode()) {
+                moveCounter++;
+                if (randomNextRotation !== null) randomNextRotation--;
 
-            if (randomNextRotation !== null && randomNextRotation <= 0) {
-                if (skipNextRotation) {
-                    skipNextRotation = false;
-                    skipBtn.textContent = '回転を止める (スキップ予約)';
-                    skipBtn.style.backgroundColor = '#3b82f6';
-                } else {
-                    isBoardRotated = !isBoardRotated;
-                    rotationsCount++;
-                    if (isBoardRotated) boardEl.classList.add('rotate-180');
-                    else boardEl.classList.remove('rotate-180');
+                if (randomNextRotation !== null && randomNextRotation <= 0) {
+                    if (skipNextRotation) {
+                        skipNextRotation = false;
+                        skipBtn.textContent = '回転を止める (スキップ予約)';
+                        skipBtn.style.backgroundColor = '#3b82f6';
+                    } else {
+                        isBoardRotated = !isBoardRotated;
+                        rotationsCount++;
+                        if (isBoardRotated) boardEl.classList.add('rotate-180');
+                        else boardEl.classList.remove('rotate-180');
+                    }
+                    moveCounter = 0;
+                    randomNextRotation = drawRandomRotationCountdown();
                 }
-                moveCounter = 0;
-                randomNextRotation = drawRandomRotationCountdown();
-            }
-        } else {
-            moveCounter++;
+            } else {
+                moveCounter++;
 
-            if (moveCounter >= 2) {
-                moveCounter = 0;
+                if (moveCounter >= 2) {
+                    moveCounter = 0;
 
-                if (skipNextRotation) {
-                    skipNextRotation = false;
-                    skipBtn.textContent = '回転を止める (スキップ予約)';
-                    skipBtn.style.backgroundColor = '#3b82f6';
-                } else {
-                    isBoardRotated = !isBoardRotated;
-                    rotationsCount++;
-                    if (isBoardRotated) boardEl.classList.add('rotate-180');
-                    else boardEl.classList.remove('rotate-180');
+                    if (skipNextRotation) {
+                        skipNextRotation = false;
+                        skipBtn.textContent = '回転を止める (スキップ予約)';
+                        skipBtn.style.backgroundColor = '#3b82f6';
+                    } else {
+                        isBoardRotated = !isBoardRotated;
+                        rotationsCount++;
+                        if (isBoardRotated) boardEl.classList.add('rotate-180');
+                        else boardEl.classList.remove('rotate-180');
+                    }
                 }
             }
         }
@@ -904,7 +973,7 @@ function executeMoveCustom(from, to, promotion) {
             if (!hasAnyLegalMove(getActivePieceColor())) { finishDraw('ステイルメイト'); return; }
         }
 
-        if (!gameOver && !game.game_over() && selectedGameMode.startsWith('cpu') && currentPlayer === 'P2') {
+        if (!gameOver && !game.game_over() && isCpuGame() && currentPlayer === 'P2') {
             setTimeout(makeCpuMove, 500);
         }
     }
@@ -1056,7 +1125,8 @@ function chooseCpuMove(player, levelKey) {
 
 function makeCpuMove() {
     if (gameOver) return;
-    const level = selectedGameMode === 'cpu-random' ? 'cpu-normal' : selectedGameMode;
+    maybeCpuUseSkill();
+    const level = (selectedGameMode === 'cpu-random' || selectedGameMode === 'normal-cpu' || selectedGameMode === 'chara-cpu') ? 'cpu-normal' : selectedGameMode;
     const mv = chooseCpuMove('P2', level);
     if (mv) executeMoveCustom(mv.from, mv.to);
 }
@@ -1134,6 +1204,10 @@ function orderMovesForSearch(moves) {
 // ※探索内では回転停止権の消費までは再現せず、回転スケジュールのみを近似する
 function getSearchActiveColor(ply, rootColor, rootPlayer) {
     const rp = rootPlayer || 'P2';
+    if (isNormalMode()) {
+        const nodePlayer = ply % 2 === 0 ? rp : (rp === 'P1' ? 'P2' : 'P1');
+        return nodePlayer === 'P1' ? 'w' : 'b';
+    }
     const rotations = Math.floor((moveCounter + ply) / 2) - Math.floor(moveCounter / 2);
     const rootBottom = rp === 'P1' ? rootColor : (rootColor === 'w' ? 'b' : 'w');
     const bottom = rotations % 2 === 0 ? rootBottom : (rootBottom === 'w' ? 'b' : 'w');
@@ -1409,6 +1483,220 @@ function setupOnline() {
         setOnlineStatus(`接続エラー（${err.type || 'unknown'}）。コードを確認してやり直してください`);
     });
     updateModeDisplay();
+}
+
+function skillHomeSquares(type, color) {
+    const rank = color === 'w' ? '1' : '8';
+    const pr = color === 'w' ? '2' : '7';
+    switch (type) {
+        case 'k': return ['e' + rank];
+        case 'q': return ['d' + rank];
+        case 'r': return ['a' + rank, 'h' + rank];
+        case 'b': return ['c' + rank, 'f' + rank];
+        case 'n': return ['b' + rank, 'g' + rank];
+        case 'p': return ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map(f => f + pr);
+    }
+    return [];
+}
+function planRevive(player) {
+    const ownColor = player === 'P1' ? 'w' : 'b';
+    const caps = moveHistory.filter(h => h.captured && h.capturedColor === ownColor && !h.revived);
+    if (!caps.length) return null;
+    caps.sort((x, y) => (SKILL_PIECE_VALUES[y.captured] || 0) - (SKILL_PIECE_VALUES[x.captured] || 0));
+    const type = caps[0].captured;
+    const square = skillHomeSquares(type, ownColor).find(s => !game.get(s));
+    return square ? { type, square } : null;
+}
+function applySkillEffect(player, data) {
+    const ch = charaOf(player);
+    if (!ch || charaUsed[player] || gameOver) return false;
+    const activeColor = getActivePieceColor(player);
+    if (ch.id === 'luna') {
+        if (player === 'P1') p1Skips++; else p2Skips++;
+    } else if (ch.id === 'yuki') {
+        frozenFor = player === 'P1' ? 'P2' : 'P1';
+    } else if (ch.id === 'hikari') {
+        pendingExtraMove[player] = true;
+    } else if (ch.id === 'momo') {
+        const pc = data && data.square ? game.get(data.square) : null;
+        if (!pc || pc.type !== 'p' || pc.color !== activeColor) return false;
+        game.remove(data.square);
+        game.put({ type: 'n', color: pc.color }, data.square);
+    } else if (ch.id === 'sora') {
+        const pa = data && data.a ? game.get(data.a) : null;
+        const pb = data && data.b ? game.get(data.b) : null;
+        if (!pa || !pb || data.a === data.b || pa.color !== activeColor || pb.color !== activeColor) return false;
+        game.remove(data.a); game.remove(data.b);
+        game.put({ type: pa.type, color: pa.color }, data.b);
+        game.put({ type: pb.type, color: pb.color }, data.a);
+    } else if (ch.id === 'mint') {
+        if (!data || !data.type || !data.square || game.get(data.square)) return false;
+        const ownColor = player === 'P1' ? 'w' : 'b';
+        const entry = moveHistory.find(h => h.captured === data.type && h.capturedColor === ownColor && !h.revived);
+        if (entry) entry.revived = true;
+        game.put({ type: data.type, color: ownColor }, data.square);
+    } else {
+        return false;
+    }
+    charaUsed[player] = true;
+    skillTargeting = null;
+    messageEl.textContent = `${ch.name} のスキル「${ch.skill}」！`;
+    renderBoard();
+    broadcastState();
+    return true;
+}
+function canUseSkillUI(player) {
+    if (!isCharaMode() || charaPhase || gameOver) return false;
+    if (currentPlayer !== player || !playerCharacters[player] || charaUsed[player]) return false;
+    if (isOnlineMode()) return myRole === player;
+    if (isCpuGame()) return player === 'P1';
+    return true;
+}
+function onSkillButton(player) {
+    if (skillTargeting && skillTargeting.player === player) { skillTargeting = null; messageEl.textContent = 'スキルをキャンセルしました'; return; }
+    if (!canUseSkillUI(player)) return;
+    const ch = charaOf(player);
+    if (!ch) return;
+    if (ch.id === 'momo') { skillTargeting = { player, skill: 'momo' }; messageEl.textContent = 'へんしん：ナイトに変えたい、今操作しているポーンをクリック'; return; }
+    if (ch.id === 'sora') { skillTargeting = { player, skill: 'sora', first: null }; messageEl.textContent = 'テレポート：入れ替える駒を2つクリックしてください'; return; }
+    if (ch.id === 'mint') {
+        const plan = planRevive(player);
+        if (!plan) { messageEl.textContent = '復活できる駒がありません'; return; }
+        applySkillEffect(player, plan);
+        return;
+    }
+    applySkillEffect(player, {});
+}
+function handleSkillTargetClick(square) {
+    const t = skillTargeting;
+    if (!t) return;
+    const activeColor = getActivePieceColor(t.player);
+    const pc = game.get(square);
+    if (t.skill === 'momo') {
+        if (pc && pc.type === 'p' && pc.color === activeColor) { applySkillEffect(t.player, { square }); }
+        else messageEl.textContent = '自分のポーンを選んでください';
+        return;
+    }
+    if (t.skill === 'sora') {
+        if (!pc || pc.color !== activeColor) { messageEl.textContent = '今操作している自分の駒を選んでください'; return; }
+        if (!t.first) { t.first = square; messageEl.textContent = 'テレポート：もう1つの駒をクリック'; return; }
+        if (square === t.first) { messageEl.textContent = '別の駒を選んでください'; return; }
+        applySkillEffect(t.player, { a: t.first, b: square });
+    }
+}
+function maybeCpuUseSkill() {
+    const player = 'P2';
+    if (!isCharaMode() || charaUsed[player] || charaPhase || gameOver) return;
+    const ch = charaOf(player);
+    if (!ch) return;
+    const rnd = Math.random();
+    if (ch.id === 'luna') { applySkillEffect(player, {}); return; }
+    if (ch.id === 'hikari' && rnd < 0.3) { applySkillEffect(player, {}); return; }
+    if (ch.id === 'yuki' && totalMovesCount > 4 && rnd < 0.3) { applySkillEffect(player, {}); return; }
+    if (ch.id === 'mint') { const plan = planRevive(player); if (plan) applySkillEffect(player, plan); return; }
+    if (ch.id === 'momo') {
+        const activeColor = getActivePieceColor(player);
+        const bd = game.board();
+        for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+            const cell = bd[r][f];
+            if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square }); return; }
+        }
+    }
+}
+function renderCharaPanel() {
+    const panel = document.getElementById('chara-panel');
+    if (!panel) return;
+    if (!isCharaMode()) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+    ['P1', 'P2'].forEach(pl => {
+        const key = pl.toLowerCase();
+        const ch = charaOf(pl);
+        const img = document.getElementById('chara-img-' + key);
+        const nameEl = document.getElementById('chara-name-' + key);
+        const skillEl = document.getElementById('chara-skill-' + key);
+        const btn = document.getElementById('chara-btn-' + key);
+        if (img) img.src = ch && typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
+        if (nameEl) nameEl.textContent = ch ? `${pl}：${ch.name}（${ch.title}）` : `${pl}：未選択`;
+        if (skillEl) skillEl.textContent = ch ? `スキル「${ch.skill}」：${ch.desc}` : '';
+        if (btn) {
+            btn.disabled = !canUseSkillUI(pl);
+            btn.textContent = !ch ? 'スキル' : (charaUsed[pl] ? 'スキル使用済み' : `スキル：${ch.skill}`);
+        }
+    });
+}
+['p1', 'p2'].forEach(k => {
+    const b = document.getElementById('chara-btn-' + k);
+    if (b) b.addEventListener('click', () => onSkillButton(k.toUpperCase()));
+});
+
+document.querySelectorAll('[data-chara-img]').forEach(img => {
+    if (typeof CHARA_IMAGES !== 'undefined') img.src = CHARA_IMAGES[img.dataset.charaImg] || '';
+});
+
+function buildCharaGrid() {
+    const grid = document.getElementById('chara-grid');
+    if (!grid || grid.childElementCount > 0) return;
+    CHARACTERS.forEach(ch => {
+        const card = document.createElement('button');
+        card.className = 'chara-card';
+        card.dataset.chara = ch.id;
+        const imgSrc = typeof CHARA_IMAGES !== 'undefined' ? (CHARA_IMAGES[ch.id] || '') : '';
+        card.innerHTML = `<img src="${imgSrc}" alt="${ch.name}"><span class="chara-card-name">${ch.name}</span><span class="chara-card-title">${ch.title}</span><span class="chara-card-skill">「${ch.skill}」${ch.desc}</span>`;
+        card.addEventListener('click', () => onCharaCardPick(ch.id));
+        grid.appendChild(card);
+    });
+}
+function openCharaSelection() {
+    playerCharacters = { P1: null, P2: null };
+    charaPhase = true;
+    skillTargeting = null;
+    buildCharaGrid();
+    document.querySelectorAll('.chara-card').forEach(c => { c.disabled = false; });
+    const title = document.getElementById('chara-modal-title');
+    if (title) title.textContent = isOnlineMode() ? 'あなたのキャラを選んでください' : 'P1 のキャラを選んでください';
+    updateCharaModalVisibility();
+    renderCharaPanel();
+}
+function onCharaCardPick(id) {
+    if (!charaPhase) return;
+    const title = document.getElementById('chara-modal-title');
+    if (isOnlineMode()) {
+        if (playerCharacters[myRole]) return;
+        playerCharacters[myRole] = id;
+        broadcastState();
+        if (playerCharacters.P1 && playerCharacters.P2) { charaPhase = false; }
+        else if (title) title.textContent = '相手の選択を待っています…';
+    } else if (isCpuGame()) {
+        playerCharacters.P1 = id;
+        const rest = CHARACTERS.map(c => c.id).filter(x => x !== id);
+        playerCharacters.P2 = rest[Math.floor(Math.random() * rest.length)];
+        charaPhase = false;
+    } else {
+        if (!playerCharacters.P1) {
+            playerCharacters.P1 = id;
+            document.querySelectorAll('.chara-card').forEach(c => { if (c.dataset.chara === id) c.disabled = true; });
+            if (title) title.textContent = 'P2 のキャラを選んでください';
+            renderCharaPanel();
+            return;
+        }
+        playerCharacters.P2 = id;
+        charaPhase = false;
+    }
+    renderBoard();
+}
+function updateCharaModalVisibility() {
+    const modal = document.getElementById('chara-modal');
+    if (!modal) return;
+    if (isCharaMode() && charaPhase) {
+        buildCharaGrid();
+        const title = document.getElementById('chara-modal-title');
+        if (title && isOnlineMode()) {
+            title.textContent = playerCharacters[myRole] ? '相手の選択を待っています…' : 'あなたのキャラを選んでください';
+        }
+        modal.classList.remove('hidden');
+    } else {
+        modal.classList.add('hidden');
+    }
 }
 
 function handleOnlineData(data) {
