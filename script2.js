@@ -408,12 +408,19 @@ function maybeCpuUseSkill() {
             return;
         }
         case 'pushback': {
-            const pawns = boardCells().filter(cell => cell.type === 'p' && cell.color === 'w');
-            for (const cell of pawns) {
+            const targets = boardCells().filter(cell => cell.color === 'w' && cell.type !== 'k');
+            targets.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
+            for (const cell of targets) {
                 const c = squareCoords(cell.square);
                 const dest = coordsToSquare(c.f, c.r - 1);
                 if (dest && !game.get(dest)) { if (rnd < 0.5) applySkillEffect(player, { square: cell.square }); return; }
             }
+            return;
+        }
+        case 'counter': {
+            const own = boardCells().filter(cell => cell.color === activeColor);
+            own.sort((a, b) => (SKILL_PIECE_VALUES[b.type] || 0) - (SKILL_PIECE_VALUES[a.type] || 0));
+            if (own.length && rnd < 0.6) applySkillEffect(player, { square: own[0].square });
             return;
         }
         case 'dashSlash': {
@@ -460,7 +467,7 @@ function maybeCpuUseSkill() {
         }
         case 'exchange': {
             const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square, toType: 'q' }); return; } }
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: cell.square, toType: 'r' }); return; } }
             return;
         }
         case 'swap': return;
