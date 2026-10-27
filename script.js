@@ -32,29 +32,30 @@ const PLAYER_COLORS = { P1: 'w', P2: 'b' };
 const COLOR_OWNERS = { w: 'P1', b: 'P2' };
 
 const CHARACTERS = [
-    { id: 'luna', name: 'セレーネ', title: '月のうさぎ巫女', skill: 'つきのまもり', kind: 'skip', desc: '回転停止権を1つ増やす。ピンチの回転を止めたいときに。', profile: '月夜の神社に仕える巫女。うさぎの耳飾りと三日月の杖が自慢。静かに見えて負けず嫌い。' },
+    { id: 'luna', name: 'セレーネ', title: '月のうさぎ巫女', skill: 'ルナ・ブレッシング', kind: 'skip', desc: '回転停止権を1つ増やす。ピンチの回転を止めたいときに。', profile: '月夜の神社に仕える巫女。うさぎの耳飾りと三日月の杖が自慢。静かに見えて負けず嫌い。' },
     { id: 'mint', name: 'シルフィーユ', title: '森の妖精', skill: 'リバイブ', kind: 'revive', unlock: { lost: 2 }, desc: '取られた自分の色の駒のうち、いちばん強い駒を初期位置に復活させる。', profile: '深い森に住む風と葉の妖精。倒れた仲間を放っておけない優しい性格。' },
     { id: 'sora', name: 'カイト', title: '空のパイロット', skill: 'テレポート', kind: 'swap', desc: '今操作している自分の駒2つの位置を入れ替える。', profile: '西風を追いかける若き飛行士。思い立ったら即行動、配置換えはお手のもの。' },
     { id: 'hikari', name: 'アステリア', title: 'ステージのアイドル', skill: 'アンコール', kind: 'extra', unlock: { moves: 6 }, desc: '自分の着手のあと、もう1手続けて動ける。', profile: '星のステージで歌う人気アイドル。アンコールの声援を力に変える。' },
-    { id: 'yuki', name: 'ネージュ', title: '雪の少女', skill: 'ふぶき', kind: 'freeze', desc: '次の相手の手番、相手は駒を取ることができない。', profile: '雪国から来た物静かな少女。彼女の吹雪は相手の攻め手を凍らせる。' },
-    { id: 'momo', name: 'モルガナ', title: '小さな魔女', skill: 'へんしん', kind: 'transform', toType: 'n', unlock: { moves: 4 }, desc: '今操作している自分のポーン1つをナイトに変える。', profile: '古い洋館に住む魔女見習い。変身魔法が得意で、いたずら好き。' },
-    { id: 'nereia', name: 'ネレイア', title: '海の人魚姫', skill: 'まどろみ', kind: 'sleep', desc: '相手が次に操作する色の駒1つを眠らせる。次の相手の手番、その駒は動けない。', profile: '深海の王国の人魚姫。子守歌のような声で大の男も眠らせる。' },
-    { id: 'vulkan', name: 'ヴォルカン', title: '炎の鍛冶屋', skill: 'うちなおし', kind: 'revivePawns', unlock: { lost: 2 }, desc: '取られた自分の色のポーンを最大2つまで、初期位置に復活させる。', profile: '火山のふもとの鍛冶屋の少年。壊れたものは打ち直せばいい、が信条。' },
+    { id: 'yuki', name: 'ネージュ', title: '雪の少女', skill: 'ブリザード', kind: 'freeze', desc: '次の相手の手番、相手は駒を取ることができない。', profile: '雪国から来た物静かな少女。彼女の吹雪は相手の攻め手を凍らせる。' },
+    { id: 'momo', name: 'モルガナ', title: '小さな魔女', skill: 'メタモルフォーゼ', kind: 'transform', toType: 'n', unlock: { moves: 4 }, desc: '今操作している自分のポーン1つをナイトに変える。', profile: '古い洋館に住む魔女見習い。変身魔法が得意で、いたずら好き。' },
+    { id: 'nereia', name: 'ネレイア', title: '海の人魚姫', skill: 'ララバイ', kind: 'sleep', desc: '相手が次に操作する色の駒1つを眠らせる。次の相手の手番、その駒は動けない。', profile: '深海の王国の人魚姫。子守歌のような声で大の男も眠らせる。' },
+    { id: 'vulkan', name: 'ヴォルカン', title: '炎の鍛冶屋', skill: 'リフォージ', kind: 'revivePawns', unlock: { lost: 2 }, desc: '取られた自分の色のポーンを最大2つまで、初期位置に復活させる。', profile: '火山のふもとの鍛冶屋の少年。壊れたものは打ち直せばいい、が信条。' },
     { id: 'chronos', name: 'クロノス', title: '時の魔法使い', skill: 'タイムリープ', kind: 'undo', unlock: { moves: 4 }, desc: '直前の1手を無料で巻き戻す（相手の手も自分の手も対象）。', profile: '時計塔に住む魔法使い。時間の流れを少しだけ巻き戻すことができる。' },
-    { id: 'bastet', name: 'バステト', title: '猫耳メイド', skill: 'にゃんステップ', kind: 'step', desc: '今操作している自分の駒1つを、隣の空きマスへそっと移す。', profile: '猫の女神の名を持つメイド。足音なく動くのは得意中の得意。' },
-    { id: 'carmilla', name: 'カーミラ', title: '吸血鬼の令嬢', skill: '眷属化', kind: 'convert', unlock: { captured: 1 }, desc: '自分が取った相手の駒のうち最強の1つを、自分の色に変えて初期位置に復活させる。', profile: '古城に住む吸血鬼の令嬢。気に入った相手は眷属にしてしまう。' },
-    { id: 'suiren', name: 'スイレン', title: '龍の巫女', skill: 'りゅうの結界', kind: 'barrier', desc: '次の相手の手番、相手はチェックをかける手とキングを取る手ができない。', profile: '水龍を祀る神社の巫女。張った結界は王への攻撃を通さない。' },
-    { id: 'titan', name: 'タイタン', title: '岩の守護者', skill: 'いわの守護', kind: 'shield', desc: '自分の色の駒が次に取られるのを1回防ぐ（防ぐまで有効）。', profile: '山の神殿を守る岩の守護者。仲間への一撃ならこの身で受ける。' },
-    { id: 'sibylla', name: 'シビラ', title: '星の占い師', skill: '星屑の加護', kind: 'fortune', desc: 'シビラだけの星読み。10%で超新星：取られた自分の駒をすべて復活。30%で星の守り：次の相手の手番、自分の駒は取られずキングもチェックされない。40%で流れ星：自分のポーン1つを前方2マスへワープ。20%で護衛の星：自分のキングの隣にポーンが現れる（現れなければ停止権+1）。', profile: '星の声を聞く占い師。運命は気まぐれだが、彼女の星読みは戦況そのものを書き換える。' },
-    { id: 'hayate', name: 'ハヤテ', title: '風の忍者', skill: '分身の術', kind: 'clone', unlock: { moves: 4 }, desc: '今操作している自分のナイトの隣の空きマスに、ナイトをもう1つ増やす。', profile: '疾風の里の忍者。分身の術でナイトを増やすのが奥義。' },
-    { id: 'seraphina', name: 'セラフィナ', title: '天空の天使', skill: '大いなる祝福', kind: 'transform', toType: 'q', unlock: { lost: 2 }, desc: '今操作している自分のポーン1つをクイーンに変える。', profile: '天空の都から遣わされた天使。小さなポーンにも大きな祝福を。' },
-    { id: 'barbarossa', name: 'バルバロッサ', title: '海賊船長', skill: '砲撃', kind: 'destroy', unlock: { moves: 8 }, desc: '相手の色の駒（キング以外）どれか1つを盤上から取り除く。クイーンやルークも砲撃で沈められる。', profile: '七つの海を荒らした海賊船長。砲撃の的は絶対に外さない。' },
-    { id: 'nicola', name: 'ニコラ', title: '錬金術師', skill: '等価交換', kind: 'exchange', unlock: { moves: 6 }, desc: '今操作している自分の駒1つ（キング以外）を、好きな駒（クイーン／ルーク／ビショップ／ナイト／ポーン）に変える。通常の上限数を超えて同じ駒を増やすこともできる（ポーンの昇格と同じ仕組み）。', profile: '賢者の石を追う錬金術師。姿を変えることも、等価交換の応用にすぎない。' },
-    { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: '冥府の軍団', kind: 'reviveAll', unlock: { lost: 3, moves: 6 }, desc: '相手に取られた自分の駒をすべて、自分の色のまま初期位置に復活させる（空いている初期位置の分だけ）。取られた駒が多いほど帰ってくる軍団も大きくなる。', profile: '冥界を治める若き女王。倒れた自軍の魂を呼び戻し、戦列へ帰す。' },
-    { id: 'rosetta', name: 'ロゼッタ', title: '薔薇の伯爵夫人', skill: '魅了の抱擁', kind: 'charm', unlock: { moves: 8 }, desc: '相手の色の駒1つ（キングとクイーン以外）を、場所はそのままに自分の色に変えてしまう。ただし、変えた駒がそのまま相手のキングにチェックできる位置にある場合は選べない。', profile: '薔薇園の若き伯爵夫人。その微笑みと差し伸べた手に、逆らえる者はいない。' },
-    { id: 'shizuku', name: 'シズク', title: '図書室の文学少女', skill: '終章', kind: 'doom', unlock: { moves: 6 }, desc: '相手が次に操作する色の駒1つ（キング以外）に「終章」の印をつける。その相手の手番が終わると、印の駒は盤上から消える。印の駒が動いても、消えるまで印は追いかける。', profile: '白髪と眼鏡が目印の、物静かな文学少女。本を閉じるように、物語の終わりを静かに告げる。' },
-    { id: 'ayame', name: 'アヤメ', title: '二刀流の女剣士', skill: '斬り込み', kind: 'dashSlash', unlock: { moves: 5 }, desc: '今操作している自分の駒1つ（キング以外）を、同じ縦・横・斜めの直線上にいる相手の色の駒（キング以外）へ一直線に斬り込ませ、その駒を取る。途中の駒は飛び越える。', profile: '桜と月夜を背に戦う二刀流の女剣士。二本の刀が描く軌跡は、一直線の死線になる。' },
-    { id: 'kanon', name: 'カノン', title: '弦楽の演奏家', skill: 'リタルダンド', kind: 'pushback', desc: '相手の色のポーン1つを、そのポーンから見て後ろの空きマスへ1マス押し戻す。', profile: 'コンサートホールの花形ヴァイオリニスト。ゆっくりと遅らせる旋律は、敵の歩みまで押し戻す。' }
+    { id: 'bastet', name: 'バステト', title: '猫耳メイド', skill: 'キャット・ステップ', kind: 'step', desc: '今操作している自分の駒1つを、隣の空きマスへそっと移す。', profile: '猫の女神の名を持つメイド。足音なく動くのは得意中の得意。' },
+    { id: 'carmilla', name: 'カーミラ', title: '吸血鬼の令嬢', skill: 'ブラッド・パクト', kind: 'convert', unlock: { captured: 1 }, desc: '自分が取った相手の駒のうち最強の1つを、自分の色に変えて初期位置に復活させる。', profile: '古城に住む吸血鬼の令嬢。気に入った相手は眷属にしてしまう。' },
+    { id: 'suiren', name: 'スイレン', title: '龍の巫女', skill: 'ドラゴン・バリア', kind: 'barrier', desc: '次の相手の手番、相手はチェックをかける手とキングを取る手ができない。', profile: '水龍を祀る神社の巫女。張った結界は王への攻撃を通さない。' },
+    { id: 'titan', name: 'タイタン', title: '岩の守護者', skill: 'グラナイト・シールド', kind: 'shield', desc: '自分の色の駒が次に取られるのを1回防ぐ（防ぐまで有効）。', profile: '山の神殿を守る岩の守護者。仲間への一撃ならこの身で受ける。' },
+    { id: 'sibylla', name: 'シビラ', title: '星の占い師', skill: 'ステラ・フォーチュン', kind: 'fortune', desc: 'シビラだけの星読み。10%で超新星：取られた自分の駒をすべて復活。30%で星の守り：次の相手の手番、自分の駒は取られずキングもチェックされない。40%で流れ星：自分のポーン1つを前方2マスへワープ。20%で護衛の星：自分のキングの隣にポーンが現れる（現れなければ停止権+1）。', profile: '星の声を聞く占い師。運命は気まぐれだが、彼女の星読みは戦況そのものを書き換える。' },
+    { id: 'hayate', name: 'ハヤテ', title: '風の忍者', skill: 'シャドウ・クローン', kind: 'clone', unlock: { moves: 4 }, desc: '今操作している自分のナイトの隣の空きマスに、ナイトをもう1つ増やす。', profile: '疾風の里の忍者。分身の術でナイトを増やすのが奥義。' },
+    { id: 'seraphina', name: 'セラフィナ', title: '天空の天使', skill: 'ホーリー・ブレッシング', kind: 'transform', toType: 'q', unlock: { lost: 2 }, desc: '今操作している自分のポーン1つをクイーンに変える。', profile: '天空の都から遣わされた天使。小さなポーンにも大きな祝福を。' },
+    { id: 'barbarossa', name: 'バルバロッサ', title: '海賊船長', skill: 'キャノン・バラージ', kind: 'destroy', unlock: { moves: 8 }, desc: '相手の色の駒（キング以外）どれか1つを盤上から取り除く。クイーンやルークも砲撃で沈められる。', profile: '七つの海を荒らした海賊船長。砲撃の的は絶対に外さない。' },
+    { id: 'nicola', name: 'ニコラ', title: '錬金術師', skill: 'トランスミュート', kind: 'exchange', unlock: { moves: 6 }, desc: '今操作している自分の駒1つ（キング以外）を、好きな駒（ルーク／ビショップ／ナイト／ポーン）に変える。クイーンには変えられない。通常の上限数を超えて同じ駒を増やすこともできる（ポーンの昇格と同じ仕組み）。', profile: '賢者の石を追う錬金術師。姿を変えることも、等価交換の応用にすぎない。' },
+    { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: 'ネクロ・リージョン', kind: 'reviveAll', unlock: { lost: 3, moves: 6 }, desc: '相手に取られた自分の駒をすべて、自分の色のまま初期位置に復活させる（空いている初期位置の分だけ）。取られた駒が多いほど帰ってくる軍団も大きくなる。', profile: '冥界を治める若き女王。倒れた自軍の魂を呼び戻し、戦列へ帰す。' },
+    { id: 'rosetta', name: 'ロゼッタ', title: '薔薇の伯爵夫人', skill: 'チャーム・エンブレイス', kind: 'charm', unlock: { moves: 8 }, desc: '相手の色の駒1つ（キングとクイーン以外）を、場所はそのままに自分の色に変えてしまう。ただし、変えた駒がそのまま相手のキングにチェックできる位置にある場合は選べない。', profile: '薔薇園の若き伯爵夫人。その微笑みと差し伸べた手に、逆らえる者はいない。' },
+    { id: 'shizuku', name: '琴那', title: '図書室の文学少女', skill: 'ファイナル・エピローグ', kind: 'doom', unlock: { moves: 6 }, desc: '相手が次に操作する色の駒1つ（キング以外）に「終章（ファイナル・エピローグ）」の印をつける。その相手の手番が終わると、印の駒は盤上から消える。印の駒が動いても、消えるまで印は追いかける。', profile: '白髪と眼鏡が目印の、物静かな文学少女。本を閉じるように、物語の終わりを静かに告げる。' },
+    { id: 'ayame', name: 'アヤメ', title: '二刀流の女剣士', skill: 'クロス・スラッシュ', kind: 'dashSlash', unlock: { moves: 5 }, desc: '今操作している自分の駒1つ（キング以外）を、同じ縦・横・斜めの直線上にいる相手の色の駒（キング以外）へ一直線に斬り込ませ、その駒を取る。途中の駒は飛び越える。', profile: '桜と月夜を背に戦う二刀流の女剣士。二本の刀が描く軌跡は、一直線の死線になる。' },
+    { id: 'kanon', name: 'カノン', title: '弦楽の演奏家', skill: 'リタルダンド', kind: 'pushback', desc: '相手の色の駒（キング以外）どれか1つを、その駒の色の後方（自陣側）の空きマスへ1マス押し戻す。クイーンやルークも押し戻して攻撃の構えを崩せる。', profile: 'コンサートホールの花形ヴァイオリニスト。ゆっくりと遅らせる旋律は、敵の歩みまで押し戻す。' },
+    { id: 'mirage', name: 'ミラージュ', title: '鏡界の魔女', skill: 'ミラー・カウンター', kind: 'counter', desc: '今操作している自分の駒1つに鏡の加護をつける。その駒を取ろうとした相手の駒は、代わりに盤上から消える（1回だけ）。キングにもつけられ、キングの一撃は消えずに防ぐ。', profile: '鏡の世界に住む若き魔女。仕掛けた鏡は、襲いかかる刃をそのまま跳ね返す。' }
 ];
 const SKILL_PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 let playerCharacters = { P1: null, P2: null };
@@ -71,6 +72,10 @@ let doomFor = null;
 let doomSquare = null;
 let doomPieceType = null;
 let doomPieceColor = null;
+let counterFor = null;
+let counterSquare = null;
+let counterPieceType = null;
+let counterPieceColor = null;
 let transformPicker = null;
 let skillFxNote = '';
 function opponentOf(player) { return player === 'P1' ? 'P2' : 'P1'; }
@@ -415,6 +420,10 @@ function initGame() {
     doomSquare = null;
     doomPieceType = null;
     doomPieceColor = null;
+    counterFor = null;
+    counterSquare = null;
+    counterPieceType = null;
+    counterPieceColor = null;
     transformPicker = null;
     skillFxNote = '';
     const transformModalInit = document.getElementById('transform-modal');
@@ -511,7 +520,8 @@ function snapshotState() {
         playerCharacters: { ...playerCharacters }, charaUsed: { ...charaUsed },
         frozenFor, pendingExtraMove: { ...pendingExtraMove },
         sleepFor, sleepSquare, barrierFor, shieldFor, starGuardFor,
-        doomFor, doomSquare, doomPieceType, doomPieceColor, skillRecharge: { ...skillRecharge },
+        doomFor, doomSquare, doomPieceType, doomPieceColor,
+        counterFor, counterSquare, counterPieceType, counterPieceColor, skillRecharge: { ...skillRecharge },
         selectedGameMode, moveHistory: JSON.parse(JSON.stringify(moveHistory)),
         totalMovesCount, rotationsCount, statsRecorded, randomNextRotation,
         lastMove, castlingRights, epSquare,
@@ -549,6 +559,10 @@ function restoreState(snap) {
     doomSquare = snap.doomSquare || null;
     doomPieceType = snap.doomPieceType || null;
     doomPieceColor = snap.doomPieceColor || null;
+    counterFor = snap.counterFor || null;
+    counterSquare = snap.counterSquare || null;
+    counterPieceType = snap.counterPieceType || null;
+    counterPieceColor = snap.counterPieceColor || null;
     transformPicker = null;
     const transformModalRestore = document.getElementById('transform-modal');
     if (transformModalRestore) transformModalRestore.classList.add('hidden');
@@ -709,6 +723,10 @@ function renderBoard() {
     if (doomSquare) {
         const doomEl = boardEl.querySelector(`[data-square="${doomSquare}"]`);
         if (doomEl) doomEl.classList.add('doom-marked');
+    }
+    if (counterSquare) {
+        const counterEl = boardEl.querySelector(`[data-square="${counterSquare}"]`);
+        if (counterEl) counterEl.classList.add('counter-marked');
     }
 
     const playerLabel = getPlayerLabel(currentPlayer);
@@ -946,13 +964,34 @@ function executeMoveCustom(from, to, promotion) {
 
     // 眠らされた駒は、この手番では動けない
     if (sleepFor === currentPlayer && from === sleepSquare) { messageEl.textContent = 'その駒は眠っている！この手番は動けません'; return; }
+    // ミラージュの鏡の加護：加護の駒を取ろうとした駒は、代わりに消える
+    if (counterFor && counterFor !== currentPlayer) {
+        const epCapturedSquare = movingPiece && movingPiece.type === 'p' && !targetPiece && to === epSquare && from[0] !== to[0] ? to[0] + from[1] : null;
+        const capturedSquare = targetPiece ? to : epCapturedSquare;
+        if (capturedSquare && capturedSquare === counterSquare) {
+            const guarded = game.get(counterSquare);
+            if (guarded && guarded.type === counterPieceType && guarded.color === counterPieceColor) {
+                if (movingPiece && movingPiece.type === 'k') {
+                    messageEl.textContent = 'ミラージュの「ミラー・カウンター」！鏡の加護がキングの一撃を防いだ';
+                } else {
+                    game.remove(from);
+                    messageEl.textContent = 'ミラージュの「ミラー・カウンター」！襲った駒が鏡に跳ね返されて消えた';
+                }
+                counterFor = null;
+                counterSquare = null;
+                counterPieceType = null;
+                counterPieceColor = null;
+                return;
+            }
+        }
+    }
     // タイタンの守護：自分の色の駒が取られるのを1回防ぐ
     if (shieldFor && shieldFor !== currentPlayer) {
         const shieldColor = shieldFor === 'P1' ? 'w' : 'b';
         const epTakesShield = movingPiece && movingPiece.type === 'p' && !targetPiece && to === epSquare && from[0] !== to[0] && currentColor !== shieldColor;
         if ((targetPiece && targetPiece.color === shieldColor) || epTakesShield) {
             shieldFor = null;
-            messageEl.textContent = 'タイタンの「いわの守護」が攻撃を防いだ！';
+            messageEl.textContent = 'タイタンの「グラナイト・シールド」が攻撃を防いだ！';
             return;
         }
     }
@@ -982,7 +1021,7 @@ function executeMoveCustom(from, to, promotion) {
         if (barrierFor === currentPlayer) {
             const ownerKingColor = opponentOf(currentPlayer) === 'P1' ? 'w' : 'b';
             if ((targetPiece && targetPiece.type === 'k') || isKingInCheck(simGame.fen(), ownerKingColor)) {
-                messageEl.textContent = 'スイレンの結界！チェックやキング取りはできません';
+                messageEl.textContent = 'スイレンの「ドラゴン・バリア」！チェックやキング取りはできません';
                 return;
             }
         }
@@ -1014,6 +1053,10 @@ function executeMoveCustom(from, to, promotion) {
             capturedColor: moveObj.captured ? (currentColor === 'w' ? 'b' : 'w') : null,
             san: moveObj.san
         });
+        if (counterFor === currentPlayer && from === counterSquare && movingPiece && movingPiece.color === counterPieceColor) {
+            counterSquare = to;
+            counterPieceType = moveObj.promotion || movingPiece.type;
+        }
         if (doomFor === currentPlayer && from === doomSquare && movingPiece && movingPiece.color === doomPieceColor) {
             doomSquare = to;
             doomPieceType = moveObj.promotion || movingPiece.type;
@@ -1077,7 +1120,7 @@ function executeMoveCustom(from, to, promotion) {
             const doomedPiece = doomSquare ? game.get(doomSquare) : null;
             if (doomedPiece && doomedPiece.type === doomPieceType && doomedPiece.color === doomPieceColor) {
                 game.remove(doomSquare);
-                messageEl.textContent = 'シズクの「終章」！印をつけられた駒が消えた';
+                messageEl.textContent = '琴那の「ファイナル・エピローグ」！印をつけられた駒が消えた';
             }
             doomFor = null;
             doomSquare = null;
@@ -1250,6 +1293,9 @@ function chooseCpuMove(player, levelKey) {
             try { const tg = new Chess(activeFen); const rm = tg.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' }); return rm ? !isKingInCheck(tg.fen(), guardColor) : false; }
             catch (e) { return true; }
         });
+    }
+    if (counterFor && counterFor !== player) {
+        moves = moves.filter(m => m.to !== counterSquare);
     }
     if (moves.length === 0) return null;
 
@@ -1909,7 +1955,7 @@ function applySkillEffect(player, data) {
         }
         case 'exchange': {
             const target = data && data.square ? game.get(data.square) : null;
-            const validTypes = ['q', 'r', 'b', 'n', 'p'];
+            const validTypes = ['r', 'b', 'n', 'p'];
             if (!target || target.color !== activeColor || target.type === 'k' || !data || !validTypes.includes(data.toType)) return false;
             game.remove(data.square);
             game.put({ type: data.toType, color: target.color }, data.square); break;
@@ -1992,13 +2038,22 @@ function applySkillEffect(player, data) {
         case 'pushback': {
             const pc = data && data.square ? game.get(data.square) : null;
             const oppColor = ownColor === 'w' ? 'b' : 'w';
-            if (!pc || pc.type !== 'p' || pc.color !== oppColor) return false;
+            if (!pc || pc.type === 'k' || pc.color !== oppColor) return false;
             const c = squareCoords(data.square);
             const dest = coordsToSquare(c.f, c.r + (pc.color === 'w' ? -1 : 1));
             if (!dest || game.get(dest)) return false;
             game.remove(data.square);
-            game.put({ type: 'p', color: pc.color }, dest);
+            game.put({ type: pc.type, color: pc.color }, dest);
             skillFxSquares = [data.square, dest];
+            break;
+        }
+        case 'counter': {
+            const pc = data && data.square ? game.get(data.square) : null;
+            if (!pc || pc.color !== activeColor) return false;
+            counterFor = player;
+            counterSquare = data.square;
+            counterPieceType = pc.type;
+            counterPieceColor = pc.color;
             break;
         }
         case 'charm': {
@@ -2087,7 +2142,8 @@ const CHARA_SKILL_FX = {
     rosetta: { sign: '💘', icons: ['💘', '🌹', '💕'], tint: 'rgba(255,110,180,.28)', motion: 'fx-rise', special: 'fx-hearts' },
     shizuku: { sign: '📖', icons: ['📖', '🔖', '✒️'], tint: 'rgba(105,135,255,.26)', motion: 'fx-fall', special: 'fx-pages' },
     ayame: { sign: '⚔️', icons: ['⚔️', '🌸', '💨'], tint: 'rgba(255,145,180,.24)', motion: 'fx-swirl', special: 'fx-slash' },
-    kanon: { sign: '🎻', icons: ['🎻', '🎵', '🎶'], tint: 'rgba(100,220,220,.24)', motion: 'fx-swirl', special: 'fx-music' }
+    kanon: { sign: '🎻', icons: ['🎻', '🎵', '🎶'], tint: 'rgba(100,220,220,.24)', motion: 'fx-swirl', special: 'fx-music' },
+    mirage: { sign: '🪞', icons: ['🪞', '✨', '💠'], tint: 'rgba(170,200,255,.27)', motion: 'fx-swirl', special: 'fx-mirror' }
 };
 function showSkillEffect(player, squares) {
     const ch = charaOf(player);
@@ -2159,10 +2215,10 @@ function onSkillButton(player) {
     switch (ch.kind) {
         case 'transform': skillTargeting = { player, skill: 'transform' }; messageEl.textContent = '変身：変えたい、今操作しているポーンをクリック'; return;
         case 'swap': skillTargeting = { player, skill: 'swap', first: null }; messageEl.textContent = 'テレポート：入れ替える駒を2つクリックしてください'; return;
-        case 'step': skillTargeting = { player, skill: 'step', first: null }; messageEl.textContent = 'にゃんステップ：移したい駒をクリック'; return;
-        case 'sleep': skillTargeting = { player, skill: 'sleep' }; messageEl.textContent = 'まどろみ：眠らせたい相手の駒をクリック'; return;
+        case 'step': skillTargeting = { player, skill: 'step', first: null }; messageEl.textContent = 'キャット・ステップ：移したい駒をクリック'; return;
+        case 'sleep': skillTargeting = { player, skill: 'sleep' }; messageEl.textContent = 'ララバイ：眠らせたい相手の駒をクリック'; return;
         case 'destroy': skillTargeting = { player, skill: 'destroy' }; messageEl.textContent = '砲撃：取り除く相手の駒（キング以外）をクリック'; return;
-        case 'exchange': skillTargeting = { player, skill: 'exchange' }; messageEl.textContent = '等価交換：変身させたい、今操作している自分の駒をクリック'; return;
+        case 'exchange': skillTargeting = { player, skill: 'exchange' }; messageEl.textContent = 'トランスミュート：変身させたい、今操作している自分の駒をクリック'; return;
         case 'revive': { const plan = planRevive(player); if (!plan) { messageEl.textContent = '復活できる駒がありません'; return; } applySkillEffect(player, plan); return; }
         case 'revivePawns': { const plan = planRevivePawns(player); if (!plan) { messageEl.textContent = '復活できるポーンがありません'; return; } applySkillEffect(player, plan); return; }
         case 'convert': { const plan = planConvert(player); if (!plan) { messageEl.textContent = '眷属化できる駒がありません'; return; } applySkillEffect(player, plan); return; }
@@ -2190,7 +2246,8 @@ function onSkillButton(player) {
         }
         case 'doom': skillTargeting = { player, skill: 'doom' }; messageEl.textContent = '終章：相手が次に操作する駒（キング以外）に印をつけてください'; return;
         case 'dashSlash': skillTargeting = { player, skill: 'dashSlash', first: null }; messageEl.textContent = '斬り込み：斬り込む自分の駒をクリック'; return;
-        case 'pushback': skillTargeting = { player, skill: 'pushback' }; messageEl.textContent = 'リタルダンド：押し戻したい相手のポーンをクリック'; return;
+        case 'pushback': skillTargeting = { player, skill: 'pushback' }; messageEl.textContent = 'リタルダンド：押し戻したい相手の駒（キング以外）をクリック'; return;
+        case 'counter': skillTargeting = { player, skill: 'counter' }; messageEl.textContent = 'ミラー・カウンター：鏡の加護をつけたい、今操作している自分の駒をクリック'; return;
         case 'charm': skillTargeting = { player, skill: 'charm' }; messageEl.textContent = '魅了：自分の色に変えたい相手の駒（キング・クイーン以外）をクリック'; return;
         case 'undo': if (!historyStack.length) { messageEl.textContent = 'まだ巻き戻せる手がありません'; return; } applySkillEffect(player, {}); return;
         default: applySkillEffect(player, {}); return;
@@ -2200,7 +2257,7 @@ function openTransformPicker(player, square) {
     transformPicker = { player, square };
     const modal = document.getElementById('transform-modal');
     if (modal) modal.classList.remove('hidden');
-    messageEl.textContent = '等価交換：変身先の駒を選んでください（上限数を超えてもOK）';
+    messageEl.textContent = 'トランスミュート：変身先の駒を選んでください（上限数を超えてもOK）';
 }
 function closeTransformPicker() {
     transformPicker = null;
@@ -2254,8 +2311,13 @@ function handleSkillTargetClick(square) {
     }
     if (t.skill === 'pushback') {
         const oppColor = t.player === 'P1' ? 'b' : 'w';
-        if (pc && pc.type === 'p' && pc.color === oppColor) { if (!applySkillEffect(t.player, { square })) messageEl.textContent = 'そのポーンの後ろが空いていません'; }
-        else messageEl.textContent = '相手の色のポーンを選んでください';
+        if (pc && pc.type !== 'k' && pc.color === oppColor) { if (!applySkillEffect(t.player, { square })) messageEl.textContent = 'その駒の後ろが空いていません'; }
+        else messageEl.textContent = '相手の色の駒（キング以外）を選んでください';
+        return;
+    }
+    if (t.skill === 'counter') {
+        if (pc && pc.color === activeColor) applySkillEffect(t.player, { square });
+        else messageEl.textContent = '今操作している自分の駒を選んでください';
         return;
     }
     if (t.skill === 'fortuneWarp') {
@@ -2287,7 +2349,7 @@ function handleSkillTargetClick(square) {
     }
     if (t.skill === 'step') {
         if (!t.first) {
-            if (pc && pc.color === activeColor) { t.first = square; messageEl.textContent = 'にゃんステップ：移す先の空きマスをクリック'; }
+            if (pc && pc.color === activeColor) { t.first = square; messageEl.textContent = 'キャット・ステップ：移す先の空きマスをクリック'; }
             else messageEl.textContent = '今操作している自分の駒を選んでください';
             return;
         }
