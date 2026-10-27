@@ -578,3 +578,20 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .chara-card img { width: 100%; height: 150px; border-radius: 10px; object-fit: cover; object-position: top center; }
 .chara-face { object-position: top center; }
 .guide-chara img { object-position: top center; }
+
+/* ===== ガイドのタブ分け・キャラ説明（v4.1） ===== */
+.guide-tabs { display: flex; gap: 8px; justify-content: center; margin: 10px 0 16px; flex-wrap: wrap; }
+.guide-tab { padding: 9px 18px; border-radius: 999px; border: 2px solid #b98a2f; background: #fffdf6; font-weight: 700; cursor: pointer; font-size: 14px; }
+.guide-tab.selected { background: #b98a2f; color: #fff; }
+.guide-chara-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 900px) { .guide-chara-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .guide-chara-grid { grid-template-columns: 1fr; } }
+.guide-chara-card { background: #fffdf6; border: 1.5px solid #d8c491; border-radius: 12px; overflow: hidden; }
+.guide-chara-card img { width: 100%; height: 230px; object-fit: cover; object-position: top center; display: block; background: #f4ecd4; }
+.guide-chara-body { padding: 10px 12px 12px; }
+.guide-chara-name { font-weight: 800; font-size: 15px; }
+.guide-chara-title { font-size: 11px; opacity: .75; font-weight: 600; }
+.guide-chara-skill { font-size: 12px; line-height: 1.55; margin-top: 4px; }
+.guide-chara-profile { font-size: 12px; line-height: 1.6; opacity: .85; margin: 6px 0 0; }
+.chara-modal-back { display: block; margin: 14px auto 0; }
+.chara-grid { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); }

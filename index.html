@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール</button>
             </div>
-            <p class="version-note">Rotating Chess v4</p>
+            <p class="version-note">Rotating Chess v4.1</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -120,7 +120,7 @@
                             <span class="badge badge-random">ランダム回転</span>
                             <div class="mode-info">
                                 <div class="mode-title">CPU対戦 (ランダム回転)</div>
-                                <div class="mode-desc">中級CPUといつ回転するか分からない特別ルールで対戦</div>
+                                <div class="mode-desc">選べる強さのCPUといつ回転するか分からない特別ルールで対戦</div>
                             </div>
                         </button>
                         <button class="mode-item" data-mode="normal-cpu">
@@ -146,7 +146,7 @@
                         </button>
                 </div>
                 <div id="cpu-level-box" class="level-box hidden">
-                    <span class="level-box-label">通常チェス／キャラ対戦（CPU）の強さ</span>
+                    <span class="level-box-label">通常／キャラ／ランダム回転（CPU）の強さ</span>
                     <div class="level-chips">
                         <button class="level-chip" data-level="cpu-easy">初級</button>
                         <button class="level-chip selected" data-level="cpu-normal">中級</button>
@@ -370,14 +370,19 @@
                 <button id="guide-back-btn" class="secondary-btn">← 戻る</button>
             </div>
             <h2 class="guide-title">駒図鑑・ルール説明</h2>
+            <div class="guide-tabs">
+                <button class="guide-tab selected" data-gtab="pieces">駒の説明</button>
+                <button class="guide-tab" data-gtab="rules">ルールの説明</button>
+                <button class="guide-tab" data-gtab="chara">キャラの説明</button>
+            </div>
 
-            <section class="guide-section">
+            <section class="guide-section" id="guide-tab-pieces">
                 <h3>駒図鑑（動き方）</h3>
                 <div id="guide-pieces" class="guide-grid"></div>
                 <p class="guide-note">図の点は移動できるマス、赤い輪は相手の駒を取れるマスです。ポーンは金（上向き）で表示しています（青は逆向きに進みます）。</p>
             </section>
 
-            <section class="guide-section">
+            <section class="guide-section hidden" id="guide-tab-rules">
                 <h3>このゲームのルール</h3>
                 <div class="guide-rules">
                     <h4>盤面の回転</h4>
@@ -394,19 +399,15 @@
                     <p>回転のタイミングが1〜4手のランダムになる特別ルールです。このモードでは初めの色に関係なく、今動かしている駒でキングを取るか、チェックメイトすれば勝利です。</p>
                     <h4>通常チェス（回転なし）</h4>
                     <p>回転も色の入れ替えもない、普通のチェスです。P1は金、P2は青を最後まで操作し、チェックメイトで勝敗が決まります。メニューの各ハブ（2人対戦／CPU／オンライン）から選べます。</p>
-                    <h4>キャラ対戦（スキル）</h4>
-                    <p>対戦前にキャラを1体選び、そのキャラのスキルを対戦中に1回だけ使えます。スキルを使うのは自分の手番です。</p>
-                    <div class="guide-chara-list">
-                        <div class="guide-chara"><img data-chara-img="luna" alt="ルナ"><div><strong>ルナ（月のうさぎ巫女）「つきのまもり」</strong><br>回転停止権を1つ増やす。</div></div>
-                        <div class="guide-chara"><img data-chara-img="mint" alt="ミント"><div><strong>ミント（森の妖精）「リバイブ」</strong><br>取られた自分の色の駒のうち、いちばん強い駒を初期位置に復活させる。</div></div>
-                        <div class="guide-chara"><img data-chara-img="sora" alt="ソラ"><div><strong>ソラ（空のパイロット）「テレポート」</strong><br>今操作している自分の駒2つの位置を入れ替える。</div></div>
-                        <div class="guide-chara"><img data-chara-img="hikari" alt="ヒカリ"><div><strong>ヒカリ（ステージのアイドル）「アンコール」</strong><br>自分の着手のあと、もう1手続けて動ける。</div></div>
-                        <div class="guide-chara"><img data-chara-img="yuki" alt="ユキ"><div><strong>ユキ（雪の少女）「ふぶき」</strong><br>次の相手の手番、相手は駒を取ることができない。</div></div>
-                        <div class="guide-chara"><img data-chara-img="momo" alt="モモ"><div><strong>モモ（小さな魔女）「へんしん」</strong><br>今操作している自分のポーン1つをナイトに変える。</div></div>
-                    </div>
                     <h4>CPU同士の観戦</h4>
                     <p>メニューの「CPU同士 観戦」では、コンピュータ同士の対戦を盤面で観戦できます。両者の強さと対戦速度を調整できます。</p>
                 </div>
+            </section>
+
+            <section class="guide-section hidden" id="guide-tab-chara">
+                <h3>キャラの説明</h3>
+                <p class="guide-note">キャラ対戦モードで選べるキャラクターたちです。スキルは対戦中に1回だけ、自分の手番に使えます。</p>
+                <div id="guide-chara-grid" class="guide-chara-grid"></div>
             </section>
         </div>
 
@@ -522,11 +523,13 @@
             <h3 id="chara-modal-title">キャラを選んでください</h3>
             <div id="chara-grid" class="chara-grid"></div>
             <p class="chara-modal-note">スキルは対戦中に1回だけ使えます。使うタイミングは自分の手番です。</p>
+            <button id="chara-modal-back" class="secondary-btn chara-modal-back">← メニューに戻る（対戦をやめる）</button>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="characters.js"></script>
+    <script src="characters2.js"></script>
     <script src="script.js"></script>
 </body>
 
