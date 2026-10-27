@@ -124,6 +124,7 @@
             <div class="menu-utility">
                 <button id="menu-settings-btn" class="utility-btn">設定</button>
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
+                <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール</button>
             </div>
             <p class="version-note">Rotating Chess v3</p>
         </div>
@@ -266,6 +267,41 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+
+        <!-- 駒図鑑・ルール説明画面 -->
+        <div id="guide-screen" class="screen hidden">
+            <div class="header-bar">
+                <button id="guide-back-btn" class="secondary-btn">← 戻る</button>
+            </div>
+            <h2 class="guide-title">駒図鑑・ルール説明</h2>
+
+            <section class="guide-section">
+                <h3>駒図鑑（動き方）</h3>
+                <div id="guide-pieces" class="guide-grid"></div>
+                <p class="guide-note">図の点は移動できるマス、赤い輪は相手の駒を取れるマスです。ポーンは金（上向き）で表示しています（青は逆向きに進みます）。</p>
+            </section>
+
+            <section class="guide-section">
+                <h3>このゲームのルール</h3>
+                <div class="guide-rules">
+                    <h4>盤面の回転</h4>
+                    <p>P1は画面の下側、P2は上側の色の駒を操作します。自分と相手が1手ずつ（計2手）動かすと、盤面が180°回転して、操作する色が入れ替わります。たとえば最初は P1＝金、P2＝青、回転後は P1＝青、P2＝金です。</p>
+                    <h4>勝ち方</h4>
+                    <p>自分の色の駒で、相手の色のキングを取ると勝利です（P1の色は金、P2の色は青）。チェックメイトでも勝利になります。相手の色の駒を操作しているときに、自分の色のキングを取る手は禁止手です。</p>
+                    <h4>回転停止権（スキップ）</h4>
+                    <p>各プレイヤーは「次の回転を1回止める」権利を最初に1回持っています。相手の駒を3つ取るごとに1回増えます。自分の手番に予約すると、次の回転タイミングで盤面が回りません。</p>
+                    <h4>引き分け</h4>
+                    <p>両者キングのみになったとき、同じ局面が3回繰り返されたとき（千日手）、動ける駒がなくなったとき（ステイルメイト）、両者が同意したときに引き分けになります。</p>
+                    <h4>特殊な動き</h4>
+                    <p>キャスリングとアンパッサンは通常のチェス通り使えます（回転しても権利は保持されます）。ポーンが端まで進むと、クイーン・ルーク・ビショップ・ナイトのいずれかに昇格できます。</p>
+                    <h4>ランダム回転モード</h4>
+                    <p>回転のタイミングが1〜4手のランダムになる特別ルールです。このモードでは初めの色に関係なく、今動かしている駒でキングを取るか、チェックメイトすれば勝利です。</p>
+                    <h4>CPU同士の観戦</h4>
+                    <p>メニューの「CPU同士 観戦」では、コンピュータ同士の対戦を盤面で観戦できます。両者の強さと対戦速度を調整できます。</p>
+                </div>
+            </section>
         </div>
 
         <!-- 3. 設定画面 -->

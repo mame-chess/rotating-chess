@@ -243,6 +243,8 @@ function showScreen(name) {
     menuScreen.classList.toggle('hidden', name !== 'menu');
     gameScreen.classList.toggle('hidden', name !== 'game');
     if (settingsScreen) settingsScreen.classList.toggle('hidden', name !== 'settings');
+    const gs = document.getElementById('guide-screen');
+    if (gs) gs.classList.toggle('hidden', name !== 'guide');
     if (dataScreen) dataScreen.classList.toggle('hidden', name !== 'data');
     if (name === 'data') { updateStatsDisplay(); renderStatsGraph(); }
 }
@@ -1800,3 +1802,64 @@ const watchSpeedSel = document.getElementById('watch-speed');
 if (watchSpeedSel) {
     watchSpeedSel.addEventListener('change', () => { if (watchPlaying) scheduleWatch(); });
 }
+
+
+// ===== 駒図鑑・ルール説明 =====
+const GUIDE_PIECES = [
+    { type: 'k', name: 'キング', value: '最重要（取られると負け）', desc: '全方向に1マス。このゲームのターゲットです。自分の色の駒で相手のキングを取れば勝利、チェックメイトでも勝利です。' },
+    { type: 'q', name: 'クイーン', value: '9', desc: '縦・横・斜めに何マスでも進める最強の駒。攻撃の中心になります。' },
+    { type: 'r', name: 'ルーク', value: '5', desc: '縦・横に何マスでも。キングとのキャスリングにも使います。' },
+    { type: 'b', name: 'ビショップ', value: '3', desc: '斜めに何マスでも。ずっと同じ色のマスの上だけを進みます。' },
+    { type: 'n', name: 'ナイト', value: '3', desc: 'L字に跳ぶ駒。他の駒を飛び越えられるのはナイトだけです。' },
+    { type: 'p', name: 'ポーン', value: '1', desc: '前に1マス（最初の移動は2マスも可）。取る時は斜め前に進みます。相手陣地の端まで進むと昇格できます。' }
+];
+function guideTargets(type) {
+    const c = 2, pts = [], caps = [];
+    const straight = [[1,0],[-1,0],[0,1],[0,-1]];
+    const diag = [[1,1],[1,-1],[-1,1],[-1,-1]];
+    const slide = (ds) => ds.forEach(([dx,dy]) => { let x=c+dx, y=c+dy; while (x>=0 && x<5 && y>=0 && y<5) { pts.push(x+','+y); x+=dx; y+=dy; } });
+    if (type === 'r') slide(straight);
+    else if (type === 'b') slide(diag);
+    else if (type === 'q') { slide(straight); slide(diag); }
+    else if (type === 'k') [...straight, ...diag].forEach(([dx,dy]) => pts.push((c+dx)+','+(c+dy)));
+    else if (type === 'n') [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([dx,dy]) => pts.push((c+dx)+','+(c+dy)));
+    else if (type === 'p') { pts.push('2,1'); caps.push('1,1','3,1'); }
+    return { pts: new Set(pts), caps: new Set(caps) };
+}
+let guideRendered = false;
+function renderGuide() {
+    const wrap = document.getElementById('guide-pieces');
+    if (!wrap || guideRendered) return;
+    guideRendered = true;
+    GUIDE_PIECES.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'guide-card';
+        const { pts, caps } = guideTargets(p.type);
+        let cells = '';
+        for (let y = 0; y < 5; y++) {
+            for (let x = 0; x < 5; x++) {
+                const key = x + ',' + y;
+                const cls = ((x + y) % 2 === 0) ? 'mini-sq light' : 'mini-sq dark';
+                let inner = '';
+                if (x === 2 && y === 2) inner = pieceSVG(p.type, 'w');
+                else if (caps.has(key)) inner = '<span class="mini-cap"></span>';
+                else if (pts.has(key)) inner = '<span class="mini-dot"></span>';
+                cells += `<div class="${cls}">${inner}</div>`;
+            }
+        }
+        card.innerHTML =
+            '<div class="guide-card-head">' +
+                '<span class="guide-piece-img">' + pieceSVG(p.type, 'w') + '</span>' +
+                '<span class="guide-piece-img">' + pieceSVG(p.type, 'b') + '</span>' +
+                '<div><div class="guide-piece-name">' + p.name + '</div>' +
+                '<div class="guide-piece-value">価値の目安：' + p.value + '</div></div>' +
+            '</div>' +
+            '<div class="mini-board">' + cells + '</div>' +
+            '<p class="guide-piece-desc">' + p.desc + '</p>';
+        wrap.appendChild(card);
+    });
+}
+const menuGuideBtn = document.getElementById('menu-guide-btn');
+if (menuGuideBtn) menuGuideBtn.addEventListener('click', () => { renderGuide(); showScreen('guide'); });
+const guideBackBtn = document.getElementById('guide-back-btn');
+if (guideBackBtn) guideBackBtn.addEventListener('click', () => showScreen('menu'));

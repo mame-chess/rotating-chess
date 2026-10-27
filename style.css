@@ -82,7 +82,8 @@ body {
 
 #menu-screen,
 #settings-screen,
-#data-screen { max-width: 620px; margin: 0 auto; }
+#data-screen,
+#guide-screen { max-width: 620px; margin: 0 auto; }
 
 /* ---------- メニュー ---------- */
 .logo-title {
@@ -491,3 +492,27 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .watch-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; }
 .watch-row select { padding: 5px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--panel); color: var(--ink); font: inherit; font-size: 0.85rem; }
 .watch-note { font-size: 0.72rem; color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+
+/* ---------- 駒図鑑・ルール ---------- */
+.guide-title { text-align: center; font-family: Georgia, "Times New Roman", "Hiragino Mincho ProN", serif; letter-spacing: 1px; margin: 6px 0 14px; }
+.guide-section { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 16px; box-shadow: 3px 3px 0 var(--shadow); }
+.guide-section h3 { margin: 0 0 12px; font-size: 1rem; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .guide-grid { grid-template-columns: 1fr; } }
+.guide-card { border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); padding: 12px; }
+.guide-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.guide-piece-img { display: inline-block; width: 40px; line-height: 0; }
+.guide-piece-name { font-weight: bold; font-size: 1rem; }
+.guide-piece-value { font-size: 0.72rem; color: var(--muted); }
+.mini-board { display: grid; grid-template-columns: repeat(5, 1fr); width: 150px; margin: 0 auto 10px; border: 2px solid var(--board-border); border-radius: 3px; overflow: hidden; }
+.mini-sq { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; position: relative; }
+.mini-sq.light { background: var(--sq-light); }
+.mini-sq.dark { background: var(--sq-dark); }
+.mini-sq .piece-svg { width: 88%; }
+.mini-dot { width: 30%; height: 30%; border-radius: 50%; background: rgba(30, 90, 40, 0.55); display: block; }
+.mini-cap { width: 74%; height: 74%; border-radius: 50%; border: 3px solid rgba(200, 40, 30, 0.75); display: block; }
+.guide-piece-desc { font-size: 0.8rem; line-height: 1.55; margin: 0; }
+.guide-note { font-size: 0.74rem; color: var(--muted); line-height: 1.6; margin: 12px 0 0; }
+.guide-rules h4 { margin: 14px 0 4px; font-size: 0.92rem; color: var(--accent); }
+.guide-rules h4:first-child { margin-top: 0; }
+.guide-rules p { margin: 0; font-size: 0.84rem; line-height: 1.7; }
