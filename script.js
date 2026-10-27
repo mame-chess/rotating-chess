@@ -108,7 +108,7 @@ const MODE_LABELS = {
     'pvp': 'P1 vs P2｜2人対戦 (ローカル)',
     'online': 'オンライン対戦｜離れた相手と対戦',
     'pvp-random': 'ランダム回転｜2人対戦 (特別ルール)',
-    'cpu-random': 'ランダム回転｜CPU対戦 (特別ルール・中級)',
+    'cpu-random': 'ランダム回転｜CPU対戦 (特別ルール)',
     'cpu-easy': 'CPU対戦 (Easy)｜初級',
     'cpu-normal': 'CPU対戦 (Normal)｜中級',
     'cpu-hard': 'CPU対戦 (Hard)｜上級・ミニマックス探索',
@@ -225,6 +225,8 @@ const exportBtn = document.getElementById('export-btn');
 const moveHistoryEl = document.getElementById('move-history');
 const statsSummaryEl = document.getElementById('stats-summary');
 const statsResetBtn = document.getElementById('stats-reset-btn');
+const watchStatsClearBtn = document.getElementById('watch-stats-clear');
+if (watchStatsClearBtn) watchStatsClearBtn.addEventListener('click', () => { localStorage.removeItem(WATCH_KEY); renderWatchStats(); });
 const settingsScreen = document.getElementById('settings-screen');
 const dataScreen = document.getElementById('data-screen');
 const settingsBackBtn = document.getElementById('settings-back-btn');
@@ -348,7 +350,7 @@ function showScreen(name) {
     const gs = document.getElementById('guide-screen');
     if (gs) gs.classList.toggle('hidden', name !== 'guide');
     if (dataScreen) dataScreen.classList.toggle('hidden', name !== 'data');
-    if (name === 'data') { updateStatsDisplay(); renderStatsGraph(); }
+    if (name === 'data') { updateStatsDisplay(); renderStatsGraph(); renderWatchStats(); }
 }
 if (menuSettingsBtn) menuSettingsBtn.addEventListener('click', () => { settingsReturnTo = 'menu'; syncSettingsUI(); showScreen('settings'); });
 if (gameSettingsBtn) gameSettingsBtn.addEventListener('click', () => { settingsReturnTo = 'game'; syncSettingsUI(); showScreen('settings'); });
@@ -598,9 +600,50 @@ function finishDraw(reason) {
     selectedSquare = null;
     validMoves = [];
     validMoveDetails = [];
+    recordWatchResult(null);
     recordGameResult();
     renderBoard();
     broadcastState();
+}
+
+// ===== 観戦モードの対戦記録と勝率 =====
+const WATCH_KEY = 'rotatingChessWatchV1';
+function loadWatchRecords() {
+    try { return JSON.parse(localStorage.getItem(WATCH_KEY)) || []; } catch (e) { return []; }
+}
+function recordWatchResult(winner) {
+    if (typeof isWatchMode !== 'function' || !isWatchMode()) return;
+    const recs = loadWatchRecords();
+    recs.push({ a: watchLevelFor('P1'), b: watchLevelFor('P2'), winner: winner || 'draw', ts: Date.now() });
+    if (recs.length > 300) recs.splice(0, recs.length - 300);
+    try { localStorage.setItem(WATCH_KEY, JSON.stringify(recs)); } catch (e) { /* 保存できない環境では無視 */ }
+    renderWatchStats();
+}
+function renderWatchStats() {
+    const box = document.getElementById('watch-stats');
+    if (!box) return;
+    const recs = loadWatchRecords();
+    if (!recs.length) {
+        box.innerHTML = '<p class="screen-note">まだ観戦の記録がありません。CPU同士の観戦で対戦が終わると、ここに勝率が表示されます。</p>';
+        return;
+    }
+    const agg = {};
+    recs.forEach(r => {
+        const key = r.a + '|' + r.b;
+        if (!agg[key]) agg[key] = { a: r.a, b: r.b, games: 0, p1: 0, p2: 0, draws: 0 };
+        agg[key].games++;
+        if (r.winner === 'P1') agg[key].p1++;
+        else if (r.winner === 'P2') agg[key].p2++;
+        else agg[key].draws++;
+    });
+    const pct = (n, g) => (g ? (n / g * 100).toFixed(1) : '0.0') + '%';
+    const rows = Object.values(agg).sort((x, y) => y.games - x.games).map(g =>
+        `<div class="watch-stat-row"><span class="ws-match">${CPU_LEVEL_NAMES[g.a] || g.a} vs ${CPU_LEVEL_NAMES[g.b] || g.b}</span>` +
+        `<span class="ws-games">${g.games}戦</span>` +
+        `<span class="ws-rec">P1 ${g.p1}勝（${pct(g.p1, g.games)}）</span>` +
+        `<span class="ws-rec">P2 ${g.p2}勝（${pct(g.p2, g.games)}）</span>` +
+        `<span class="ws-draw">引分 ${g.draws}</span></div>`).join('');
+    box.innerHTML = `<p class="screen-note">観戦の対戦記録：全${recs.length}試合（P1の強さ × P2の強さ ごとの勝率）</p>` + rows;
 }
 
 // 勝利でゲームを終える共通処理
@@ -610,6 +653,7 @@ function finishGame(winner, reason) {
     winReason = reason;
     selectedSquare = null;
     validMoves = [];
+    recordWatchResult(winner);
     recordGameResult();
     renderBoard();
     broadcastState();
