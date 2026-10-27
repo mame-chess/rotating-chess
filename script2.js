@@ -355,6 +355,7 @@ function simulateBattleGame(modeA, modeB) {
     const sCaps = { P1: 0, P2: 0 };
     let sGuardP2 = true;
     let sDoubleP2 = true;
+    let sExtraNow = false;
     let moves = 0;
     while (moves < 240) {
         const bottomColor = sRotated ? 'b' : 'w';
@@ -375,6 +376,8 @@ function simulateBattleGame(modeA, modeB) {
         if (sSkips[sPlayer] > 0 && !sSkipNext && ((sDanger && Math.random() < 0.85) || (mode === 'cpu-demon' && Math.random() < 0.3))) {
             sSkipNext = true; sSkips[sPlayer]--;
         }
+        const isExtraMove = sExtraNow && sPlayer === 'P2';
+        if (isExtraMove) sExtraNow = false;
         if (sGuardP2 && sPlayer === 'P1') {
             const wm = legal.find(m => m.captured === 'k' && COLOR_OWNERS[m.color] === 'P1');
             if (wm) {
@@ -397,15 +400,18 @@ function simulateBattleGame(modeA, modeB) {
         if (isKingCheckmated(sg.fen(), 'b') && sPlayer === 'P1' && color === 'w') return { winner: 'P1', moves };
         if (isKingCheckmated(sg.fen(), 'w') && sPlayer === 'P2' && color === 'b') return { winner: 'P2', moves };
         if (sg.board().flat().every(x => !x || x.type === 'k')) return { winner: null, moves };
-        sCounter++;
-        if (sCounter >= 2) {
-            sCounter = 0;
-            if (sSkipNext) sSkipNext = false; else sRotated = !sRotated;
+        if (!isExtraMove) {
+            sCounter++;
+            if (sCounter >= 2) {
+                sCounter = 0;
+                if (sSkipNext) sSkipNext = false; else sRotated = !sRotated;
+            }
         }
         let extraTurn = false;
         if (sPlayer === 'P2' && sDoubleP2 && (mo.captured || isKingInCheck(sg.fen(), 'w'))) {
             sDoubleP2 = false;
             extraTurn = true;
+            sExtraNow = true;
         }
         if (!extraTurn) sPlayer = sPlayer === 'P1' ? 'P2' : 'P1';
     }
