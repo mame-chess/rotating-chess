@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール・キャラ図鑑</button>
             </div>
-            <p class="version-note">Rotating Chess v4.3</p>
+            <p class="version-note">Rotating Chess v4.4</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -264,6 +264,17 @@
                                 <button class="promotion-btn" data-piece="n">ナイト</button>
                             </div>
                         </div>
+                        <div id="transform-modal" class="promotion-modal hidden">
+                            <div class="promotion-title">変身させる駒を選んでください</div>
+                            <div class="promotion-choices">
+                                <button class="transform-btn" data-tpiece="q">クイーン</button>
+                                <button class="transform-btn" data-tpiece="r">ルーク</button>
+                                <button class="transform-btn" data-tpiece="b">ビショップ</button>
+                                <button class="transform-btn" data-tpiece="n">ナイト</button>
+                                <button class="transform-btn" data-tpiece="p">ポーン</button>
+                            </div>
+                            <button id="transform-cancel" class="secondary-btn transform-cancel">キャンセル</button>
+                        </div>
                     </div>
                     <p id="message" class="message"></p>
                 </div>
@@ -298,7 +309,7 @@
                     </div>
 
                     <div id="chara-panel" class="status-panel chara-panel hidden">
-                        <h4 class="chara-panel-title">キャラクター</h4>
+                        <h4 class="chara-panel-title">キャラクター <span class="chara-panel-hint">顔を押すと説明・立ち絵を拡大</span></h4>
                         <div class="chara-row">
                             <img id="chara-img-p1" class="chara-face" alt="">
                             <div class="chara-info">
@@ -423,6 +434,9 @@
                         <li>解放条件：強いスキルには解放条件があるキャラがいます（例：自分の着手を6回以上／相手の駒を2つ以上取る／自分の駒が2つ以上取られる）。条件は各キャラの説明（キャラの説明タブと選択画面）に書いてあります。条件を満たすまでは使えませんが、対戦が進めば自然に満たせるものと、負けているほど満たしやすいものを中心にしています。</li>
                         <li>リチャージ：いちど使ったスキルは、そのあと相手の駒を3つ取ると再び使えるようになります。何回でもリチャージできます。</li>
                         <li>スキルボタンには、解放までの残りや、再使用まであと何つ取ればいいかが表示されます。</li>
+                        <li>シビラの「星屑の加護」は、超新星・星の守り・流れ星・護衛の星という、シビラ専用の星読みで結果が決まります。</li>
+                        <li>シズクの「終章」は盤面に☠の印で表示され、相手の手番が終わると発動します。ニコラの「等価交換」は、通常の上限数を超えて駒を変身させることができます。</li>
+                        <li>ロゼッタの「魅了の抱擁」はキングとクイーンには使えず、変えた駒がそのまま相手のキングへチェックできる位置にある場合も選べません。</li>
                     </ul>
                     <h4>CPU同士の観戦</h4>
                     <p>メニューの「CPU同士 観戦」では、コンピュータ同士の対戦を盤面で観戦できます。両者の強さと対戦速度を調整できます。</p>
@@ -543,7 +557,7 @@
         <div class="chara-modal-box">
             <h3 id="chara-modal-title">キャラを選んでください</h3>
             <div id="chara-grid" class="chara-grid"></div>
-            <p class="chara-modal-note">スキルは対戦中に1回だけ使えます。使うタイミングは自分の手番です。</p>
+            <p class="chara-modal-note">スキルは自分の手番に使えます。使用後は、相手の駒を3つ取ると再び使えるようになります。</p>
             <button id="chara-modal-back" class="secondary-btn chara-modal-back">← メニューに戻る（対戦をやめる）</button>
         </div>
     </div>
@@ -556,6 +570,8 @@
     <script src="characters5.js"></script>
     <script src="characters6.js"></script>
     <script src="characters7.js"></script>
+    <script src="characters8.js"></script>
+    <script src="characters9.js"></script>
     <script src="script.js"></script>
     <script src="script2.js"></script>
     <div id="skill-effect-banner" class="hidden"></div>
