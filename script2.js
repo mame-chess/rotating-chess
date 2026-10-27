@@ -1023,14 +1023,31 @@ function scheduleWatch() {
 }
 function watchStep() {
     if (!watchPlaying || !isWatchMode() || gameOver) return;
-    const mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
+    let mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
+    // 観戦の反復回避：同じ盤面を3回目に作る手は、他に手があれば避ける（同じ動きの繰り返しでの引き分け防止）
+    if (mv) {
+        const boardPartCount = (m) => {
+            try {
+                const tg = new Chess(buildActiveFen());
+                tg.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
+                const bp = tg.fen().split(' ')[0];
+                let c = 0;
+                for (const k in positionCounts) if (k.startsWith(bp + '|')) c += positionCounts[k];
+                return c;
+            } catch (e) { return 0; }
+        };
+        if (boardPartCount(mv) >= 2) {
+            const alts = getSimulatedMoves().filter(m2 => !(m2.from === mv.from && m2.to === mv.to) && boardPartCount(m2) < 2);
+            if (alts.length) mv = alts[Math.floor(Math.random() * alts.length)];
+        }
+    }
     maybeArmDoubleMove(currentPlayer, mv);
     if (!mv) { pauseWatch(); return; }
     executeMoveCustom(mv.from, mv.to);
     if (!gameOver && totalMovesCount >= 300) {
         const adjScore = evaluateBoard(game, 'w');
-        if (adjScore > 150) { finishGame('P1', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P1 の勝ち'; }
-        else if (adjScore < -150) { finishGame('P2', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P2 の勝ち'; }
+        if (adjScore >= 50) { finishGame('P1', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P1 の勝ち'; }
+        else if (adjScore <= -50) { finishGame('P2', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P2 の勝ち'; }
         else finishDraw('手数上限・形勢互角');
     }
     if (!gameOver) scheduleWatch();
