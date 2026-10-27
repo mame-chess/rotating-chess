@@ -287,9 +287,10 @@ function simPickMove(mode, moves, fen, color, player, counter) {
         return pool[Math.floor(Math.random() * pool.length)];
     }
     // 上級・鬼（簡易版）: 1手評価＋（鬼のみ）相手の最善応手まで読む
+    // 高速化：ルートの盤面は1つのインスタンスを使い回して move/undo する
     let best = -Infinity, sel = moves[0];
+    const tg = new Chess(fen);
     orderMovesForSearch(moves).forEach(m => {
-        const tg = new Chess(fen);
         tg.move(m);
         let score = evaluateBoard(tg, player === 'P1' ? 'w' : 'b');
         if (mode === 'cpu-demon') {
@@ -305,18 +306,24 @@ function simPickMove(mode, moves, fen, color, player, counter) {
                     .filter(om => !(om.captured === 'k' && COLOR_OWNERS[om.color] !== oppPlayer));
                 if (oppMoves.some(om => om.captured === 'k')) {
                     score = -100000;
-                } else if (oppMoves.length) {
-                    let min = Infinity;
-                    oppMoves.forEach(om => {
-                        const og = new Chess(`${boardOnly} ${oppColor} - - 0 1`);
-                        og.move(om);
-                        min = Math.min(min, evaluateBoard(og, player === 'P1' ? 'w' : 'b'));
-                    });
-                    score = min;
+                } else {
+                    // 高速化：応手は「取る手」だけを評価する（全応手だと鬼同士で激重になるため）。
+                    // 盤面も1つのインスタンスを使い回して move/undo する。
+                    const replies = oppMoves.filter(om => om.captured);
+                    if (replies.length) {
+                        let min = Infinity;
+                        replies.forEach(om => {
+                            oppFen.move(om);
+                            min = Math.min(min, evaluateBoard(oppFen, player === 'P1' ? 'w' : 'b'));
+                            oppFen.undo();
+                        });
+                        score = min;
+                    }
                 }
             }
         }
         if (score > best) { best = score; sel = m; }
+        tg.undo();
     });
     return sel;
 }
@@ -678,7 +685,13 @@ if (battleStartBtn) {
                 }
                 return;
             }
-            const r = simulateBattleGame(modeA, modeB);
+            let r;
+            try { r = simulateBattleGame(modeA, modeB); }
+            catch (e) {
+                battleRunning = false;
+                if (battleProgressEl) battleProgressEl.textContent = 'エラーで停止しました（もう一度お試しください）';
+                return;
+            }
             if (r.winner === 'P1') tally.a++; else if (r.winner === 'P2') tally.b++; else tally.d++;
             if (r.adjudicated) tally.adj++;
             tally.moves += r.moves;
