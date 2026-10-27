@@ -40,7 +40,7 @@
                 <button id="menu-data-btn" class="utility-btn">対戦データ・検証</button>
                 <button id="menu-guide-btn" class="utility-btn">駒図鑑・ルール・キャラ図鑑</button>
             </div>
-            <p class="version-note">Rotating Chess v4.8</p>
+            <p class="version-note">Rotating Chess v4.9</p>
         </div>
 
         <!-- 1-2. ハブ画面（モードの細かい選択） -->
@@ -292,6 +292,7 @@
                                 <span class="p-name" id="p2-name-label">P2 (相手)</span>
                                 <span class="p-status">停止権: <strong id="p2-skips">1</strong>回 | 撃破: <strong
                                         id="p2-captures">0</strong>/<span class="capture-goal">3</span></span>
+                                <span class="p-status" id="p2-double"></span>
                             </div>
                         </div>
                         <hr>
@@ -301,6 +302,7 @@
                         </div>
                         <div id="danger-warning" class="danger-warning hidden"></div>
                         <button id="skip-btn" class="action-btn">回転を止める (スキップ予約)</button>
+                        <button id="double-btn" class="action-btn hidden-handicap">連続手番を使う (後手ハンデ)</button>
                         <div class="sub-actions">
                             <button id="undo-btn" class="secondary-btn">1手戻す</button>
                             <button id="draw-btn" class="secondary-btn">引き分け</button>
@@ -403,7 +405,9 @@
                     <h4>盤面の回転</h4>
                     <p>P1は画面の下側、P2は上側の色の駒を操作します。自分と相手が1手ずつ（計2手）動かすと、盤面が180°回転して、操作する色が入れ替わります。たとえば最初は P1＝金、P2＝青、回転後は P1＝青、P2＝金です。</p>
                     <h4>勝ち方</h4>
-                    <p>自分の色の駒で、相手の色のキングを取ると勝利です（P1の色は金、P2の色は青）。自分の色の駒でチェックメイトした場合も勝利です（相手の色の駒で詰ませても勝利にはなりません）。相手の色の駒を操作しているときに、自分の色のキングを取る手は禁止手です。バランス調整として、相手の色のキングは原則として動かすことができません（その色の駒がキングだけの場合や、他に合法手がない場合は除きます）。また後手（P2）のキングは、対局中1回だけ取られずに守られます（王の加護）。</p>
+                    <p>自分の色の駒で、相手の色のキングを取ると勝利です（P1の色は金、P2の色は青）。自分の色の駒でチェックメイトした場合も勝利です（相手の色の駒で詰ませても勝利にはなりません）。相手の色の駒を操作しているときに、自分の色のキングを取る手は禁止手です。バランス調整として、相手の色のキングは原則として動かすことができません（その色の駒がキングだけの場合や、他に合法手がない場合は除きます）。また後手（P2）のキングは、対局中1回だけ取られずに守られます（王の加護）。さらに後手は、対局中1回だけ「連続手番」（自分の手番を2回連続にする）を使えます。危ないキングを修理してそのまま反撃するなど、後手の切り札です。対戦画面の「連続手番を使う」ボタンで予約でき、P2の情報欄にも残りが表示されます。</p>
+                    <h4>先手・後手の決め方</h4>
+                    <p>対戦の開始前にサイコロで先手・後手を決めます（大きい目が出た方が先手＝P1・金）。CPU戦で負けると、あなたが後手（P2・青）になり、後手ハンデ（停止権+1・王の加護・連続手番）があなたに付きます。オンライン対戦では接続時に自動でサイコロを振り合います。観戦モードでは試合ごとに自動で決め、P1/P2の強さの割り当てが入れ替わることがあります。</p>
                     <h4>回転停止権（スキップ）</h4>
                     <p>各プレイヤーは「次の回転を1回止める」権利を持って始まります。相手の駒を3つ取るごとに1回増えます。自分の手番に予約すると、次の回転タイミングで盤面が回りません。なお回転式では先手（P1）が有利なため、バランス調整として後手（P2）は停止権を1回多く持って始まります（通常チェスは対象外）。</p>
                     <h4>引き分け</h4>
@@ -600,6 +604,19 @@
             </figcaption>
             <button id="lb-close" class="secondary-btn">閉じる</button>
         </figure>
+    </div>
+    <div id="dice-modal" class="dice-modal hidden">
+        <div class="dice-box">
+            <h3 class="dice-title">🎲 先手・後手を決めよう</h3>
+            <div class="dice-row">
+                <div class="dice-side"><span id="dice-you-name">あなた</span><div id="dice-you" class="dice-face">🎲</div></div>
+                <div class="dice-vs">VS</div>
+                <div class="dice-side"><span id="dice-opp-name">相手</span><div id="dice-opp" class="dice-face">🎲</div></div>
+            </div>
+            <p id="dice-result" class="dice-result">サイコロを振って、大きい目が出た方が先手（P1・金）になります</p>
+            <button id="dice-roll-btn" class="action-btn">サイコロを振る</button>
+            <button id="dice-go-btn" class="action-btn hidden">対戦開始</button>
+        </div>
     </div>
 </body>
 
