@@ -293,6 +293,7 @@ document.querySelectorAll('.hub-back').forEach(b => b.addEventListener('click', 
 document.querySelectorAll('.hub-start').forEach(b => b.addEventListener('click', () => startSelectedGame()));
 
 function startSelectedGame() {
+    if (selectedGameMode === 'watch') watchMatchNo = 1;
     showScreen('game');
     p2NameLabel.textContent = (isCpuGame() || isWatchMode()) ? 'P2 (CPU)' : 'P2 (相手)';
     updateModeDisplay();
@@ -350,7 +351,7 @@ function showScreen(name) {
     const gs = document.getElementById('guide-screen');
     if (gs) gs.classList.toggle('hidden', name !== 'guide');
     if (dataScreen) dataScreen.classList.toggle('hidden', name !== 'data');
-    if (name === 'data') { updateStatsDisplay(); renderStatsGraph(); renderWatchStats(); }
+    if (name === 'data') { updateStatsDisplay(); renderStatsGraph(); renderWatchStats(); renderCharaStats(); }
 }
 if (menuSettingsBtn) menuSettingsBtn.addEventListener('click', () => { settingsReturnTo = 'menu'; syncSettingsUI(); showScreen('settings'); });
 if (gameSettingsBtn) gameSettingsBtn.addEventListener('click', () => { settingsReturnTo = 'game'; syncSettingsUI(); showScreen('settings'); });
@@ -604,46 +605,6 @@ function finishDraw(reason) {
     recordGameResult();
     renderBoard();
     broadcastState();
-}
-
-// ===== 観戦モードの対戦記録と勝率 =====
-const WATCH_KEY = 'rotatingChessWatchV1';
-function loadWatchRecords() {
-    try { return JSON.parse(localStorage.getItem(WATCH_KEY)) || []; } catch (e) { return []; }
-}
-function recordWatchResult(winner) {
-    if (typeof isWatchMode !== 'function' || !isWatchMode()) return;
-    const recs = loadWatchRecords();
-    recs.push({ a: watchLevelFor('P1'), b: watchLevelFor('P2'), winner: winner || 'draw', ts: Date.now() });
-    if (recs.length > 300) recs.splice(0, recs.length - 300);
-    try { localStorage.setItem(WATCH_KEY, JSON.stringify(recs)); } catch (e) { /* 保存できない環境では無視 */ }
-    renderWatchStats();
-}
-function renderWatchStats() {
-    const box = document.getElementById('watch-stats');
-    if (!box) return;
-    const recs = loadWatchRecords();
-    if (!recs.length) {
-        box.innerHTML = '<p class="screen-note">まだ観戦の記録がありません。CPU同士の観戦で対戦が終わると、ここに勝率が表示されます。</p>';
-        return;
-    }
-    const agg = {};
-    recs.forEach(r => {
-        const key = r.a + '|' + r.b;
-        if (!agg[key]) agg[key] = { a: r.a, b: r.b, games: 0, p1: 0, p2: 0, draws: 0 };
-        agg[key].games++;
-        if (r.winner === 'P1') agg[key].p1++;
-        else if (r.winner === 'P2') agg[key].p2++;
-        else agg[key].draws++;
-    });
-    const pct = (n, g) => (g ? (n / g * 100).toFixed(1) : '0.0') + '%';
-    const rows = Object.values(agg).sort((x, y) => y.games - x.games).map(g =>
-        `<div class="watch-stat-row"><span class="ws-match">${CPU_LEVEL_NAMES[g.a] || g.a} vs ${CPU_LEVEL_NAMES[g.b] || g.b}</span>` +
-        `<span class="ws-games">${g.games}戦</span>` +
-        `<span class="ws-rec">P1 ${g.p1}勝（${pct(g.p1, g.games)}）</span>` +
-        `<span class="ws-rec">P2 ${g.p2}勝（${pct(g.p2, g.games)}）</span>` +
-        `<span class="ws-draw">引分 ${g.draws}</span></div>`).join('');
-    box.innerHTML = `<p class="screen-note">観戦の対戦記録：全${recs.length}試合（P1の強さ × P2の強さ ごとの勝率）</p>` + rows;
 }
 
 // 勝利でゲームを終える共通処理
@@ -1408,6 +1369,7 @@ function makeCpuMove() {
 // ===== CPU同士の観戦モード =====
 let watchTimer = null;
 let watchPlaying = false;
+let watchMatchNo = 1;
 function isWatchMode() { return selectedGameMode === 'watch'; }
 function watchLevelFor(player) {
     const sel = document.getElementById(player === 'P1' ? 'watch-p1-level' : 'watch-p2-level');
@@ -1431,7 +1393,19 @@ function watchStep() {
     if (!mv) { pauseWatch(); return; }
     executeMoveCustom(mv.from, mv.to);
     if (!gameOver) scheduleWatch();
+    else if (watchAutoEnabled()) {
+        watchTimer = setTimeout(() => {
+            if (!isWatchMode() || !watchPlaying) return;
+            watchMatchNo++;
+            initGame();
+            startWatch();
+        }, 3000);
+    }
     else pauseWatch();
+}
+function watchAutoEnabled() {
+    const el = document.getElementById('watch-auto');
+    return !!(el && el.checked);
 }
 function startWatch() {
     if (!isWatchMode()) return;
@@ -1449,6 +1423,8 @@ function updateWatchUI() {
     if (panel) panel.classList.toggle('hidden', !isWatchMode());
     const btn = document.getElementById('watch-toggle-btn');
     if (btn) btn.textContent = watchPlaying ? '一時停止' : '再開する';
+    const info = document.getElementById('watch-match-info');
+    if (info) info.textContent = `第${watchMatchNo}試合`;
 }
 
 function evaluateBoard(chessObj, cpuColor) {
@@ -1651,6 +1627,18 @@ function recordGameResult() {
     else if (winReason === 'resignation') stats.resignationWins++;
     stats.totalMoves += totalMovesCount;
     stats.totalRotations += rotationsCount;
+    if (isCharaMode()) {
+        stats.chara = stats.chara || {};
+        const sides = selectedGameMode === 'chara-pvp' ? ['P1', 'P2'] : selectedGameMode === 'chara-cpu' ? ['P1'] : [myRole];
+        sides.forEach(pl => {
+            const cid = playerCharacters[pl];
+            if (!cid) return;
+            const c = stats.chara[cid] || (stats.chara[cid] = { games: 0, wins: 0, draws: 0 });
+            c.games++;
+            if (winnerPlayer === pl) c.wins++;
+            else if (winReason === 'draw') c.draws++;
+        });
+    }
     saveStats(stats);
     updateStatsDisplay();
 }
