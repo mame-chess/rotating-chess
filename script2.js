@@ -1077,28 +1077,20 @@ function scheduleWatch() {
 }
 function watchStep() {
     if (!watchPlaying || !isWatchMode() || gameOver) return;
-    if (isCharaWatchMode()) maybeUseSkillFor(currentPlayer);
+    if (isCharaWatchMode()) { try { maybeUseSkillFor(currentPlayer); } catch (e) { /* スキル処理の例外で観戦が止まらないようにする */ } }
     let mv = chooseCpuMove(currentPlayer, watchLevelFor(currentPlayer));
-    // 観戦の反復回避：同じ盤面を3回目に作る手は、他に手があれば避ける（同じ動きの繰り返しでの引き分け防止）
-    if (mv) {
-        const boardPartCount = (m) => {
-            try {
-                const tg = new Chess(buildActiveFen());
-                tg.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
-                const bp = tg.fen().split(' ')[0];
-                let c = 0;
-                for (const k in positionCounts) if (k.startsWith(bp + '|')) c += positionCounts[k];
-                return c;
-            } catch (e) { return 0; }
-        };
-        if (boardPartCount(mv) >= 2) {
-            const alts = getSimulatedMoves().filter(m2 => !(m2.from === mv.from && m2.to === mv.to) && boardPartCount(m2) < 2);
-            if (alts.length) mv = alts[Math.floor(Math.random() * alts.length)];
-        }
-    }
     maybeArmDoubleMove(currentPlayer, mv);
     if (!mv) { pauseWatch(); return; }
+    const fenBefore = game.fen();
     executeMoveCustom(mv.from, mv.to);
+    if (!gameOver && game.fen() === fenBefore) {
+        // 着手が何らかの理由で拒否された場合は、盤面が変わる代替手を探す（対戦が止まるのを防ぐ）
+        const alts = getSimulatedMoves().filter(m2 => !(m2.from === mv.from && m2.to === mv.to));
+        for (const alt of alts.slice(0, 10)) {
+            executeMoveCustom(alt.from, alt.to);
+            if (gameOver || game.fen() !== fenBefore) break;
+        }
+    }
     if (!gameOver && totalMovesCount >= 300) {
         const adjScore = evaluateBoard(game, 'w');
         if (adjScore >= 50) { finishGame('P1', 'adjudication'); messageEl.textContent = '手数上限のため形勢判定：P1 の勝ち'; }
@@ -1190,3 +1182,106 @@ function adjudicateByPosition(reason) {
     else if (diff <= -50) { finishGame('P2', 'adjudication'); messageEl.textContent = `${reason}のため形勢判定：P2 の勝ち`; }
     else finishDraw(reason + '・形勢互角');
 }
+
+// ===== CPUの着手選択（script.js から分割） =====
+function chooseCpuMove(player, levelKey) {
+    const color = getActivePieceColor(player);
+    const ownColor = player === 'P1' ? 'w' : 'b'; // そのプレイヤーの「初めの色」。評価は常にこの色基準
+    const activeFen = buildActiveFen(color);
+    let simGame;
+    try { simGame = new Chess(activeFen); } catch (e) { return null; }
+    let moves = filterForbiddenKingCaptures(simGame.moves({ verbose: true }), player);
+    const legalMoves = moves;
+    // 自分の色の駒を取る手は選ばない（他に手がある場合）。相手の色を操作中の自滅的な取りを防ぐ
+    const nonOwnCaps = moves.filter(m => !m.captured || (m.color === 'w' ? 'b' : 'w') !== ownColor);
+    if (nonOwnCaps.length) moves = nonOwnCaps;
+    if (sleepFor === player) moves = moves.filter(m => m.from !== sleepSquare);
+    if (frozenFor === player) moves = moves.filter(m => !m.captured);
+    if (shieldFor && shieldFor !== player) {
+        const sc = shieldFor === 'P1' ? 'w' : 'b';
+        moves = moves.filter(m => { if (!m.captured) return true; return (m.color === 'w' ? 'b' : 'w') !== sc; });
+    }
+    if (barrierFor === player) {
+        const okc = opponentOf(player) === 'P1' ? 'w' : 'b';
+        moves = moves.filter(m => {
+            if (m.captured === 'k') return false;
+            try { const tg = new Chess(activeFen); const rm = tg.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' }); return rm ? !isKingInCheck(tg.fen(), okc) : false; }
+            catch (e) { return true; }
+        });
+    }
+    if (starGuardFor && starGuardFor !== player) {
+        const guardColor = starGuardFor === 'P1' ? 'w' : 'b';
+        moves = moves.filter(m => {
+            if (m.captured && (m.color === 'w' ? 'b' : 'w') === guardColor) return false;
+            try { const tg = new Chess(activeFen); const rm = tg.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' }); return rm ? !isKingInCheck(tg.fen(), guardColor) : false; }
+            catch (e) { return true; }
+        });
+    }
+    if (counterFor && counterFor !== player) {
+        moves = moves.filter(m => m.to !== counterSquare);
+    }
+    // 相手の色のキングを動かす手は、合法手全体に他の手がある限り必ず除外する（着手側のハードルールで拒否され、対戦が止まるため）。
+    // 嗜好フィルターで候補が敵キング手だけになった場合は、嗜好を緩めて合法手全体から選び直す
+    if (legalMoves.some(m => m.piece !== 'k')) {
+        let nk = moves.filter(m => !(m.piece === 'k' && m.color !== ownColor));
+        if (!nk.length) nk = legalMoves.filter(m => !(m.piece === 'k' && m.color !== ownColor));
+        if (nk.length) moves = nk;
+    }
+    if (!moves.length) moves = legalMoves;
+    if (moves.length === 0) return null;
+
+    // 回転停止権の使用判断（そのプレイヤーの残り回数を使う）
+    const skipsLeft = player === 'P1' ? p1Skips : p2Skips;
+    if (skipsLeft > 0 && !skipNextRotation) {
+        const ownKingInDanger = isKingInCheck(game.fen(), ownColor);
+        const useSkip = ownKingInDanger
+            ? Math.random() < 0.85
+            : (levelKey === 'cpu-demon' ? (Math.random() < 0.4 || simGame.in_check()) : (Math.random() < 0.2));
+        if (useSkip) {
+            skipNextRotation = true;
+            if (player === 'P1') p1Skips--; else p2Skips--;
+            skipBtn.textContent = '回転停止予約中！';
+            skipBtn.style.backgroundColor = '#ef4444';
+        }
+    }
+
+    let selectedMove = null;
+    if (levelKey === 'cpu-easy') {
+        selectedMove = moves[Math.floor(Math.random() * moves.length)];
+    } else if (levelKey === 'cpu-normal') {
+        if (color === ownColor) {
+            const captureMoves = moves.filter(m => m.captured);
+            selectedMove = captureMoves.length > 0 ? captureMoves[Math.floor(Math.random() * captureMoves.length)] : moves[Math.floor(Math.random() * moves.length)];
+        } else {
+            // 相手の色を操作しているときは、自分の色の駒を減らす「取る手」を避ける
+            const safeMoves = moves.filter(m => !m.captured);
+            const pool = safeMoves.length > 0 ? safeMoves : moves;
+            selectedMove = pool[Math.floor(Math.random() * pool.length)];
+        }
+    } else if (levelKey === 'cpu-hard' || levelKey === 'cpu-demon') {
+        // ミニマックス法＋α-β探索（上級：合計2手先、鬼：合計3手先まで読む）
+        const depth = levelKey === 'cpu-demon' ? 2 : 1; // ルートの1手＋この深さ
+        let bestScore = -Infinity;
+        let alpha = -Infinity;
+        const ordered = orderMovesForSearch(moves);
+        ordered.forEach(m => {
+            if (isWinningKingCapture(m, player)) {
+                selectedMove = m;
+                bestScore = Infinity;
+                return;
+            }
+            const testGame = new Chess(activeFen);
+            testGame.move(m);
+            const childBoard = testGame.fen().split(' ')[0];
+            const score = minimaxAlphaBeta(childBoard, 1, depth, alpha, Infinity, false, color, player, ownColor);
+            if (score > bestScore) {
+                bestScore = score;
+                selectedMove = m;
+            }
+            if (score > alpha) alpha = score;
+        });
+    }
+    if (!selectedMove) selectedMove = moves[Math.floor(Math.random() * moves.length)];
+    return selectedMove;
+}
+
