@@ -53,7 +53,7 @@ const CHARACTERS = [
     { id: 'persephone', name: 'ペルセフォネ', title: '冥界の女王', skill: 'ネクロ・リージョン', kind: 'reviveAll', unlock: { lost: 3, moves: 6 }, desc: '相手に取られた自分の駒を、自分が取った駒の数（最大3つ）まで、強い順に自分の色のまま初期位置に復活させる（魂の等価交換）。たくさん取らせるだけでは軍団は帰ってこない。', profile: '冥界を治める若き女王。倒れた自軍の魂を呼び戻し、戦列へ帰す。' },
     { id: 'rosetta', name: 'ロゼッタ', title: '薔薇の伯爵夫人', skill: 'チャーム・エンブレイス', kind: 'charm', unlock: { moves: 8 }, desc: '相手の色の駒1つ（キングとクイーン以外）を、場所はそのままに自分の色に変えてしまう。ただし、変えた駒がそのまま相手のキングにチェックできる位置にある場合は選べない。', profile: '薔薇園の若き伯爵夫人。その微笑みと差し伸べた手に、逆らえる者はいない。' },
     { id: 'shizuku', name: '琴那', title: '図書室の文学少女', skill: 'ファイナル・エピローグ', kind: 'doom', unlock: { moves: 6 }, desc: '相手が次に操作する色の駒1つ（キング以外）に「終章（ファイナル・エピローグ）」の印をつける。その相手の手番が終わると、印の駒は盤上から消える。印の駒が動いても、消えるまで印は追いかける。', profile: '白髪と眼鏡が目印の、物静かな文学少女。本を閉じるように、物語の終わりを静かに告げる。' },
-    { id: 'ayame', name: 'ツバキ', title: '二刀流の女剣士', skill: 'クロス・スラッシュ', kind: 'dashSlash', unlock: { moves: 5 }, desc: '今操作している自分の駒1つ（キング以外）を、同じ縦・横・斜めの直線上にいる相手の色の駒（キング以外）へ一直線に斬り込ませ、その駒を取る。途中の駒は飛び越える。', profile: '桜と月夜を背に戦う二刀流の女剣士。二本の刀が描く軌跡は、一直線の死線になる。' },
+    { id: 'ayame', name: 'ツバキ', title: '二刀流の女剣士', skill: 'クロス・スラッシュ', kind: 'dashSlash', unlock: { moves: 5 }, desc: '今操作している自分の駒1つ（キング以外）を、同じ縦・横・斜めの直線上にいる相手の色の駒（キング以外）へ一直線に斬り込ませ、その駒を取る。途中の駒は飛び越える。ただし、クロス・スラッシュを使った手番ではキングを取ることはできない。', profile: '桜と月夜を背に戦う二刀流の女剣士。二本の刀が描く軌跡は、一直線の死線になる。' },
     { id: 'kanon', name: 'カノン', title: '弦楽の演奏家', skill: 'リタルダンド', kind: 'pushback', desc: '相手の色の駒（キング以外）どれか1つを、その駒の色の後方（自陣側）の空きマスへ1マス押し戻す。クイーンやルークも押し戻して攻撃の構えを崩せる。', profile: 'コンサートホールの花形ヴァイオリニスト。ゆっくりと遅らせる旋律は、敵の歩みまで押し戻す。' },
     { id: 'mirage', name: 'ミラージュ', title: '鏡界の魔女', skill: 'ミラー・カウンター', kind: 'counter', desc: '今操作している自分の駒1つに鏡の加護をつける。その駒を取ろうとした相手の駒は、代わりに盤上から消える（1回だけ）。キングにもつけられ、キングの一撃は消えずに防ぐ。', profile: '鏡の世界に住む若き魔女。仕掛けた鏡は、襲いかかる刃をそのまま跳ね返す。' }
 ];
@@ -76,6 +76,7 @@ let counterFor = null;
 let counterSquare = null;
 let counterPieceType = null;
 let counterPieceColor = null;
+let slashKingBanFor = null; // クロス・スラッシュを使ったプレイヤーは、その手番ではキングを取れない
 let transformPicker = null;
 let skillFxNote = '';
 function opponentOf(player) { return player === 'P1' ? 'P2' : 'P1'; }
@@ -448,6 +449,7 @@ function initGame() {
     counterSquare = null;
     counterPieceType = null;
     counterPieceColor = null;
+    slashKingBanFor = null;
     transformPicker = null;
     skillFxNote = '';
     const transformModalInit = document.getElementById('transform-modal');
@@ -546,7 +548,7 @@ function snapshotState() {
         frozenFor, pendingExtraMove: { ...pendingExtraMove },
         sleepFor, sleepSquare, barrierFor, shieldFor, starGuardFor,
         doomFor, doomSquare, doomPieceType, doomPieceColor,
-        counterFor, counterSquare, counterPieceType, counterPieceColor, skillRecharge: { ...skillRecharge },
+        counterFor, counterSquare, counterPieceType, counterPieceColor, slashKingBanFor, skillRecharge: { ...skillRecharge },
         selectedGameMode, moveHistory: JSON.parse(JSON.stringify(moveHistory)),
         totalMovesCount, rotationsCount, statsRecorded, randomNextRotation,
         lastMove, castlingRights, epSquare,
@@ -595,6 +597,7 @@ function restoreState(snap) {
     counterSquare = snap.counterSquare || null;
     counterPieceType = snap.counterPieceType || null;
     counterPieceColor = snap.counterPieceColor || null;
+    slashKingBanFor = snap.slashKingBanFor || null;
     transformPicker = null;
     const transformModalRestore = document.getElementById('transform-modal');
     if (transformModalRestore) transformModalRestore.classList.add('hidden');
@@ -914,6 +917,7 @@ function getSimulatedMoves(square, color) {
         const simGame = new Chess(buildActiveFen(color));
         let moves = simGame.moves({ square: square, verbose: true });
         moves = filterForbiddenKingCaptures(moves, currentPlayer);
+        if (slashKingBanFor === currentPlayer) moves = moves.filter(m => m.captured !== 'k'); // クロス・スラッシュを使った手番はキングを取れない
         if (frozenFor && frozenFor === currentPlayer) moves = moves.filter(m => !m.captured);
         return moves;
     } catch (e) {
@@ -1001,6 +1005,12 @@ function executeMoveCustom(from, to, promotion) {
         if (isForbiddenKingCapture(attemptedMove, currentPlayer)) {
             return;
         }
+    }
+
+    // クロス・スラッシュを使った手番では、キングを取ることはできない
+    if (slashKingBanFor === currentPlayer && targetPiece && targetPiece.type === 'k') {
+        messageEl.textContent = 'クロス・スラッシュを使った手番ではキングを取れません';
+        return;
     }
 
     // 眠らされた駒は、この手番では動けない
@@ -1241,6 +1251,7 @@ function executeMoveCustom(from, to, promotion) {
             if (isCpuGame() && currentPlayer === cpuSide) setTimeout(makeCpuMove, 600);
             return;
         }
+        if (slashKingBanFor === currentPlayer) slashKingBanFor = null; // 手番が移ったらキング取り禁止は解除
         currentPlayer = currentPlayer === 'P1' ? 'P2' : 'P1';
         renderBoard();
         broadcastState();
@@ -1973,6 +1984,7 @@ function applySkillEffect(player, data) {
             game.remove(data.b);
             game.remove(data.a);
             game.put({ type: pa.type, color: pa.color }, data.b);
+            slashKingBanFor = player; // この手番ではキングを取れない
             break;
         }
         case 'pushback': {

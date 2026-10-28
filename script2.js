@@ -1208,6 +1208,11 @@ function chooseCpuMove(player, levelKey) {
     try { simGame = new Chess(activeFen); } catch (e) { return null; }
     let moves = filterForbiddenKingCaptures(simGame.moves({ verbose: true }), player);
     const legalMoves = moves;
+    // クロス・スラッシュを使った手番ではキングを取れない（他に手がある場合）
+    if (slashKingBanFor === player) {
+        const noKing = moves.filter(m => m.captured !== 'k');
+        if (noKing.length) moves = noKing;
+    }
     // 自分の色の駒を取る手は選ばない（他に手がある場合）。相手の色を操作中の自滅的な取りを防ぐ
     const nonOwnCaps = moves.filter(m => !m.captured || (m.color === 'w' ? 'b' : 'w') !== ownColor);
     if (nonOwnCaps.length) moves = nonOwnCaps;
