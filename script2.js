@@ -537,8 +537,8 @@ function maybeUseSkillFor(player) {
         }
         case 'undo': if (historyStack.length >= 3 && rnd < 0.12) applySkillEffect(player, {}); return;
         case 'transform': {
-            const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: boardCells()[r * 8 + f].square }); return; } }
+            const bd = game.board(); const files = 'abcdefgh';
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: files[f] + (8 - r) }); return; } }
             return;
         }
         case 'sleep': {
@@ -560,14 +560,14 @@ function maybeUseSkillFor(player) {
                 const cell = bd[r][f];
                 if (cell && cell.type === 'p' && cell.color === activeColor) {
                     const nr = cell.color === 'w' ? r - 1 : r + 1;
-                    if (nr >= 0 && nr < 8 && !bd[nr][f]) { applySkillEffect(player, { a: boardCells()[r * 8 + f].square, b: files[f] + (8 - nr) }); return; }
+                    if (nr >= 0 && nr < 8 && !bd[nr][f]) { applySkillEffect(player, { a: files[f] + (8 - r), b: files[f] + (8 - nr) }); return; }
                 }
             }
             return;
         }
         case 'exchange': {
-            const bd = game.board();
-            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: boardCells()[r * 8 + f].square, toType: 'r' }); return; } }
+            const bd = game.board(); const files = 'abcdefgh';
+            for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const cell = bd[r][f]; if (cell && cell.type === 'p' && cell.color === activeColor) { applySkillEffect(player, { square: files[f] + (8 - r), toType: 'r' }); return; } }
             return;
         }
         case 'swap': return;
@@ -1047,10 +1047,26 @@ function maybeArmDoubleMove(player, mv) {
 }
 function makeCpuMove() {
     if (gameOver) return;
-    maybeCpuUseSkill();
+    // スキル処理で例外が起きても、CPUの手番がそのまま止まらないようにする
+    try { maybeCpuUseSkill(); } catch (e) { /* スキルを諦めて着手に進む */ }
     const level = getCpuLevelForMode();
-    const mv = chooseCpuMove(cpuSide, level);
+    let mv = null;
+    try { mv = chooseCpuMove(cpuSide, level); } catch (e) { mv = null; }
+    const fenBefore = game.fen();
     if (mv) { maybeArmDoubleMove(cpuSide, mv); executeMoveCustom(mv.from, mv.to); }
+    if (!gameOver && currentPlayer === cpuSide && game.fen() === fenBefore) {
+        // 着手がルールで拒否された（王の加護・鏡の加護など）場合は代替手を試し、対戦が止まるのを防ぐ
+        // ※盤面が変わっている場合は追加手番（アンコール／連続手番）で、予約済みの次手に任せる
+        const color = getActivePieceColor();
+        const alts = [];
+        boardCells().filter(c => c.color === color).forEach(c => { getSimulatedMoves(c.square, color).forEach(m => alts.push(m)); });
+        for (const alt of alts) {
+            if (mv && alt.from === mv.from && alt.to === mv.to) continue;
+            maybeArmDoubleMove(cpuSide, alt);
+            executeMoveCustom(alt.from, alt.to);
+            if (gameOver || currentPlayer !== cpuSide || game.fen() !== fenBefore) break;
+        }
+    }
 }
 
 // ===== CPU同士の観戦モード =====
@@ -1264,11 +1280,14 @@ function chooseCpuMove(player, levelKey) {
         let bestScore = -Infinity;
         let alpha = -Infinity;
         const ordered = orderMovesForSearch(moves);
-        ordered.forEach(m => {
+        // 考えすぎて画面が固まらないよう、探索に時間の上限を設ける（候補は取る手優先の順なので、途中で切っても最善寄りの手が残る）
+        const searchStart = Date.now();
+        const timeBudget = levelKey === 'cpu-demon' ? 2500 : 1500;
+        for (const m of ordered) {
             if (isWinningKingCapture(m, player)) {
                 selectedMove = m;
                 bestScore = Infinity;
-                return;
+                break;
             }
             const testGame = new Chess(activeFen);
             testGame.move(m);
@@ -1279,7 +1298,8 @@ function chooseCpuMove(player, levelKey) {
                 selectedMove = m;
             }
             if (score > alpha) alpha = score;
-        });
+            if (selectedMove && Date.now() - searchStart > timeBudget) break;
+        }
     }
     if (!selectedMove) selectedMove = moves[Math.floor(Math.random() * moves.length)];
     return selectedMove;
