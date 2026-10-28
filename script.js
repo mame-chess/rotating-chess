@@ -468,7 +468,7 @@ function initGame() {
 
     updateModeDisplay();
     if (messageEl) messageEl.textContent = '';
-    boardEl.classList.remove('rotate-180');
+    syncBoardRotationClass();
     skipBtn.textContent = '回転を止める (スキップ予約)';
     skipBtn.style.backgroundColor = '#3b82f6';
     renderBoard();
@@ -476,6 +476,18 @@ function initGame() {
 
 function getBottomPieceColor() {
     return isBoardRotated ? 'b' : 'w';
+}
+
+// 表示の向き：自分が後手（P2）の席のときは、自分が操作する色の駒が手前に来るよう盤面表示だけを反転する
+// （対戦状態 isBoardRotated はゲームの進行で切り替わるため、表示側で XOR する。P1の席は下側・P2の席は上側が基準）
+function viewFlippedForPlayer() {
+    if (isCpuGame()) return cpuSide === 'P1'; // CPU戦で自分が後手（P2）になったとき
+    if (isOnlineMode()) return myRole === 'P2'; // オンラインで自分が後手（P2）のとき
+    return false;
+}
+function syncBoardRotationClass() {
+    if (!boardEl) return;
+    boardEl.classList.toggle('rotate-180', isBoardRotated !== viewFlippedForPlayer());
 }
 
 // そのプレイヤーが今操作できる駒の色。P1は画面下側、P2は画面上側の色を操作し、
@@ -616,8 +628,7 @@ function restoreState(snap) {
     drawReason = snap.drawReason || null;
     selectedSquare = null;
     validMoves = [];
-    if (isBoardRotated) boardEl.classList.add('rotate-180');
-    else boardEl.classList.remove('rotate-180');
+    syncBoardRotationClass();
     skipBtn.textContent = skipNextRotation ? '回転停止予約中！' : '回転を止める (スキップ予約)';
     skipBtn.style.backgroundColor = skipNextRotation ? '#ef4444' : '#3b82f6';
     updateModeDisplay();
@@ -679,6 +690,7 @@ function showDragHints(from) {
 }
 
 function renderBoard() {
+    syncBoardRotationClass();
     boardEl.innerHTML = '';
     const board = game.board();
 
@@ -1215,8 +1227,7 @@ function executeMoveCustom(from, to, promotion) {
                     } else {
                         isBoardRotated = !isBoardRotated;
                         rotationsCount++;
-                        if (isBoardRotated) boardEl.classList.add('rotate-180');
-                        else boardEl.classList.remove('rotate-180');
+                        syncBoardRotationClass();
                     }
                     moveCounter = 0;
                     randomNextRotation = drawRandomRotationCountdown();
@@ -1234,8 +1245,7 @@ function executeMoveCustom(from, to, promotion) {
                     } else {
                         isBoardRotated = !isBoardRotated;
                         rotationsCount++;
-                        if (isBoardRotated) boardEl.classList.add('rotate-180');
-                        else boardEl.classList.remove('rotate-180');
+                        syncBoardRotationClass();
                     }
                 }
             }

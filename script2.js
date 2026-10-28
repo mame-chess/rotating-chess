@@ -978,7 +978,7 @@ function beginGameWithDice() {
                 if (isCpuGame()) cpuSide = youFirst ? 'P2' : 'P1';
                 if (result) result.textContent = youFirst
                     ? `${you} vs ${opp} ― ${isCpuGame() ? 'あなた' : 'プレイヤー1'} の勝ち！先手（P1・金）です`
-                    : `${you} vs ${opp} ― ${isCpuGame() ? 'CPU' : 'プレイヤー2'} の勝ち！${isCpuGame() ? 'CPUが先手（P1）、あなたは後手（P2）です' : 'プレイヤー2 が先手（P1・金）です'}`;
+                    : `${you} vs ${opp} ― ${isCpuGame() ? 'CPU' : 'プレイヤー2'} の勝ち！${isCpuGame() ? 'CPUが先手（P1）、あなたは後手（P2）です。盤面は回転し、あなたの駒（青）が手前になります' : 'プレイヤー2 が先手（P1・金）です'}`;
                 rollBtn.classList.add('hidden');
                 goBtn.classList.remove('hidden');
             }
@@ -1187,7 +1187,7 @@ function updateWatchUI() {
 function enterEndgamePhase() {
     endgamePhase = true;
     isBoardRotated = false;
-    if (boardEl) boardEl.classList.remove('rotate-180');
+    syncBoardRotationClass();
     positionCounts = {};
     positionCounts[positionKey()] = 1;
     messageEl.textContent = '千日手！盤面の回転を止めて、通常チェスで最終決戦を行います';
