@@ -70,6 +70,7 @@ body {
     display: flex;
     justify-content: center;
     min-height: 100vh;
+    min-height: 100dvh; /* 対応ブラウザではアドレスバー等を除いた実表示領域の高さに合わせる */
 }
 
 /* フォント統一: ボタンや入力欄などの操作要素も本文と同じフォントスタックを使う */
@@ -79,12 +80,15 @@ button, input, select, textarea { font-family: var(--font-main); }
     width: 100%;
     max-width: 1400px;
     padding: 20px;
+    /* body(flex) の中で余った縦スペースを上下均等に配分し、画面全体を縦中央に配置する。
+       コンテンツが画面より高い場合はマージンが 0 になり、通常の上寄せスクロールになる */
+    margin: auto;
 }
 
 .screen.hidden,
 .hidden { display: none !important; }
 
-#menu-screen,
+#menu-screen { max-width: 1400px; margin: 0 auto; }
 #guide-screen { max-width: 1120px; margin: 0 auto; }
 #settings-screen,
 #data-screen { max-width: 920px; margin: 0 auto; }
@@ -93,6 +97,26 @@ button, input, select, textarea { font-family: var(--font-main); }
 #hub-online-screen { max-width: 1120px; margin: 0 auto; }
 
 /* ---------- メニュー ---------- */
+/* 中央のメニュー列の両サイドに立ち絵 (琴那 / カノン) を配置する。装飾専用 */
+.menu-layout { display: flex; align-items: center; justify-content: center; gap: 28px; }
+.menu-main { flex: 0 1 980px; min-width: 0; }
+.menu-side-art { flex: 0 1 250px; min-width: 0; pointer-events: none; user-select: none; }
+.menu-side-art img {
+    display: block;
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    max-height: 78vh;
+    object-fit: contain;
+    margin: 0 auto;
+    border-radius: 12px;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
+}
+/* 狭い画面では立ち絵を消し、メニュー列は従来の幅まで広げてよい */
+@media (max-width: 1150px) {
+    .menu-side-art { display: none; }
+    .menu-main { flex-basis: 1120px; }
+}
 .logo-title {
     font-family: var(--font-main);
     font-weight: 800;
