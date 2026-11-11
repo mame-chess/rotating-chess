@@ -100,17 +100,15 @@ button, input, select, textarea { font-family: var(--font-main); }
 /* 中央のメニュー列の両サイドに立ち絵 (琴那 / カノン) を配置する。装飾専用 */
 .menu-layout { display: flex; align-items: center; justify-content: center; gap: 28px; }
 .menu-main { flex: 0 1 980px; min-width: 0; }
-.menu-side-art { flex: 0 1 250px; min-width: 0; pointer-events: none; user-select: none; }
+.menu-side-art { flex: 0 1 300px; min-width: 0; pointer-events: none; user-select: none; }
 .menu-side-art img {
+    /* 背景なしの切り抜き透過画像をそのまま浮かせる (影はシルエットに沿う drop-shadow) */
     display: block;
-    width: 100%;
-    max-width: 250px;
-    height: auto;
-    max-height: 78vh;
-    object-fit: contain;
+    height: min(76vh, 680px);
+    width: auto;
+    max-width: 100%;
     margin: 0 auto;
-    border-radius: 12px;
-    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.30));
 }
 /* 狭い画面では立ち絵を消し、メニュー列は従来の幅まで広げてよい */
 @media (max-width: 1150px) {

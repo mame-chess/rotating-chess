@@ -15,7 +15,7 @@
         <!-- 1. メニュー画面 -->
         <div id="menu-screen" class="screen">
             <div class="menu-layout">
-                <div class="menu-side-art" aria-hidden="true"><img id="menu-art-left" alt="琴那" draggable="false"></div>
+                <div class="menu-side-art" aria-hidden="true"><img id="menu-art-left" src="menu-kotona.png" alt="琴那" draggable="false" onerror="this.style.display='none'"></div>
                 <div class="menu-main">
             <h1 class="logo-title">180° ROTATING CHESS</h1>
             <p class="description">
@@ -45,7 +45,7 @@
             </div>
             <p class="version-note">Rotating Chess v5.6</p>
                 </div>
-                <div class="menu-side-art" aria-hidden="true"><img id="menu-art-right" alt="カノン" draggable="false"></div>
+                <div class="menu-side-art" aria-hidden="true"><img id="menu-art-right" src="menu-kanon.png" alt="カノン" draggable="false" onerror="this.style.display='none'"></div>
             </div>
         </div>
 
@@ -642,16 +642,6 @@
             <button id="lb-close" class="secondary-btn">閉じる</button>
         </figure>
     </div>
-    <script>
-    // メニュー画面の両サイドの立ち絵 (左: 琴那 / 右: カノン)。装飾専用で、ゲームの処理には関与しない
-    (function () {
-        if (typeof CHARA_IMAGES === 'undefined') return;
-        var left = document.getElementById('menu-art-left');
-        var right = document.getElementById('menu-art-right');
-        if (left && CHARA_IMAGES.shizuku) left.src = CHARA_IMAGES.shizuku;
-        if (right && CHARA_IMAGES.kanon) right.src = CHARA_IMAGES.kanon;
-    })();
-    </script>
 </body>
 
 </html>
