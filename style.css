@@ -63,7 +63,8 @@ body[data-theme="neon"] {
 
 body {
     margin: 0;
-    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+    --font-main: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, "Noto Sans JP", sans-serif;
+    font-family: var(--font-main);
     background: var(--bg);
     color: var(--ink);
     display: flex;
@@ -71,24 +72,31 @@ body {
     min-height: 100vh;
 }
 
+/* フォント統一: ボタンや入力欄などの操作要素も本文と同じフォントスタックを使う */
+button, input, select, textarea { font-family: var(--font-main); }
+
 #app {
     width: 100%;
-    max-width: 1140px;
-    padding: 16px;
+    max-width: 1400px;
+    padding: 20px;
 }
 
 .screen.hidden,
 .hidden { display: none !important; }
 
 #menu-screen,
+#guide-screen { max-width: 1120px; margin: 0 auto; }
 #settings-screen,
-#data-screen,
-#guide-screen { max-width: 620px; margin: 0 auto; }
+#data-screen { max-width: 920px; margin: 0 auto; }
+#hub-local-screen,
+#hub-cpu-screen,
+#hub-online-screen { max-width: 1120px; margin: 0 auto; }
 
 /* ---------- メニュー ---------- */
 .logo-title {
-    font-family: Georgia, "Times New Roman", "Hiragino Mincho ProN", serif;
-    font-size: 2rem;
+    font-family: var(--font-main);
+    font-weight: 800;
+    font-size: 2.3rem;
     text-align: center;
     margin: 10px 0 4px;
     letter-spacing: 2px;
@@ -100,9 +108,10 @@ body {
 .description {
     text-align: center;
     color: var(--muted);
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     line-height: 1.6;
-    margin-bottom: 18px;
+    max-width: 780px;
+    margin: 0 auto 18px;
 }
 
 .mode-menu-container {
@@ -179,7 +188,7 @@ body {
 .mode-info { text-align: left; flex-grow: 1; }
 .mode-title { font-weight: bold; font-size: 0.93rem; }
 .mode-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.45; }
-.key-hint { font-size: 0.68rem; color: var(--muted); font-family: monospace; white-space: nowrap; }
+.key-hint { font-size: 0.68rem; color: var(--muted); font-family: var(--font-main); white-space: nowrap; }
 
 .start-btn {
     width: 100%;
@@ -293,13 +302,13 @@ button.secondary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     background: var(--panel); color: var(--ink); font: inherit; font-size: 0.85rem;
 }
 
-.game-layout { display: flex; gap: 16px; align-items: flex-start; }
-.board-area { flex: 0 1 auto; margin: 0 auto; }
-.side-panel { width: 340px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+.game-layout { display: flex; gap: 20px; align-items: flex-start; }
+.board-area { flex: 1 1 auto; min-width: 0; }
+.side-panel { width: 380px; flex: none; display: flex; flex-direction: column; gap: 12px; }
 
 .board-container {
     position: relative;
-    width: min(92vw, 540px);
+    width: min(100%, 640px);
     aspect-ratio: 1 / 1;
     margin: 0 auto;
     background: var(--board-border);
@@ -494,7 +503,7 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .watch-note { font-size: 0.72rem; color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
 
 /* ---------- 駒図鑑・ルール ---------- */
-.guide-title { text-align: center; font-family: Georgia, "Times New Roman", "Hiragino Mincho ProN", serif; letter-spacing: 1px; margin: 6px 0 14px; }
+.guide-title { text-align: center; font-family: var(--font-main); font-weight: 800; letter-spacing: 1px; margin: 6px 0 14px; }
 .guide-section { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 16px; box-shadow: 3px 3px 0 var(--shadow); }
 .guide-section h3 { margin: 0 0 12px; font-size: 1rem; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
 .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -529,7 +538,7 @@ body[data-theme="neon"] .danger-warning { background: #2c1a1a; }
 .chara-skill-btn:disabled { opacity: .45; cursor: default; }
 .chara-modal { position: fixed; inset: 0; background: rgba(20,16,8,.55); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 16px; }
 .chara-modal.hidden { display: none; }
-.chara-modal-box { background: #fdf8ec; border: 2px solid #8a6a1d; border-radius: 14px; max-width: 760px; width: 100%; max-height: 92vh; overflow: auto; padding: 20px; }
+.chara-modal-box { background: #fdf8ec; border: 2px solid #8a6a1d; border-radius: 14px; max-width: 900px; width: 100%; max-height: 92vh; overflow: auto; padding: 20px; }
 .chara-modal-box h3 { margin: 0 0 14px; text-align: center; }
 .chara-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .chara-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; background: #fff; border: 2px solid #d8c491; border-radius: 12px; cursor: pointer; text-align: center; }
@@ -737,3 +746,20 @@ body[data-theme="wood"] .square .piece-b svg { filter: sepia(0.85) saturate(1.2)
 .dice-result { font-size: 13px; min-height: 36px; margin: 10px 0; }
 #double-btn { margin-top: 8px; background: #6d4fa1; }
 #double-btn:disabled { opacity: .45; }
+
+/* ===== v5.7: レイアウト拡張（画面の幅と周囲のスペースを使う） ===== */
+/* メニューのハブボタンは横3列のカード配置にして、画面幅を活かす */
+.hub-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: none; margin: 22px auto; }
+.hub-btn { min-height: 112px; }
+.hub-title { font-size: 19px; }
+.hub-desc { font-size: 12.5px; line-height: 1.55; }
+@media (max-width: 900px) {
+    .hub-container { grid-template-columns: 1fr; }
+    .hub-btn { min-height: 0; }
+}
+/* ハブ画面のモード一覧は、広い画面では2列にして縦の間延びを防ぐ */
+@media (min-width: 1024px) {
+    .mode-menu-container .mode-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+    .mode-menu-container .mode-list .mode-group-label { grid-column: 1 / -1; }
+    .mode-menu-container .mode-item { height: 100%; }
+}
